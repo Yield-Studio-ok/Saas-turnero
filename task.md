@@ -1,0 +1,7 @@
+﻿- [x] 3. [Frontend] Esqueleto de UI Super Admin y Login
+- [x] 4. [Frontend] UI Formulario Alta de Locales
+- [x] 6. [Frontend] UI Login de DueÃ±o y Layout del Dashboard
+- [x] 8. [Frontend] UI Formulario Perfil del Local
+- [x] 5. [Backend] Servicio de Creación de Tenant
+- [x] 7. [Backend] Query de Perfil del Local
+- [x] 9. [Backend] Servicio Update Perfil Local
