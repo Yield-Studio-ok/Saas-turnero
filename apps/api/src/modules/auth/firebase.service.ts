@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
+﻿import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import * as admin from "firebase-admin";
 import { existsSync, readFileSync } from "fs";
 import type { AuthUser } from "./auth.types";
@@ -77,6 +77,6 @@ export class FirebaseService implements OnModuleInit {
       throw new Error(`${message}. Production cannot fall back to demo auth.`);
     }
 
-    this.logger.warn(`${message} — demo JWT auth enabled`);
+    this.logger.warn(`${message} â€” demo JWT auth enabled`);
   }
 }

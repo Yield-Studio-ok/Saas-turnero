@@ -30,5 +30,53 @@ model Local {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
+  employees   Employee[]
+  schedules   Schedule[]
+  services    Service[]
+
   @@map("locales")
+}
+
+model Employee {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  localId   String
+  local     Local    @relation(fields: [localId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  schedules Schedule[]
+
+  @@map("employees")
+}
+
+model Schedule {
+  id          String   @id @default(cuid())
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  localId     String
+  local       Local    @relation(fields: [localId], references: [id], onDelete: Cascade)
+  dayOfWeek   Int      // 0 = Sunday, 1 = Monday, etc.
+  startTime   String   // e.g. "09:00"
+  endTime     String   // e.g. "18:00"
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("schedules")
+}
+
+model Service {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  price       Float
+  duration    Int      // duration in minutes
+  localId     String
+  local       Local    @relation(fields: [localId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("services")
 }

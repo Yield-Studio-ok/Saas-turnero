@@ -1,0 +1,147 @@
+[
+  {
+    "id": "59fd8e48-e33c-496d-b85e-f9b59f367bc4",
+    "seq": 29,
+    "name": "29. [Frontend] Integrar Guardado de Turno"
+  },
+  {
+    "id": "81a14359-73a2-4a80-a78f-a2846cad5b92",
+    "seq": 28,
+    "name": "28. [Backend] Servicio Transaccional Guardado Turno"
+  },
+  {
+    "id": "ce0aecd2-0971-493c-9bfe-c7b8645a9308",
+    "seq": 27,
+    "name": "27. [Frontend] Formulario Final Cliente"
+  },
+  {
+    "id": "0fbbf887-2ed3-4cfb-9642-50336c48d14f",
+    "seq": 26,
+    "name": "26. [Frontend] Integración Motor vs Calendario"
+  },
+  {
+    "id": "5fa00172-935e-4435-913a-ea63cff3f5bd",
+    "seq": 25,
+    "name": "25. [Frontend] UI Selección de Fecha y Hora"
+  },
+  {
+    "id": "2ac53078-445c-4dfb-b577-7a79be368e38",
+    "seq": 24,
+    "name": "24. [Backend] Algoritmo Motor de Disponibilidad"
+  },
+  {
+    "id": "29633b9f-b020-4a7e-8d17-99155689939c",
+    "seq": 23,
+    "name": "23. [Backend] Query Público de Local y Servicios"
+  },
+  {
+    "id": "2dbc39ef-ea69-4da7-965a-4e6432554151",
+    "seq": 22,
+    "name": "22. [Frontend] Maquetado de Landing Page Pública"
+  },
+  {
+    "id": "d97547ac-ae5d-4764-bff2-493c84829953",
+    "seq": 21,
+    "name": "21. [Backend] Servicio de Cancelación"
+  },
+  {
+    "id": "ad03184a-00aa-4e55-83f2-326e7da1b53c",
+    "seq": 20,
+    "name": "20. [Frontend] UI Botón Cancelar Turno"
+  },
+  {
+    "id": "470011a9-0b90-46c7-a36a-1f76ace10380",
+    "seq": 19,
+    "name": "19. [Frontend] UI Modal de Detalles de Turno"
+  },
+  {
+    "id": "6f7a4314-7ce6-4591-a2c9-f9acae6041b8",
+    "seq": 18,
+    "name": "18. [Frontend] Renderizado de Turnos en la Grilla"
+  },
+  {
+    "id": "ecb79705-469c-44d6-a267-24695431699f",
+    "seq": 17,
+    "name": "17. [Backend] Servicio Real-Time de Turnos (onSnapshot)"
+  },
+  {
+    "id": "a1de0ca1-7978-421b-a804-25b5531a4d23",
+    "seq": 16,
+    "name": "16. [Frontend] Maquetado de Grilla Diaria Base"
+  },
+  {
+    "id": "f42715c8-dc4f-4f5c-bb51-a0d65f72951c",
+    "seq": 15,
+    "name": "15. [Backend] Servicios CRUD de Servicios"
+  },
+  {
+    "id": "6653f7ee-7855-437f-85fc-93ce11020654",
+    "seq": 14,
+    "name": "14. [Frontend] UI ABM de Servicios"
+  },
+  {
+    "id": "c05ccb99-8359-4198-bd8d-ee10a736930a",
+    "seq": 13,
+    "name": "13. [Backend] Servicio Guardado de Horarios"
+  },
+  {
+    "id": "22fd7f49-c3a0-4ae9-93b4-ccf8d76e6593",
+    "seq": 12,
+    "name": "12. [Frontend] UI Configuración de Horarios de Trabajo"
+  },
+  {
+    "id": "857d1f3b-aac8-4958-b260-26140168919f",
+    "seq": 11,
+    "name": "11. [Backend] Servicios CRUD Empleados"
+  },
+  {
+    "id": "4d8d25fc-2421-4381-a5c7-6056eb7fd3f3",
+    "seq": 10,
+    "name": "10. [Frontend] UI ABM de Empleados"
+  },
+  {
+    "id": "0500724c-ade4-4e61-a99a-ca866eb3f0ca",
+    "seq": 9,
+    "name": "9. [Backend] Servicio Update Perfil Local"
+  },
+  {
+    "id": "5c5bb9d3-e240-4f57-84f4-c233dea91905",
+    "seq": 8,
+    "name": "8. [Frontend] UI Formulario Perfil del Local"
+  },
+  {
+    "id": "0ff84f42-ab8a-42a2-abad-970e3bb226f9",
+    "seq": 7,
+    "name": "7. [Backend] Query de Perfil del Local"
+  },
+  {
+    "id": "4b7df032-df7c-42e7-a80c-12584a2024b3",
+    "seq": 6,
+    "name": "6. [Frontend] UI Login de Dueño y Layout del Dashboard"
+  },
+  {
+    "id": "66bd5558-d7f1-4e24-89fa-b4002c003ecc",
+    "seq": 5,
+    "name": "5. [Backend] Servicio de Creación de Tenant"
+  },
+  {
+    "id": "1cd5a43e-175f-47f5-8ddd-1fdb4695431b",
+    "seq": 4,
+    "name": "4. [Frontend] UI Formulario Alta de Locales"
+  },
+  {
+    "id": "93fa0636-82ed-4783-895c-0842f8c7900c",
+    "seq": 3,
+    "name": "3. [Frontend] Esqueleto de UI Super Admin y Login"
+  },
+  {
+    "id": "50cdd58d-e304-4e6c-ac57-455efe415b4b",
+    "seq": 2,
+    "name": "2. [Backend] Setup Auth y Custom Claims"
+  },
+  {
+    "id": "95b0085e-ede2-498f-8c0a-3d1d5057460c",
+    "seq": 1,
+    "name": "1. [Backend] Reglas de Seguridad en Firestore"
+  }
+]

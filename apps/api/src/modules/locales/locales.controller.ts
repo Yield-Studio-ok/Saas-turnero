@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Patch, Body, Param, Req } from "@nestjs/common";
+﻿import { Controller, Post, Get, Patch, Body, Param, Req } from "@nestjs/common";
 import { ApiTags, ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
 import { LocalesService } from "./locales.service";
 import { CreateLocalDto } from "./dto/create-local.dto";

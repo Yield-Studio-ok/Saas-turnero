@@ -1,4 +1,4 @@
-import { Module, Global } from "@nestjs/common";
+﻿import { Module, Global } from "@nestjs/common";
 import { APP_GUARD } from "@nestjs/core";
 import { JwtModule } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
