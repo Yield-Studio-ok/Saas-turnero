@@ -2,4 +2,5 @@ export type AuthUser = {
   uid: string;
   email: string;
   role: string;
+  tenantId?: string;
 };

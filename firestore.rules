@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Función auxiliar para chequear si el usuario es Super Admin
+    function isSuperAdmin() {
+      return request.auth != null && request.auth.token.role == 'super_admin';
+    }
+
+    // Función auxiliar para chequear si el usuario es dueño del tenant
+    function isTenantOwner(tenantId) {
+      return request.auth != null && request.auth.token.tenantId == tenantId && request.auth.token.role == 'owner';
+    }
+
+    // Locales
+    match /tenants/{tenantId} {
+      allow read: if true; // Lectura pública para la landing
+      allow write: if isSuperAdmin() || isTenantOwner(tenantId);
+      
+      // Subcolección de servicios
+      match /services/{serviceId} {
+        allow read: if true; // Lectura pública
+        allow write: if isSuperAdmin() || isTenantOwner(tenantId);
+      }
+      
+      // Subcolección de empleados
+      match /employees/{employeeId} {
+        allow read: if true; // Lectura pública para la reserva
+        allow write: if isSuperAdmin() || isTenantOwner(tenantId);
+      }
+      
+      // Subcolección de turnos (reservas)
+      match /appointments/{appointmentId} {
+        // Los dueños pueden leer y editar todos los turnos de su local
+        allow read: if isSuperAdmin() || isTenantOwner(tenantId);
+        allow update, delete: if isSuperAdmin() || isTenantOwner(tenantId);
+        // NOTA: La creación de turnos públicos se hará desde el Backend,
+        // por lo que no es necesario habilitar `allow create` aquí,
+        // ya que Firebase Admin SDK bypassa estas reglas de seguridad.
+      }
+    }
+  }
+}

@@ -55,7 +55,21 @@ export class FirebaseService implements OnModuleInit {
       uid: decoded.uid,
       email: decoded.email ?? "",
       role: typeof customRole === "string" ? customRole : "user",
+      tenantId: (decoded as { tenantId?: string }).tenantId,
     };
+  }
+
+  async setRole(uid: string, role: string, tenantId?: string): Promise<void> {
+    if (!this.firebaseApp) {
+      throw new Error("Firebase is not configured");
+    }
+
+    const claims: Record<string, any> = { role };
+    if (tenantId) {
+      claims.tenantId = tenantId;
+    }
+
+    await this.firebaseApp.auth().setCustomUserClaims(uid, claims);
   }
 
   private failOrWarn(message: string) {
