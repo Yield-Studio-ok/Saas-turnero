@@ -10,7 +10,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "jest"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.0",
@@ -36,10 +37,26 @@
     "@nestjs/testing": "^11.1.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/express": "^5.0.1",
+    "@types/jest": "^30.0.0",
     "@types/node": "^22.15.3",
+    "jest": "^30.5.1",
+    "ts-jest": "^29.4.12",
     "typescript": "^5.8.3"
   },
   "engines": {
     "node": ">=20.9.0"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "testEnvironment": "node"
   }
 }

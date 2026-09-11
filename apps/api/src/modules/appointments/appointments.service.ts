@@ -102,7 +102,7 @@ export class AppointmentsService {
     }
   }
 
-  async cancelAppointment(id: string, reason?: string) {
+  async cancelAppointment(id: string, reason?: string): Promise<Record<string, any>> {
     const db = this.firebase.getFirestore();
     const appointmentRef = db.collection("appointments").doc(id);
     const doc = await appointmentRef.get();
@@ -130,7 +130,7 @@ export class AppointmentsService {
     };
   }
 
-  async cancel(id: string, reason?: string) {
+  async cancel(id: string, reason?: string): Promise<Record<string, any>> {
     return this.cancelAppointment(id, reason);
   }
 

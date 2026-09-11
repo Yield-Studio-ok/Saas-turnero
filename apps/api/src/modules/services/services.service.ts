@@ -1,4 +1,4 @@
-﻿import { Injectable, ForbiddenException, NotFoundException } from "@nestjs/common";
+import { Injectable, ForbiddenException, NotFoundException } from "@nestjs/common";
 import { CreateServiceDto } from "./dto/create-service.dto";
 import { UpdateServiceDto } from "./dto/update-service.dto";
 import { PrismaService } from "../../prisma/prisma.service";
@@ -22,6 +22,10 @@ export class ServicesService {
 
   async findAllByLocal(userId: string, localId: string) {
     await this.checkLocalOwnership(userId, localId);
+    return this.prisma.service.findMany({ where: { localId } });
+  }
+
+  async findPublicByLocal(localId: string) {
     return this.prisma.service.findMany({ where: { localId } });
   }
 
