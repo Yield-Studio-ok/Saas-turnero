@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useMemo, useEffect } from "react";
 import { useAvailability } from "../../hooks/use-availability";
@@ -372,9 +372,9 @@ export function DateTimePickerModal({
               <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-800 flex items-start gap-2.5 text-left">
                 <InfoIcon className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-bold">PrÃ³ximo paso (Ticket 27):</p>
+                  <p className="font-bold">Paso siguiente:</p>
                   <p className="text-blue-700 mt-0.5">
-                    Se abrirÃ¡ el formulario de datos del cliente (Nombre, TelÃ©fono y Email) para emitir el turno final en Firestore.
+                    Completa tus datos de contacto (Nombre y WhatsApp) para confirmar la reserva y recibir tu comprobante.
                   </p>
                 </div>
               </div>
@@ -392,7 +392,7 @@ export function DateTimePickerModal({
                   onClick={onClose}
                   className="flex-1 py-2.5 px-3 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 shadow-md shadow-blue-600/20 transition"
                 >
-                  Finalizar selecciÃ³n
+                  Continuar con mis datos
                 </button>
               </div>
             </div>
