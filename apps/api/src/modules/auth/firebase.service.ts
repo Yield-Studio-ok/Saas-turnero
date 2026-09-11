@@ -1,4 +1,4 @@
-﻿import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
+import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import * as admin from "firebase-admin";
 import { existsSync, readFileSync } from "fs";
 import type { AuthUser } from "./auth.types";
@@ -38,9 +38,15 @@ export class FirebaseService implements OnModuleInit {
 
     this.failOrWarn("GOOGLE_APPLICATION_CREDENTIALS is not set");
   }
-
   isEnabled() {
     return this.firebaseApp !== null;
+  }
+
+  getFirestore() {
+    if (!this.firebaseApp) {
+      throw new Error("Firebase is not configured");
+    }
+    return this.firebaseApp.firestore();
   }
 
   async verifyIdToken(token: string): Promise<AuthUser> {
@@ -77,6 +83,6 @@ export class FirebaseService implements OnModuleInit {
       throw new Error(`${message}. Production cannot fall back to demo auth.`);
     }
 
-    this.logger.warn(`${message} â€” demo JWT auth enabled`);
+    this.logger.warn(`${message} — demo JWT auth enabled`);
   }
 }
