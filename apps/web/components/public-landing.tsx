@@ -427,6 +427,8 @@ export function PublicLanding({
           isOpen={showNextStepModal}
           onClose={() => setShowNextStepModal(false)}
           service={selectedService}
+          localId={(local as any).id || local.slug}
+          openHours={local.openHours}
           onConfirm={(selection) => {
             setSelectedDateTime(selection);
           }}
@@ -561,3 +563,4 @@ function CalendarIcon({ className = "w-4 h-4" }: { className?: string }) {
     </svg>
   );
 }
+
