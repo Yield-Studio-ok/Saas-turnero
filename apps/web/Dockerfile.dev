@@ -14,4 +14,4 @@ COPY . .
 WORKDIR /app/apps/web
 
 EXPOSE 3000
-CMD ["npx", "next", "dev", "-H", "0.0.0.0", "--no-turbopack"]
+CMD ["npx", "next", "dev", "-H", "0.0.0.0", "--webpack"]
