@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useState, useMemo } from "react";
+import { DateTimePickerModal, type SelectedDateTime } from "./booking/date-time-picker-modal";
 
 export interface ServiceItem {
   id: string;
@@ -120,6 +121,7 @@ export function PublicLanding({
   const [activeCategory, setActiveCategory] = useState<string>("Todos");
   const [searchQuery, setSearchQuery] = useState("");
   const [showNextStepModal, setShowNextStepModal] = useState(false);
+  const [selectedDateTime, setSelectedDateTime] = useState<SelectedDateTime | null>(null);
 
   const local: LocalInfo = {
     ...DEFAULT_LOCAL,
@@ -297,6 +299,7 @@ export function PublicLanding({
                     type="button"
                     onClick={() => {
                       setSelectedServiceId(isSelected ? null : service.id);
+                      setSelectedDateTime(null);
                     }}
                     className={`w-full text-left p-4 rounded-2xl border transition-all duration-200 relative group flex items-start justify-between gap-3 ${
                       isSelected
@@ -380,12 +383,24 @@ export function PublicLanding({
                 </span>
               </div>
 
+              {selectedDateTime && (
+                <div className="flex items-center justify-between bg-blue-50/90 border border-blue-200/80 rounded-xl px-3 py-2 text-xs text-blue-900">
+                  <div className="flex items-center gap-1.5 font-medium truncate">
+                    <CalendarIcon className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                    <span className="truncate">{selectedDateTime.dateFormatted}</span>
+                  </div>
+                  <span className="font-bold bg-white px-2 py-0.5 rounded-md border border-blue-200 text-blue-700 shrink-0">
+                    {selectedDateTime.timeSlot} hs
+                  </span>
+                </div>
+              )}
+
               <button
                 type="button"
                 onClick={() => setShowNextStepModal(true)}
                 className="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-bold py-3 px-4 rounded-xl shadow-md shadow-blue-600/25 flex items-center justify-center gap-2 transition-all"
               >
-                <span>Continuar reserva</span>
+                <span>{selectedDateTime ? "Modificar fecha y horario" : "Elegir fecha y horario"}</span>
                 <ArrowRightIcon className="w-4 h-4" />
               </button>
             </div>
@@ -407,48 +422,15 @@ export function PublicLanding({
           </div>
         </footer>
 
-        {/* Modal informativo para el siguiente paso (Ticket 25) */}
-        {showNextStepModal && selectedService && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-4">
-            <div className="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200">
-              <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mx-auto">
-                <CalendarIcon className="w-6 h-6" />
-              </div>
-
-              <div className="text-center">
-                <h3 className="text-base font-bold text-slate-900">¡Servicio Seleccionado!</h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  Has elegido{" "}
-                  <span className="font-semibold text-slate-800">{selectedService.name}</span> ($
-                  {selectedService.price.toLocaleString("es-AR")} • {selectedService.duration} min).
-                </p>
-              </div>
-
-              <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-800 space-y-1">
-                <p className="font-semibold">Siguiente ticket (Epic 3):</p>
-                <p className="text-blue-700">
-                  Ticket 25: <strong>[Frontend] UI Selección de Fecha y Hora</strong> integrará el
-                  calendario interactivo con los slots disponibles.
-                </p>
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowNextStepModal(false)}
-                  className="flex-1 py-2.5 px-3 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
-                >
-                  Volver a servicios
-                </button>
-                <button
-                  onClick={() => setShowNextStepModal(false)}
-                  className="flex-1 py-2.5 px-3 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 shadow-sm transition"
-                >
-                  Entendido
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Modal de Selección de Fecha y Hora (Ticket 25) */}
+        <DateTimePickerModal
+          isOpen={showNextStepModal}
+          onClose={() => setShowNextStepModal(false)}
+          service={selectedService}
+          onConfirm={(selection) => {
+            setSelectedDateTime(selection);
+          }}
+        />
       </div>
     </div>
   );
