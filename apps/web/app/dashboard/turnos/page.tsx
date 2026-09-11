@@ -3,127 +3,66 @@
 import React, { useState } from "react";
 import TurnoDetalleModal, { Turno } from "@/components/turnos/TurnoDetalleModal";
 
-// Mocks
+import { useDailyAppointments } from "@/hooks/useDailyAppointments";
+import { cancelAppointment } from "@/lib/appointments-service";
+import { Appointment } from "@/types/appointment";
+
+// Mocks para empleados (hasta que se integre el servicio de empleados)
 const empleados = [
-  { id: 1, nombre: "Juan Perez" },
-  { id: 2, nombre: "Maria Gomez" },
-  { id: 3, nombre: "Carlos Ruiz" },
+  { id: "emp1", nombre: "Juan Perez" },
+  { id: "emp2", nombre: "Maria Gomez" },
+  { id: "emp3", nombre: "Carlos Ruiz" },
 ];
 
 const horas = Array.from({ length: 12 }, (_, i) => i + 9); // 9 to 20 (9am to 8pm)
 
-// Mock de algunos turnos con información detallada del cliente y servicio
-const turnosIniciales: Turno[] = [
-  {
-    id: 101,
-    empleadoId: 1,
-    empleadoNombre: "Juan Perez",
-    horaInicio: 9,
-    duracion: 1,
+const mapAppointmentToTurno = (appt: Appointment): Turno => {
+  const [hours, minutes] = appt.startTime.split(":").map(Number);
+  const horaInicio = hours + minutes / 60;
+  const duracion = appt.duration / 60;
+
+  return {
+    id: appt.id,
+    empleadoId: appt.employeeId,
+    empleadoNombre: appt.employeeName || "Empleado",
+    horaInicio,
+    duracion,
     cliente: {
-      nombre: "Ana Fernandez",
-      telefono: "+54 9 11 4567-8901",
-      email: "ana.fernandez@example.com",
-      notas: "Prefiere corte con tijera. Primera vez en el local.",
-      historialTurnos: 1,
+      nombre: appt.customerName,
+      telefono: appt.customerPhone,
+      email: appt.customerEmail,
+      notas: appt.notes,
     },
-    servicio: "Corte de pelo",
-    precio: 3500,
-    estado: "confirmado",
-    metodoPago: "Efectivo en local",
-    fecha: "Hoy, 11 de Septiembre 2026",
-  },
-  {
-    id: 102,
-    empleadoId: 1,
-    empleadoNombre: "Juan Perez",
-    horaInicio: 11,
-    duracion: 1.5,
-    cliente: {
-      nombre: "Luis Martinez",
-      telefono: "+54 9 11 9876-5432",
-      email: "luis.martinez@example.com",
-      notas: "Perfilado de barba con toalla caliente.",
-      historialTurnos: 5,
-    },
-    servicio: "Corte + Barba",
-    precio: 5200,
-    estado: "confirmado",
-    metodoPago: "Mercado Pago (Señado)",
-    fecha: "Hoy, 11 de Septiembre 2026",
-  },
-  {
-    id: 103,
-    empleadoId: 2,
-    empleadoNombre: "Maria Gomez",
-    horaInicio: 10,
-    duracion: 2,
-    cliente: {
-      nombre: "Sofia Lopez",
-      telefono: "+54 9 11 2345-6789",
-      email: "sofia.lopez@example.com",
-      notas: "Balayage tonos cobrizos. Trae foto de referencia de Instagram.",
-      historialTurnos: 3,
-    },
-    servicio: "Colorimetria",
-    precio: 12000,
-    estado: "confirmado",
-    metodoPago: "Tarjeta de Crédito",
-    fecha: "Hoy, 11 de Septiembre 2026",
-  },
-  {
-    id: 104,
-    empleadoId: 3,
-    empleadoNombre: "Carlos Ruiz",
-    horaInicio: 15,
-    duracion: 1,
-    cliente: {
-      nombre: "Diego Maradona",
-      telefono: "+54 9 11 1010-1010",
-      email: "diego10@example.com",
-      notas: "Cliente VIP habitual.",
-      historialTurnos: 10,
-    },
-    servicio: "Corte de pelo",
-    precio: 3500,
-    estado: "confirmado",
-    metodoPago: "Efectivo en local",
-    fecha: "Hoy, 11 de Septiembre 2026",
-  },
-  {
-    id: 105,
-    empleadoId: 2,
-    empleadoNombre: "Maria Gomez",
-    horaInicio: 16,
-    duracion: 1,
-    cliente: {
-      nombre: "Lionel Messi",
-      telefono: "+54 9 11 3410-1010",
-      email: "leo.messi@example.com",
-      notas: "Degradé medio y arreglo de barba prolijo.",
-      historialTurnos: 8,
-    },
-    servicio: "Corte",
-    precio: 3500,
-    estado: "confirmado",
-    metodoPago: "Transferencia",
-    fecha: "Hoy, 11 de Septiembre 2026",
-  },
-];
+    servicio: appt.serviceName || "Servicio",
+    precio: appt.price,
+    estado: (appt.status === "pending" ? "pendiente" :
+             appt.status === "confirmed" ? "confirmado" :
+             appt.status === "cancelled" ? "cancelado" :
+             appt.status === "completed" ? "completado" : "confirmado") as any,
+    fecha: appt.date,
+  };
+};
 
 export default function TurnosPage() {
-  const [turnos, setTurnos] = useState<Turno[]>(turnosIniciales);
+  // Asumimos un tenantId de demostración por ahora
+  const tenantId = "demo-tenant";
+  
+  const { appointments, loading } = useDailyAppointments(tenantId, new Date());
+  
+  const turnos: Turno[] = appointments.map(mapAppointmentToTurno);
+  
   const [selectedTurno, setSelectedTurno] = useState<Turno | null>(null);
 
-  const handleCancelTurno = (turnoId: number | string) => {
-    setTurnos((prev) =>
-      prev.map((t) => (t.id === turnoId ? { ...t, estado: "cancelado" as const } : t))
-    );
-    setSelectedTurno((prev) =>
-      prev && prev.id === turnoId ? { ...prev, estado: "cancelado" as const } : prev
-    );
+  const handleCancelTurno = async (turnoId: number | string) => {
+    try {
+      await cancelAppointment(tenantId, turnoId.toString());
+      setSelectedTurno((prev) =>
+        prev && prev.id === turnoId ? { ...prev, estado: "cancelado" as const } : prev
+      );
+    } catch (error) {
+      console.error("Error cancelando turno:", error);
+    }
   };
-
   return (
     <div className="flex flex-col h-full bg-white rounded-lg shadow">
       <div className="p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
