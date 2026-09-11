@@ -1,4 +1,4 @@
-import { calculateAvailableSlots, timeToMinutes, minutesToTime } from "./availability.engine";
+import { calculateAvailableSlots, timeToMinutes, minutesToTime, TimeSlot } from "./availability.engine";
 
 describe("Availability Engine", () => {
   describe("timeToMinutes", () => {
@@ -20,7 +20,7 @@ describe("Availability Engine", () => {
   describe("calculateAvailableSlots", () => {
     it("should return free slots when no appointments exist", () => {
       const workingHours = [{ startTime: "09:00", endTime: "11:00" }];
-      const appointments = [];
+      const appointments: TimeSlot[] = [];
       const serviceDuration = 60;
 
       const slots = calculateAvailableSlots({ workingHours, appointments, serviceDuration });
@@ -33,7 +33,7 @@ describe("Availability Engine", () => {
 
     it("should handle custom slot intervals", () => {
       const workingHours = [{ startTime: "09:00", endTime: "10:00" }];
-      const appointments = [];
+      const appointments: TimeSlot[] = [];
       const serviceDuration = 30;
       const slotInterval = 15;
 
