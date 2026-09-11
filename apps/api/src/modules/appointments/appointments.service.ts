@@ -56,10 +56,12 @@ export class AppointmentsService {
         const existingAppointments: TimeSlot[] = [];
         querySnapshot.forEach((doc) => {
           const data = doc.data();
-          existingAppointments.push({
-            startTime: data.startTime,
-            endTime: data.endTime,
-          });
+          if (data.status !== "Cancelado" && data.status !== "cancelado") {
+            existingAppointments.push({
+              startTime: data.startTime,
+              endTime: data.endTime,
+            });
+          }
         });
 
         // 3. Re-validate availability
@@ -98,5 +100,51 @@ export class AppointmentsService {
       }
       throw new BadRequestException("Failed to create appointment: " + error.message);
     }
+  }
+
+  async cancelAppointment(id: string, reason?: string) {
+    const db = this.firebase.getFirestore();
+    const appointmentRef = db.collection("appointments").doc(id);
+    const doc = await appointmentRef.get();
+
+    if (!doc.exists) {
+      throw new NotFoundException(`Appointment with ID ${id} not found`);
+    }
+
+    const updateData: Record<string, any> = {
+      status: "Cancelado",
+      updatedAt: new Date().toISOString(),
+      cancelledAt: new Date().toISOString(),
+    };
+
+    if (reason) {
+      updateData.cancellationReason = reason;
+    }
+
+    await appointmentRef.update(updateData);
+
+    return {
+      id: doc.id,
+      ...doc.data(),
+      ...updateData,
+    };
+  }
+
+  async cancel(id: string, reason?: string) {
+    return this.cancelAppointment(id, reason);
+  }
+
+  async getAppointmentById(id: string) {
+    const db = this.firebase.getFirestore();
+    const doc = await db.collection("appointments").doc(id).get();
+
+    if (!doc.exists) {
+      throw new NotFoundException(`Appointment with ID ${id} not found`);
+    }
+
+    return {
+      id: doc.id,
+      ...doc.data(),
+    };
   }
 }
