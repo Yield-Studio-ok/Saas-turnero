@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 import { FirebaseService } from "../auth/firebase.service";
 import { CreateLocalDto } from "./dto/create-local.dto";
@@ -70,13 +75,16 @@ export class LocalesService {
     if (this.firebase.isEnabled()) {
       try {
         const db = this.firebase.getFirestore();
-        await db.collection("tenants").doc(localId).set(
-          {
-            ...updateLocalDto,
-            updatedAt: updated.updatedAt.toISOString(),
-          },
-          { merge: true },
-        );
+        await db
+          .collection("tenants")
+          .doc(localId)
+          .set(
+            {
+              ...updateLocalDto,
+              updatedAt: updated.updatedAt.toISOString(),
+            },
+            { merge: true },
+          );
       } catch (e) {
         console.error("Failed to sync tenant update to Firestore", e);
       }
@@ -194,7 +202,9 @@ export class LocalesService {
 
           const resolvedSlug =
             tenantData.slug ||
-            (tenantData.name ? tenantData.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") : tenantId);
+            (tenantData.name
+              ? tenantData.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")
+              : tenantId);
 
           const profile = {
             ...tenantData,

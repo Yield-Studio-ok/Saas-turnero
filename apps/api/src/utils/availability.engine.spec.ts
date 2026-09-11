@@ -1,4 +1,9 @@
-import { calculateAvailableSlots, timeToMinutes, minutesToTime, TimeSlot } from "./availability.engine";
+import {
+  calculateAvailableSlots,
+  timeToMinutes,
+  minutesToTime,
+  TimeSlot,
+} from "./availability.engine";
 
 describe("Availability Engine", () => {
   describe("timeToMinutes", () => {
@@ -37,7 +42,12 @@ describe("Availability Engine", () => {
       const serviceDuration = 30;
       const slotInterval = 15;
 
-      const slots = calculateAvailableSlots({ workingHours, appointments, serviceDuration, slotInterval });
+      const slots = calculateAvailableSlots({
+        workingHours,
+        appointments,
+        serviceDuration,
+        slotInterval,
+      });
 
       expect(slots).toEqual([
         { startTime: "09:00", endTime: "09:30" },

@@ -9,13 +9,7 @@ import {
   Query,
   BadRequestException,
 } from "@nestjs/common";
-import {
-  ApiTags,
-  ApiBearerAuth,
-  ApiOperation,
-  ApiParam,
-  ApiQuery,
-} from "@nestjs/swagger";
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiQuery } from "@nestjs/swagger";
 import { LocalesService } from "./locales.service";
 import { CreateLocalDto } from "./dto/create-local.dto";
 import { UpdateLocalDto } from "./dto/update-local.dto";
