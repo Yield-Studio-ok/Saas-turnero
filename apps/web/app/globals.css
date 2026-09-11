@@ -1,13 +1,15 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+﻿@import "tailwindcss";
 
 @layer base {
   html,
   body {
-    @apply h-full;
+    height: 100%;
   }
   body {
-    @apply bg-gray-50 text-gray-900 flex flex-col font-sans;
+    background-color: #f8fafc;
+    color: #0f172a;
+    display: flex;
+    flex-direction: column;
+    font-family: sans-serif;
   }
 }

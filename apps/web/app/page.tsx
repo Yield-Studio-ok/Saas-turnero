@@ -1,6 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 
 export default function HomePage() {
@@ -13,19 +14,33 @@ export default function HomePage() {
 
   if (user) {
     return (
-      <main>
-        <h1>Logged in</h1>
-        <p>
+      <main className="p-8 max-w-md mx-auto">
+        <h1 className="text-xl font-bold">Logged in</h1>
+        <p className="text-gray-600 mb-4">
           {user.email} ({user.role})
         </p>
-        <button onClick={logout}>Logout</button>
+        <button
+          onClick={logout}
+          className="px-4 py-2 bg-red-600 text-white rounded-md mb-6 hover:bg-red-700"
+        >
+          Logout
+        </button>
+
+        <div className="pt-4 border-t">
+          <Link
+            href="/barberia-vintage"
+            className="inline-block px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700"
+          >
+            Ver Landing Pública de Reservas (/barberia-vintage)
+          </Link>
+        </div>
       </main>
     );
   }
 
   return (
-    <main>
-      <h1>Login</h1>
+    <main className="p-8 max-w-md mx-auto">
+      <h1 className="text-2xl font-bold mb-4">Login</h1>
       <form
         onSubmit={async (e) => {
           e.preventDefault();
@@ -36,20 +51,28 @@ export default function HomePage() {
             setError("Invalid credentials");
           }
         }}
+        className="space-y-4"
       >
         <input
           type="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          className="w-full border p-2 rounded"
         />
         <input
           type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          className="w-full border p-2 rounded"
         />
-        <button type="submit">Login</button>
+        <button
+          type="submit"
+          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+        >
+          Login
+        </button>
         {error && <p style={{ color: "red" }}>{error}</p>}
       </form>
       <p style={{ fontSize: 12, color: "#666", marginTop: 16 }}>
@@ -57,6 +80,18 @@ export default function HomePage() {
         <br />
         User: user@user.com / user123
       </p>
+
+      <div className="mt-8 pt-6 border-t border-gray-200">
+        <h2 className="text-sm font-semibold text-gray-700 mb-2">
+          Acceso Rápido a Landing Pública:
+        </h2>
+        <Link
+          href="/barberia-vintage"
+          className="block text-center w-full px-4 py-2.5 bg-slate-900 text-white text-sm font-semibold rounded-lg hover:bg-slate-800 transition shadow-sm"
+        >
+          📱 Probar Landing Pública (/barberia-vintage)
+        </Link>
+      </div>
     </main>
   );
 }
