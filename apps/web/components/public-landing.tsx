@@ -131,27 +131,25 @@ export function PublicLanding({
 
   const handleBookingSubmit = async (formData: CustomerBookingFormData) => {
     if (!selectedService || !selectedDateTime) return;
-    try {
-      const { createAppointment } = await import("../lib/appointments-service");
-      const id = await createAppointment(local.slug, {
-        employeeId: "general",
-        serviceId: selectedService.id,
-        serviceName: selectedService.name,
-        date: selectedDateTime.date,
-        startTime: selectedDateTime.timeSlot,
-        duration: selectedService.duration,
-        price: selectedService.price,
-        customerName: formData.customerName,
-        customerPhone: formData.customerPhone,
-        customerEmail: formData.customerEmail,
-        notes: formData.notes,
-        status: "confirmed",
-      });
-      return { id };
-    } catch (e) {
-      console.warn("Firestore not available or offline, generated fallback ID:", e);
-      return { id: "TRN-" + Math.floor(100000 + Math.random() * 900000) };
-    }
+    const { createAppointment } = await import("../lib/appointments-service");
+    const targetLocalId = (local as any).id || local.slug;
+    const targetEmployeeId = (selectedService as any).employeeId || "general";
+    const id = await createAppointment(targetLocalId, {
+      employeeId: targetEmployeeId,
+      serviceId: selectedService.id,
+      serviceName: selectedService.name,
+      date: selectedDateTime.date,
+      startTime: selectedDateTime.timeSlot,
+      endTime: selectedDateTime.endTime,
+      duration: selectedService.duration,
+      price: selectedService.price,
+      customerName: formData.customerName,
+      customerPhone: formData.customerPhone,
+      customerEmail: formData.customerEmail,
+      notes: formData.notes,
+      status: "confirmed",
+    });
+    return { id };
   };
 
   const local: LocalInfo = {
@@ -483,13 +481,15 @@ export function PublicLanding({
           }}
         />
 
-        {/* Modal de Formulario de Cliente y Pantalla de Éxito (Ticket 27) */}
+        {/* Modal de Formulario de Cliente y Pantalla de Éxito (Ticket 27 y 29) */}
         <CustomerBookingModal
           isOpen={showCustomerModal}
           onClose={() => setShowCustomerModal(false)}
           service={selectedService}
           selectedDateTime={selectedDateTime}
           localInfo={local}
+          localId={(local as any).id || local.slug}
+          employeeId={(selectedService as any)?.employeeId || "general"}
           onBack={() => {
             setShowCustomerModal(false);
             setShowNextStepModal(true);

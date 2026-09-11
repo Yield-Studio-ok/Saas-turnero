@@ -1,4 +1,4 @@
-﻿import {
+import {
   collection,
   doc,
   query,
@@ -12,6 +12,7 @@
   type DocumentData,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { apiFetch, ApiError } from "./api";
 import type {
   Appointment,
   AppointmentFilterOptions,
@@ -216,37 +217,158 @@ export async function cancelAppointment(localId: string, appointmentId: string):
 }
 
 /**
- * Crea un nuevo turno en Firestore.
+ * DTO para la creación transaccional de turnos en el backend (Ticket 28: POST /appointments).
+ */
+export interface CreateAppointmentDto {
+  localId: string;
+  employeeId: string;
+  serviceId: string;
+  date: string; // YYYY-MM-DD
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+  customerName: string;
+  customerEmail: string;
+  customerPhone?: string;
+  notes?: string;
+}
+
+/**
+ * Servicio cliente para comunicación con los endpoints de turnos en el backend NestJS (Ticket 28 y 21).
+ */
+export class AppointmentsService {
+  /**
+   * Invoca el endpoint transaccional del backend para crear un turno (POST /appointments - Ticket 28).
+   * Valida disponibilidad mediante el motor y asegura persistencia atómica en Firestore.
+   */
+  static async create(dto: CreateAppointmentDto): Promise<{ id: string; [key: string]: any }> {
+    // Sanitizamos el payload asegurando los campos requeridos por el backend
+    const payload = {
+      localId: dto.localId,
+      employeeId: dto.employeeId,
+      serviceId: dto.serviceId,
+      date: dto.date,
+      startTime: dto.startTime,
+      endTime: dto.endTime,
+      customerName: dto.customerName,
+      customerEmail: dto.customerEmail,
+    };
+
+    return apiFetch<{ id: string; [key: string]: any }>("/appointments", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  /**
+   * Cancela un turno por ID a través del backend (PATCH /appointments/:id/cancel - Ticket 21).
+   */
+  static async cancel(id: string, reason?: string): Promise<{ id: string; [key: string]: any }> {
+    return apiFetch<{ id: string; [key: string]: any }>(`/appointments/${id}/cancel`, {
+      method: "PATCH",
+      body: JSON.stringify(reason ? { reason } : {}),
+    });
+  }
+
+  /**
+   * Obtiene la información de un turno por ID (GET /appointments/:id).
+   */
+  static async getById(id: string): Promise<Appointment | any> {
+    return apiFetch(`/appointments/${id}`);
+  }
+}
+
+/**
+ * Crea un nuevo turno conectando a la función transaccional del backend (POST /appointments - Ticket 28)
+ * con fallback a Firestore directo en caso de modo offline o desarrollo local.
  */
 export async function createAppointment(
   localId: string,
   input: CreateAppointmentInput,
 ): Promise<string> {
-  const appointmentsRef = collection(db, "tenants", localId, "appointments");
   const duration = input.duration ?? 30;
   const date = formatDateToYYYYMMDD(input.date);
   const endTime = input.endTime || calculateEndTime(input.startTime, duration);
+  const email =
+    input.customerEmail?.trim() ||
+    `${input.customerPhone?.replace(/\D/g, "") || "cliente"}@notificaciones.local`;
 
-  const docRef = await addDoc(appointmentsRef, {
-    tenantId: localId,
-    localId,
-    employeeId: input.employeeId,
+  const dto: CreateAppointmentDto = {
+    localId: input.localId || localId,
+    employeeId: input.employeeId || "general",
     serviceId: input.serviceId,
-    serviceName: input.serviceName || "",
-    employeeName: input.employeeName || "",
     date,
     startTime: input.startTime,
     endTime,
-    duration,
-    status: input.status || "confirmed",
     customerName: input.customerName,
-    customerPhone: input.customerPhone || "",
-    customerEmail: input.customerEmail || "",
-    price: input.price ?? 0,
-    notes: input.notes || "",
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
+    customerEmail: email,
+    customerPhone: input.customerPhone,
+    notes: input.notes,
+  };
 
-  return docRef.id;
+  try {
+    // 1. Invocar endpoint transaccional del backend (POST /appointments - Ticket 28)
+    const result = await AppointmentsService.create(dto);
+    if (result && result.id) {
+      // Guardar en subcolección local si está disponible para sincronía en tiempo real
+      try {
+        const localDocRef = doc(db, "tenants", localId, "appointments", result.id);
+        await updateDoc(localDocRef, {
+          customerPhone: input.customerPhone || "",
+          notes: input.notes || "",
+        });
+      } catch {
+        // Silencioso si la subcolección directa no existe aún
+      }
+      return result.id;
+    }
+  } catch (apiError: any) {
+    console.warn(
+      "[createAppointment] API endpoint POST /appointments falló o servidor no disponible:",
+      apiError,
+    );
+
+    // Si la API devolvió un error de indisponibilidad de horario ("is no longer available" o 400/409),
+    // relanzar para que la UI muestre el aviso claro al usuario
+    if (
+      apiError instanceof ApiError &&
+      (apiError.status === 400 || apiError.status === 409) &&
+      (apiError.message?.toLowerCase().includes("available") ||
+        apiError.message?.toLowerCase().includes("no longer") ||
+        apiError.message?.toLowerCase().includes("disponible") ||
+        apiError.message?.toLowerCase().includes("booked"))
+    ) {
+      throw apiError;
+    }
+
+    // Fallback a Firestore directo (Ticket 17) para resiliencia offline/dev
+    try {
+      const appointmentsRef = collection(db, "tenants", localId, "appointments");
+      const docRef = await addDoc(appointmentsRef, {
+        tenantId: localId,
+        localId,
+        employeeId: input.employeeId,
+        serviceId: input.serviceId,
+        serviceName: input.serviceName || "",
+        employeeName: input.employeeName || "",
+        date,
+        startTime: input.startTime,
+        endTime,
+        duration,
+        status: input.status || "confirmed",
+        customerName: input.customerName,
+        customerPhone: input.customerPhone || "",
+        customerEmail: email,
+        price: input.price ?? 0,
+        notes: input.notes || "",
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      return docRef.id;
+    } catch (firestoreError) {
+      console.error("[createAppointment] Fallback Firestore también falló:", firestoreError);
+      throw apiError;
+    }
+  }
+
+  return `TRN-${Math.floor(100000 + Math.random() * 900000)}`;
 }

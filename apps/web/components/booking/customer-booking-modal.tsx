@@ -3,6 +3,11 @@
 import { useState, useId, useEffect } from "react";
 import type { ServiceItem, LocalInfo } from "../public-landing";
 import type { SelectedDateTime } from "./date-time-picker-modal";
+import {
+  AppointmentsService,
+  formatDateToYYYYMMDD,
+  calculateEndTime,
+} from "../../lib/appointments-service";
 
 export interface CustomerBookingFormData {
   customerName: string;
@@ -25,10 +30,42 @@ export interface CustomerBookingModalProps {
   service: ServiceItem | null;
   selectedDateTime: SelectedDateTime | null;
   localInfo?: Partial<LocalInfo>;
+  localId?: string;
+  employeeId?: string;
   onBack?: () => void;
   onSubmit?: (data: CustomerBookingFormData) => Promise<{ id?: string } | void> | void;
   onSuccess?: (successData: CustomerBookingSuccessData) => void;
   initialData?: Partial<CustomerBookingFormData>;
+}
+
+function formatApiErrorMessage(err: any): string {
+  const message = err?.message || (typeof err === "string" ? err : "");
+  if (!message) return "Ocurrió un error al confirmar la reserva. Intenta nuevamente.";
+
+  const lower = message.toLowerCase();
+  if (
+    lower.includes("no longer available") ||
+    lower.includes("already booked") ||
+    lower.includes("not available") ||
+    lower.includes("is overlapping") ||
+    lower.includes("disponible")
+  ) {
+    return "El horario seleccionado ya no se encuentra disponible. Por favor, selecciona otro horario.";
+  }
+
+  if (lower.includes("does not work on this day")) {
+    return "El profesional o local no atiende en la fecha seleccionada.";
+  }
+
+  if (lower.includes("service not found")) {
+    return "El servicio seleccionado no está disponible en este local.";
+  }
+
+  if (lower.includes("employee not found")) {
+    return "El profesional asignado no está disponible.";
+  }
+
+  return message;
 }
 
 export function CustomerBookingModal({
@@ -37,6 +74,8 @@ export function CustomerBookingModal({
   service,
   selectedDateTime,
   localInfo,
+  localId,
+  employeeId,
   onBack,
   onSubmit,
   onSuccess,
@@ -60,6 +99,7 @@ export function CustomerBookingModal({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successData, setSuccessData] = useState<CustomerBookingSuccessData | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   // Reset al abrir el modal con una nueva reserva
   useEffect(() => {
@@ -69,6 +109,7 @@ export function CustomerBookingModal({
       setCustomerEmail(initialData?.customerEmail || "");
       setNotes(initialData?.notes || "");
       setErrors({});
+      setApiError(null);
       setIsSubmitting(false);
     }
   }, [isOpen, initialData, successData]);
@@ -125,6 +166,7 @@ export function CustomerBookingModal({
     if (!validateForm() || !service || !selectedDateTime) return;
 
     setIsSubmitting(true);
+    setApiError(null);
 
     const formData: CustomerBookingFormData = {
       customerName: customerName.trim(),
@@ -142,8 +184,33 @@ export function CustomerBookingModal({
           bookingId = res.id;
         }
       } else {
-        // Simulación de delay de red suave
-        await new Promise((resolve) => setTimeout(resolve, 600));
+        // Llamada directa al endpoint transaccional del backend (Ticket 28: POST /appointments)
+        const targetLocalId =
+          localId || (localInfo as any)?.id || localInfo?.slug || "barberia-vintage";
+        const targetEmployeeId = employeeId || (service as any)?.employeeId || "general";
+        const dateStr = formatDateToYYYYMMDD(selectedDateTime.date);
+        const startTime = selectedDateTime.timeSlot;
+        const endTime = selectedDateTime.endTime || calculateEndTime(startTime, service.duration);
+        const email =
+          formData.customerEmail ||
+          `${formData.customerPhone.replace(/\D/g, "") || "cliente"}@notificaciones.local`;
+
+        const res = await AppointmentsService.create({
+          localId: targetLocalId,
+          employeeId: targetEmployeeId,
+          serviceId: service.id,
+          date: dateStr,
+          startTime,
+          endTime,
+          customerName: formData.customerName,
+          customerEmail: email,
+          customerPhone: formData.customerPhone,
+          notes: formData.notes,
+        });
+
+        if (res && res.id) {
+          bookingId = res.id;
+        }
       }
 
       const confirmedData: CustomerBookingSuccessData = {
@@ -158,11 +225,13 @@ export function CustomerBookingModal({
       if (onSuccess) {
         onSuccess(confirmedData);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("[CustomerBookingModal] Error submitting booking:", err);
+      const friendlyMsg = formatApiErrorMessage(err);
+      setApiError(friendlyMsg);
       setErrors((prev) => ({
         ...prev,
-        customerName: "Ocurrió un error al confirmar la reserva. Intenta nuevamente.",
+        customerName: friendlyMsg,
       }));
     } finally {
       setIsSubmitting(false);
@@ -476,6 +545,16 @@ export function CustomerBookingModal({
 
             {/* Contenido scrolleable del formulario */}
             <div className="px-5 py-4 overflow-y-auto space-y-4 flex-1 text-slate-900">
+              {apiError && (
+                <div className="bg-rose-50 border border-rose-200 text-rose-700 px-3.5 py-2.5 rounded-xl text-xs flex items-start gap-2.5 animate-in fade-in duration-150">
+                  <AlertCircleIcon className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-bold text-rose-800">No se pudo confirmar la reserva</p>
+                    <p className="text-[11px] text-rose-600 mt-0.5">{apiError}</p>
+                  </div>
+                </div>
+              )}
+
               {/* Campo 1: Nombre y Apellido (Obligatorio) */}
               <div className="space-y-1.5">
                 <label
@@ -814,6 +893,20 @@ function GoogleCalendarIcon({ className = "w-4 h-4" }: { className?: string }) {
   return (
     <svg className={className} fill="currentColor" viewBox="0 0 24 24">
       <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 002 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2zm-7 5h5v5h-5v-5z" />
+    </svg>
+  );
+}
+
+
+function AlertCircleIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
     </svg>
   );
 }
