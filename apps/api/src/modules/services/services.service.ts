@@ -7,39 +7,39 @@ import { PrismaService } from "../../prisma/prisma.service";
 export class ServicesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async checkLocalOwnership(userId: string, localId: string) {
-    const local = await this.prisma.local.findUnique({ where: { id: localId } });
-    if (!local) throw new NotFoundException("Local not found");
-    if (local.ownerId !== userId) {
-      throw new ForbiddenException("You do not have permission to manage this Local");
+  private async checkBusinessOwnership(userId: string, businessId: string) {
+    const business = await this.prisma.business.findUnique({ where: { id: businessId } });
+    if (!business) throw new NotFoundException("Business not found");
+    if (business.ownerId !== userId) {
+      throw new ForbiddenException("You do not have permission to manage this Business");
     }
   }
 
   async create(userId: string, createServiceDto: CreateServiceDto) {
-    await this.checkLocalOwnership(userId, createServiceDto.localId);
+    await this.checkBusinessOwnership(userId, createServiceDto.businessId);
     return this.prisma.service.create({ data: createServiceDto });
   }
 
-  async findAllByLocal(userId: string, localId: string) {
-    await this.checkLocalOwnership(userId, localId);
-    return this.prisma.service.findMany({ where: { localId } });
+  async findAllByBusiness(userId: string, businessId: string) {
+    await this.checkBusinessOwnership(userId, businessId);
+    return this.prisma.service.findMany({ where: { businessId } });
   }
 
-  async findPublicByLocal(localId: string) {
-    return this.prisma.service.findMany({ where: { localId } });
+  async findPublicByBusiness(businessId: string) {
+    return this.prisma.service.findMany({ where: { businessId } });
   }
 
   async findOne(userId: string, id: string) {
     const service = await this.prisma.service.findUnique({ where: { id } });
     if (!service) throw new NotFoundException("Service not found");
-    await this.checkLocalOwnership(userId, service.localId);
+    await this.checkBusinessOwnership(userId, service.businessId);
     return service;
   }
 
   async update(userId: string, id: string, updateServiceDto: UpdateServiceDto) {
     const service = await this.findOne(userId, id); // validates ownership
-    if (updateServiceDto.localId && updateServiceDto.localId !== service.localId) {
-      await this.checkLocalOwnership(userId, updateServiceDto.localId);
+    if (updateServiceDto.businessId && updateServiceDto.businessId !== service.businessId) {
+      await this.checkBusinessOwnership(userId, updateServiceDto.businessId);
     }
     return this.prisma.service.update({
       where: { id },

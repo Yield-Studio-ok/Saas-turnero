@@ -7,23 +7,23 @@ import { PrismaService } from "../../prisma/prisma.service";
 export class SchedulesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async checkLocalOwnership(userId: string, localId: string) {
-    const local = await this.prisma.local.findUnique({ where: { id: localId } });
-    if (!local) throw new NotFoundException("Local not found");
-    if (local.ownerId !== userId) {
-      throw new ForbiddenException("You do not have permission to manage this Local");
+  private async checkBusinessOwnership(userId: string, businessId: string) {
+    const business = await this.prisma.business.findUnique({ where: { id: businessId } });
+    if (!business) throw new NotFoundException("Business not found");
+    if (business.ownerId !== userId) {
+      throw new ForbiddenException("You do not have permission to manage this Business");
     }
   }
 
   async create(userId: string, createScheduleDto: CreateScheduleDto) {
-    await this.checkLocalOwnership(userId, createScheduleDto.localId);
+    await this.checkBusinessOwnership(userId, createScheduleDto.businessId);
 
-    // Check if employee exists and belongs to the same local
+    // Check if employee exists and belongs to the same business
     const employee = await this.prisma.employee.findUnique({
       where: { id: createScheduleDto.employeeId },
     });
-    if (!employee || employee.localId !== createScheduleDto.localId) {
-      throw new NotFoundException("Employee not found in this Local");
+    if (!employee || employee.businessId !== createScheduleDto.businessId) {
+      throw new NotFoundException("Employee not found in this Business");
     }
 
     return this.prisma.schedule.create({ data: createScheduleDto });
@@ -32,14 +32,14 @@ export class SchedulesService {
   async bulkCreate(userId: string, createScheduleDtos: CreateScheduleDto[]) {
     if (createScheduleDtos.length === 0) return { count: 0 };
 
-    const localId = createScheduleDtos[0].localId;
-    await this.checkLocalOwnership(userId, localId);
+    const businessId = createScheduleDtos[0].businessId;
+    await this.checkBusinessOwnership(userId, businessId);
 
-    // Verify all belong to same local
+    // Verify all belong to same business
     for (const dto of createScheduleDtos) {
-      if (dto.localId !== localId) {
+      if (dto.businessId !== businessId) {
         throw new ForbiddenException(
-          "Bulk create requires all schedules to belong to the same local",
+          "Bulk create requires all schedules to belong to the same business",
         );
       }
     }
@@ -49,22 +49,22 @@ export class SchedulesService {
     });
   }
 
-  async findAllByLocal(userId: string, localId: string) {
-    await this.checkLocalOwnership(userId, localId);
-    return this.prisma.schedule.findMany({ where: { localId } });
+  async findAllByBusiness(userId: string, businessId: string) {
+    await this.checkBusinessOwnership(userId, businessId);
+    return this.prisma.schedule.findMany({ where: { businessId } });
   }
 
   async findOne(userId: string, id: string) {
     const schedule = await this.prisma.schedule.findUnique({ where: { id } });
     if (!schedule) throw new NotFoundException("Schedule not found");
-    await this.checkLocalOwnership(userId, schedule.localId);
+    await this.checkBusinessOwnership(userId, schedule.businessId);
     return schedule;
   }
 
   async update(userId: string, id: string, updateScheduleDto: UpdateScheduleDto) {
     const schedule = await this.findOne(userId, id); // validates ownership
-    if (updateScheduleDto.localId && updateScheduleDto.localId !== schedule.localId) {
-      await this.checkLocalOwnership(userId, updateScheduleDto.localId);
+    if (updateScheduleDto.businessId && updateScheduleDto.businessId !== schedule.businessId) {
+      await this.checkBusinessOwnership(userId, updateScheduleDto.businessId);
     }
     return this.prisma.schedule.update({
       where: { id },

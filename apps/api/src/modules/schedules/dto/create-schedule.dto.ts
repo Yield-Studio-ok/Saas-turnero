@@ -10,7 +10,7 @@ export class CreateScheduleDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  localId: string;
+  businessId: string;
 
   @ApiProperty({ description: "0 = Sunday, 1 = Monday..." })
   @IsInt()

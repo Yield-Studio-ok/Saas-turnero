@@ -7,35 +7,35 @@ import { PrismaService } from "../../prisma/prisma.service";
 export class EmployeesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async checkLocalOwnership(userId: string, localId: string) {
-    const local = await this.prisma.local.findUnique({ where: { id: localId } });
-    if (!local) throw new NotFoundException("Local not found");
-    if (local.ownerId !== userId) {
-      throw new ForbiddenException("You do not have permission to manage this Local");
+  private async checkBusinessOwnership(userId: string, businessId: string) {
+    const business = await this.prisma.business.findUnique({ where: { id: businessId } });
+    if (!business) throw new NotFoundException("Business not found");
+    if (business.ownerId !== userId) {
+      throw new ForbiddenException("You do not have permission to manage this Business");
     }
   }
 
   async create(userId: string, createEmployeeDto: CreateEmployeeDto) {
-    await this.checkLocalOwnership(userId, createEmployeeDto.localId);
+    await this.checkBusinessOwnership(userId, createEmployeeDto.businessId);
     return this.prisma.employee.create({ data: createEmployeeDto });
   }
 
-  async findAllByLocal(userId: string, localId: string) {
-    await this.checkLocalOwnership(userId, localId);
-    return this.prisma.employee.findMany({ where: { localId } });
+  async findAllByBusiness(userId: string, businessId: string) {
+    await this.checkBusinessOwnership(userId, businessId);
+    return this.prisma.employee.findMany({ where: { businessId } });
   }
 
   async findOne(userId: string, id: string) {
     const employee = await this.prisma.employee.findUnique({ where: { id } });
     if (!employee) throw new NotFoundException("Employee not found");
-    await this.checkLocalOwnership(userId, employee.localId);
+    await this.checkBusinessOwnership(userId, employee.businessId);
     return employee;
   }
 
   async update(userId: string, id: string, updateEmployeeDto: UpdateEmployeeDto) {
     const employee = await this.findOne(userId, id); // validates ownership
-    if (updateEmployeeDto.localId && updateEmployeeDto.localId !== employee.localId) {
-      await this.checkLocalOwnership(userId, updateEmployeeDto.localId);
+    if (updateEmployeeDto.businessId && updateEmployeeDto.businessId !== employee.businessId) {
+      await this.checkBusinessOwnership(userId, updateEmployeeDto.businessId);
     }
     return this.prisma.employee.update({
       where: { id },

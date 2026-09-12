@@ -1,4 +1,4 @@
-import {
+﻿import {
   Controller,
   Post,
   Get,
@@ -10,24 +10,24 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiQuery } from "@nestjs/swagger";
-import { LocalesService } from "./locales.service";
-import { CreateLocalDto } from "./dto/create-local.dto";
-import { UpdateLocalDto } from "./dto/update-local.dto";
+import { BusinessesService } from "./businesses.service";
+import { CreateBusinessDto } from "./dto/create-business.dto";
+import { UpdateBusinessDto } from "./dto/update-business.dto";
 import { Request } from "express";
 import { AuthUser } from "../auth/auth.types";
 import { Public } from "../auth/public.decorator";
 
-@ApiTags("Locales (Tenants)")
-@Controller(["locales", "tenants"])
-export class LocalesController {
-  constructor(private readonly localesService: LocalesService) {}
+@ApiTags("Businesses (Tenants)")
+@Controller(["business", "businesses", "tenants"])
+export class BusinessesController {
+  constructor(private readonly businessesService: BusinessesService) {}
 
   @Post()
   @ApiBearerAuth()
-  @ApiOperation({ summary: "Create a new Local (Tenant)" })
-  create(@Req() req: Request, @Body() createLocalDto: CreateLocalDto) {
+  @ApiOperation({ summary: "Create a new Business (Tenant)" })
+  create(@Req() req: Request, @Body() createBusinessDto: CreateBusinessDto) {
     const user = req.user as AuthUser;
-    return this.localesService.create(user.uid, createLocalDto);
+    return this.businessesService.create(user.uid, user.email, createBusinessDto);
   }
 
   @Public()
@@ -35,7 +35,7 @@ export class LocalesController {
   @ApiOperation({ summary: "Get public tenant profile and services by ID or slug" })
   @ApiParam({ name: "identifier", description: "Tenant ID or slug (e.g. barberia-vintage)" })
   getPublicProfile(@Param("identifier") identifier: string) {
-    return this.localesService.getPublicProfile(identifier);
+    return this.businessesService.getPublicProfile(identifier);
   }
 
   @Public()
@@ -43,17 +43,17 @@ export class LocalesController {
   @ApiOperation({ summary: "Get public tenant profile and services by query params" })
   @ApiQuery({ name: "slug", required: false, type: String })
   @ApiQuery({ name: "id", required: false, type: String })
-  @ApiQuery({ name: "localId", required: false, type: String })
+  @ApiQuery({ name: "businessId", required: false, type: String })
   getPublicProfileQuery(
     @Query("slug") slug?: string,
     @Query("id") id?: string,
-    @Query("localId") localId?: string,
+    @Query("businessId") businessId?: string,
   ) {
-    const identifier = slug || id || localId;
+    const identifier = slug || id || businessId;
     if (!identifier) {
-      throw new BadRequestException("slug, id or localId query parameter is required");
+      throw new BadRequestException("slug, id or businessId query parameter is required");
     }
-    return this.localesService.getPublicProfile(identifier);
+    return this.businessesService.getPublicProfile(identifier);
   }
 
   @Public()
@@ -61,7 +61,7 @@ export class LocalesController {
   @ApiOperation({ summary: "Get public tenant profile and services by ID" })
   @ApiParam({ name: "id", description: "Tenant ID" })
   getPublicProfileById(@Param("id") id: string) {
-    return this.localesService.getPublicProfile(id);
+    return this.businessesService.getPublicProfile(id);
   }
 
   @Public()
@@ -69,7 +69,7 @@ export class LocalesController {
   @ApiOperation({ summary: "Get public services of a tenant by ID" })
   @ApiParam({ name: "id", description: "Tenant ID" })
   getPublicServices(@Param("id") id: string) {
-    return this.localesService.getPublicServices(id);
+    return this.businessesService.getPublicServices(id);
   }
 
   @Public()
@@ -77,25 +77,26 @@ export class LocalesController {
   @ApiOperation({ summary: "Get public services of a tenant by ID (alias)" })
   @ApiParam({ name: "id", description: "Tenant ID" })
   getPublicServicesAlias(@Param("id") id: string) {
-    return this.localesService.getPublicServices(id);
+    return this.businessesService.getPublicServices(id);
   }
 
   @Get(":id")
   @ApiBearerAuth()
-  @ApiOperation({ summary: "Get Local profile" })
+  @ApiOperation({ summary: "Get Business profile" })
   getProfile(@Param("id") id: string) {
-    return this.localesService.getProfile(id);
+    return this.businessesService.getProfile(id);
   }
 
   @Patch(":id")
   @ApiBearerAuth()
-  @ApiOperation({ summary: "Update Local profile" })
+  @ApiOperation({ summary: "Update Business profile" })
   updateProfile(
     @Req() req: Request,
     @Param("id") id: string,
-    @Body() updateLocalDto: UpdateLocalDto,
+    @Body() updateBusinessDto: UpdateBusinessDto,
   ) {
     const user = req.user as AuthUser;
-    return this.localesService.updateProfile(id, user.uid, updateLocalDto);
+    return this.businessesService.updateProfile(id, user.uid, updateBusinessDto);
   }
 }
+

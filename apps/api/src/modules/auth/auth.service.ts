@@ -12,21 +12,6 @@ import { FirebaseService } from "./firebase.service";
 import type { AuthUser } from "./auth.types";
 import { LoginDto } from "./dto/login.dto";
 
-const DEMO_USERS = [
-  {
-    email: "admin@admin.com",
-    password: "admin123",
-    name: "Admin",
-    role: "admin",
-  },
-  {
-    email: "user@user.com",
-    password: "user123",
-    name: "User",
-    role: "user",
-  },
-] as const;
-
 @Injectable()
 export class AuthService implements OnModuleInit {
   private readonly logger = new Logger(AuthService.name);
@@ -38,8 +23,7 @@ export class AuthService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    if (this.firebase.isEnabled()) return;
-    await this.ensureDemoUsers();
+    // Demo users removed
   }
 
   async login(dto: LoginDto) {
@@ -53,7 +37,7 @@ export class AuthService implements OnModuleInit {
       where: { email: dto.email },
     });
 
-    if (!user || !(await bcrypt.compare(dto.password, user.password))) {
+    if (!user) {
       throw new UnauthorizedException("Invalid credentials");
     }
 
@@ -89,23 +73,5 @@ export class AuthService implements OnModuleInit {
       email: payload.email,
       role: payload.role,
     };
-  }
-
-  private async ensureDemoUsers() {
-    for (const demo of DEMO_USERS) {
-      const password = await bcrypt.hash(demo.password, 10);
-      await this.prisma.user.upsert({
-        where: { email: demo.email },
-        update: { password, role: demo.role, name: demo.name },
-        create: {
-          email: demo.email,
-          password,
-          name: demo.name,
-          role: demo.role,
-        },
-      });
-    }
-
-    this.logger.log("Demo users ready (admin@admin.com / user@user.com)");
   }
 }

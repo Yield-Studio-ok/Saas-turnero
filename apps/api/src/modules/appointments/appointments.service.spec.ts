@@ -16,7 +16,7 @@ describe("Appointments Cancellation (Ticket 21)", () => {
       exists: true,
       id: "appointment-123",
       data: jest.fn().mockReturnValue({
-        localId: "local-1",
+        businessId: "local-1",
         employeeId: "emp-1",
         serviceId: "srv-1",
         date: "2026-09-15",
@@ -74,15 +74,15 @@ describe("Appointments Cancellation (Ticket 21)", () => {
     });
 
     it("should store cancellationReason if provided", async () => {
-      const result = await service.cancelAppointment("appointment-123", "Cliente solicitó reprogramación");
+      const result = await service.cancelAppointment("appointment-123", "Cliente solicitï¿½ reprogramaciï¿½n");
 
       expect(mockDoc.update).toHaveBeenCalledWith(
         expect.objectContaining({
           status: "Cancelado",
-          cancellationReason: "Cliente solicitó reprogramación",
+          cancellationReason: "Cliente solicitï¿½ reprogramaciï¿½n",
         }),
       );
-      expect(result.cancellationReason).toBe("Cliente solicitó reprogramación");
+      expect(result.cancellationReason).toBe("Cliente solicitï¿½ reprogramaciï¿½n");
     });
 
     it("should throw NotFoundException when appointment document does not exist", async () => {

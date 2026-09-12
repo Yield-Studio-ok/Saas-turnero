@@ -12,15 +12,15 @@ export class AppointmentsService {
   ) {}
 
   async createAppointment(dto: CreateAppointmentDto) {
-    const { localId, employeeId, serviceId, date, startTime, endTime } = dto;
+    const { businessId, employeeId, serviceId, date, startTime, endTime } = dto;
 
     // 1. Validate entities
     const service = await this.prisma.service.findUnique({ where: { id: serviceId } });
-    if (!service || service.localId !== localId)
+    if (!service || service.businessId !== businessId)
       throw new NotFoundException("Service not found for this local");
 
     const employee = await this.prisma.employee.findUnique({ where: { id: employeeId } });
-    if (!employee || employee.localId !== localId)
+    if (!employee || employee.businessId !== businessId)
       throw new NotFoundException("Employee not found for this local");
 
     // Get day of week (0 = Sunday, 1 = Monday)

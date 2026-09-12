@@ -25,5 +25,5 @@ export class CreateServiceDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  localId: string;
+  businessId: string;
 }

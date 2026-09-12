@@ -4,7 +4,7 @@ import { ConfigModule } from "@nestjs/config";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { PrismaModule } from "./prisma/prisma.module";
 import { AuthModule } from "./modules/auth/auth.module";
-import { LocalesModule } from "./modules/locales/locales.module";
+import { BusinessesModule } from "./modules/businesses/businesses.module";
 import { HealthController } from "./health.controller";
 import { EmployeesModule } from "./modules/employees/employees.module";
 import { SchedulesModule } from "./modules/schedules/schedules.module";
@@ -22,7 +22,7 @@ import { AppointmentsModule } from "./modules/appointments/appointments.module";
     }),
     PrismaModule,
     AuthModule,
-    LocalesModule,
+    BusinessesModule,
     EmployeesModule,
     SchedulesModule,
     ServicesModule,

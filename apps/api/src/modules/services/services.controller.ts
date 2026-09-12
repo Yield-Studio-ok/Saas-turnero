@@ -22,19 +22,19 @@ export class ServicesController {
 
   @Public()
   @Get("public")
-  @ApiOperation({ summary: "Get public services of a local" })
-  @ApiQuery({ name: "localId", required: true, type: String })
-  findPublic(@Query("localId") localId: string) {
-    return this.servicesService.findPublicByLocal(localId);
+  @ApiOperation({ summary: "Get public services of a business" })
+  @ApiQuery({ name: "businessId", required: true, type: String })
+  findPublic(@Query("businessId") businessId: string) {
+    return this.servicesService.findPublicByBusiness(businessId);
   }
 
   @Get()
   @ApiBearerAuth()
-  @ApiOperation({ summary: "Get all services of a local" })
-  @ApiQuery({ name: "localId", required: true, type: String })
-  findAll(@Req() req: Request, @Query("localId") localId: string) {
+  @ApiOperation({ summary: "Get all services of a business" })
+  @ApiQuery({ name: "businessId", required: true, type: String })
+  findAll(@Req() req: Request, @Query("businessId") businessId: string) {
     const user = req.user as AuthUser;
-    return this.servicesService.findAllByLocal(user.uid, localId);
+    return this.servicesService.findAllByBusiness(user.uid, businessId);
   }
 
   @Get(":id")
