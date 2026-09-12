@@ -13,6 +13,7 @@ import { AppointmentsModule } from "./modules/appointments/appointments.module";
 import { LegalNoticesModule } from "./modules/legal-notices/legal-notices.module";
 import { ProductsModule } from "./modules/products/products.module";
 import { ReviewsModule } from "./modules/reviews/reviews.module";
+import { ChatbotModule } from "./modules/chatbot/chatbot.module";
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { ReviewsModule } from "./modules/reviews/reviews.module";
     LegalNoticesModule,
     ProductsModule,
     ReviewsModule,
+    ChatbotModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
