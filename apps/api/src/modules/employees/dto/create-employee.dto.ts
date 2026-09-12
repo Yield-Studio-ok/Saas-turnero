@@ -20,5 +20,5 @@ export class CreateEmployeeDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  localId: string;
+  businessId: string;
 }

@@ -20,11 +20,11 @@ export class EmployeesController {
   }
 
   @Get()
-  @ApiOperation({ summary: "Get all employees of a local" })
-  @ApiQuery({ name: "localId", required: true, type: String })
-  findAll(@Req() req: Request, @Query("localId") localId: string) {
+  @ApiOperation({ summary: "Get all employees of a business" })
+  @ApiQuery({ name: "businessId", required: true, type: String })
+  findAll(@Req() req: Request, @Query("businessId") businessId: string) {
     const user = req.user as AuthUser;
-    return this.employeesService.findAllByLocal(user.uid, localId);
+    return this.employeesService.findAllByBusiness(user.uid, businessId);
   }
 
   @Get(":id")

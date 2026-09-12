@@ -6,36 +6,40 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 import { FirebaseService } from "../auth/firebase.service";
-import { CreateLocalDto } from "./dto/create-local.dto";
-import { UpdateLocalDto } from "./dto/update-local.dto";
+import { CreateBusinessDto } from "./dto/create-business.dto";
+import { UpdateBusinessDto } from "./dto/update-business.dto";
 
 @Injectable()
-export class LocalesService {
+export class BusinessesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly firebase: FirebaseService,
   ) {}
 
-  async create(ownerId: string, createLocalDto: CreateLocalDto) {
-    const local = await this.prisma.local.create({
-      data: {
-        ...createLocalDto,
-        ownerId,
-      },
-    });
+  async create(firebaseUid: string, email: string, createBusinessDto: CreateBusinessDto) {
+    let user = await this.prisma.user.findUnique({ where: { firebaseUid } });
+    if (!user) {
+      user = await this.prisma.user.findUnique({ where: { email } });
+      if (user) {
+        user = await this.prisma.user.update({ where: { email }, data: { firebaseUid, role: "owner" } });
+      } else {
+        user = await this.prisma.user.create({ data: { firebaseUid, email, role: "owner" } });
+      }
+    }
+    const business = await this.prisma.business.create({ data: { ...createBusinessDto, ownerId: user.id } });
 
     if (this.firebase.isEnabled()) {
       try {
-        await this.firebase.setRole(ownerId, "owner", local.id);
+        await this.firebase.setRole(firebaseUid, "owner", business.id);
         const db = this.firebase.getFirestore();
-        await db.collection("tenants").doc(local.id).set(
+        await db.collection("tenants").doc(business.id).set(
           {
-            id: local.id,
-            name: local.name,
-            description: local.description,
-            ownerId: local.ownerId,
-            createdAt: local.createdAt.toISOString(),
-            updatedAt: local.updatedAt.toISOString(),
+            id: business.id,
+            name: business.name,
+            description: business.description,
+            ownerId: business.ownerId,
+            createdAt: business.createdAt.toISOString(),
+            updatedAt: business.updatedAt.toISOString(),
           },
           { merge: true },
         );
@@ -44,32 +48,32 @@ export class LocalesService {
       }
     } else {
       await this.prisma.user.update({
-        where: { id: ownerId },
+        where: { id: user.id },
         data: { role: "owner" },
       });
     }
 
-    return local;
+    return business;
   }
 
-  async getProfile(localId: string) {
-    const local = await this.prisma.local.findUnique({
-      where: { id: localId },
+  async getProfile(businessId: string) {
+    const business = await this.prisma.business.findUnique({
+      where: { id: businessId },
     });
-    if (!local) throw new NotFoundException("Local not found");
-    return local;
+    if (!business) throw new NotFoundException("Business not found");
+    return business;
   }
 
-  async updateProfile(localId: string, ownerId: string, updateLocalDto: UpdateLocalDto) {
-    const local = await this.prisma.local.findUnique({
-      where: { id: localId },
+  async updateProfile(businessId: string, ownerId: string, updateBusinessDto: UpdateBusinessDto) {
+    const business = await this.prisma.business.findUnique({
+      where: { id: businessId },
     });
-    if (!local) throw new NotFoundException("Local not found");
-    if (local.ownerId !== ownerId) throw new ForbiddenException("You do not own this local");
+    if (!business) throw new NotFoundException("Business not found");
+    if (business.ownerId !== ownerId) throw new ForbiddenException("You do not own this business");
 
-    const updated = await this.prisma.local.update({
-      where: { id: localId },
-      data: updateLocalDto,
+    const updated = await this.prisma.business.update({
+      where: { id: businessId },
+      data: updateBusinessDto,
     });
 
     if (this.firebase.isEnabled()) {
@@ -77,10 +81,10 @@ export class LocalesService {
         const db = this.firebase.getFirestore();
         await db
           .collection("tenants")
-          .doc(localId)
+          .doc(businessId)
           .set(
             {
-              ...updateLocalDto,
+              ...updateBusinessDto,
               updatedAt: updated.updatedAt.toISOString(),
             },
             { merge: true },
@@ -164,7 +168,7 @@ export class LocalesService {
           if (services.length === 0) {
             const rootServicesSnap = await db
               .collection("services")
-              .where("localId", "==", tenantId)
+              .where("businessId", "==", tenantId)
               .get();
 
             if (rootServicesSnap && rootServicesSnap.docs) {
@@ -181,7 +185,7 @@ export class LocalesService {
           if (services.length === 0) {
             try {
               const prismaServices = await this.prisma.service.findMany({
-                where: { localId: tenantId },
+                where: { businessId: tenantId },
               });
               if (prismaServices && prismaServices.length > 0) {
                 services.push(
@@ -220,7 +224,7 @@ export class LocalesService {
             reviewCount: typeof tenantData.reviewCount === "number" ? tenantData.reviewCount : 0,
             isOpen: typeof tenantData.isOpen === "boolean" ? tenantData.isOpen : true,
             services,
-            local: {
+            business: {
               ...tenantData,
               id: tenantId,
               name: tenantData.name || trimmedIdentifier,
@@ -250,7 +254,7 @@ export class LocalesService {
     }
 
     // 2. Database (Prisma) fallback if not found in Firestore or Firestore disabled
-    const local = await this.prisma.local.findFirst({
+    const business = await this.prisma.business.findFirst({
       where: {
         OR: [{ id: trimmedIdentifier }, { name: trimmedIdentifier }],
       },
@@ -259,20 +263,20 @@ export class LocalesService {
       },
     });
 
-    if (!local) {
-      throw new NotFoundException(`Tenant or Local '${trimmedIdentifier}' not found`);
+    if (!business) {
+      throw new NotFoundException(`Tenant or Business '${trimmedIdentifier}' not found`);
     }
 
-    const { services = [], ...localData } = local;
-    const resolvedSlug = local.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    const { services = [], ...businessData } = business;
+    const resolvedSlug = business.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
     return {
-      ...localData,
-      id: local.id,
-      name: local.name,
+      ...businessData,
+      id: business.id,
+      name: business.name,
       slug: resolvedSlug,
-      description: local.description || "",
-      tagline: local.description || "",
+      description: business.description || "",
+      tagline: business.description || "",
       address: "",
       phone: "",
       openHours: "09:00 - 20:00",
@@ -287,13 +291,13 @@ export class LocalesService {
         price: s.price,
         category: (s as any).category || "General",
       })),
-      local: {
-        ...localData,
-        id: local.id,
-        name: local.name,
+      business: {
+        ...businessData,
+        id: business.id,
+        name: business.name,
         slug: resolvedSlug,
-        description: local.description || "",
-        tagline: local.description || "",
+        description: business.description || "",
+        tagline: business.description || "",
         address: "",
         phone: "",
         openHours: "09:00 - 20:00",
@@ -302,9 +306,9 @@ export class LocalesService {
         isOpen: true,
       },
       tenant: {
-        ...localData,
-        id: local.id,
-        name: local.name,
+        ...businessData,
+        id: business.id,
+        name: business.name,
         slug: resolvedSlug,
       },
     };

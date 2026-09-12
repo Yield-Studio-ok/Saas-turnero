@@ -3,7 +3,7 @@ import { IsString, IsNotEmpty } from "class-validator";
 export class CreateAppointmentDto {
   @IsString()
   @IsNotEmpty()
-  localId: string;
+  businessId: string;
 
   @IsString()
   @IsNotEmpty()

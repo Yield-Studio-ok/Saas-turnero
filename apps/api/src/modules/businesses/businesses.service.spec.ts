@@ -1,13 +1,13 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { LocalesService } from "./locales.service";
-import { LocalesController } from "./locales.controller";
+import { BusinessesService } from "./businesses.service";
+import { BusinessesController } from "./businesses.controller";
 import { PrismaService } from "../../prisma/prisma.service";
 import { FirebaseService } from "../auth/firebase.service";
 import { NotFoundException, BadRequestException } from "@nestjs/common";
 
-describe("LocalesService & LocalesController - Public Query", () => {
-  let service: LocalesService;
-  let controller: LocalesController;
+describe("BusinessesService & BusinessesController - Public Query", () => {
+  let service: BusinessesService;
+  let controller: BusinessesController;
 
   let mockPrisma: any;
   let mockFirebase: any;
@@ -22,8 +22,8 @@ describe("LocalesService & LocalesController - Public Query", () => {
           {
             id: "srv-1",
             data: () => ({
-              name: "Corte Clásico",
-              description: "Corte tradicional a tijera o máquina",
+              name: "Corte Clï¿½sico",
+              description: "Corte tradicional a tijera o mï¿½quina",
               duration: 30,
               price: 1500,
               category: "Cortes",
@@ -47,10 +47,10 @@ describe("LocalesService & LocalesController - Public Query", () => {
       exists: true,
       id: "tenant-123",
       data: () => ({
-        name: "Barbería Vintage",
+        name: "Barberï¿½a Vintage",
         slug: "barberia-vintage",
-        description: "La mejor barbería clásica de la ciudad",
-        tagline: "Estilo y tradición",
+        description: "La mejor barberï¿½a clï¿½sica de la ciudad",
+        tagline: "Estilo y tradiciï¿½n",
         address: "Av. Corrientes 1234",
         phone: "+54 11 4444-5555",
         openHours: "10:00 - 20:00",
@@ -85,7 +85,7 @@ describe("LocalesService & LocalesController - Public Query", () => {
                 docs: [mockTenantDoc],
               };
             }
-            if (field === "name" && val === "Barbería Vintage") {
+            if (field === "name" && val === "Barberï¿½a Vintage") {
               return {
                 empty: false,
                 docs: [mockTenantDoc],
@@ -117,7 +117,7 @@ describe("LocalesService & LocalesController - Public Query", () => {
     };
 
     mockPrisma = {
-      local: {
+      business: {
         findUnique: jest.fn(),
         findFirst: jest.fn(),
         create: jest.fn(),
@@ -132,19 +132,19 @@ describe("LocalesService & LocalesController - Public Query", () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [LocalesController],
+      controllers: [BusinessesController],
       providers: [
-        LocalesService,
+        BusinessesService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: FirebaseService, useValue: mockFirebase },
       ],
     }).compile();
 
-    service = module.get<LocalesService>(LocalesService);
-    controller = module.get<LocalesController>(LocalesController);
+    service = module.get<BusinessesService>(BusinessesService);
+    controller = module.get<BusinessesController>(BusinessesController);
   });
 
-  describe("LocalesService.getPublicProfile", () => {
+  describe("BusinessesService.getPublicProfile", () => {
     it("should fetch tenant details and services subcollection from Firestore by document ID", async () => {
       const result = await service.getPublicProfile("tenant-123");
 
@@ -154,14 +154,14 @@ describe("LocalesService & LocalesController - Public Query", () => {
       expect(mockServicesSubcollection.get).toHaveBeenCalled();
 
       expect(result.id).toBe("tenant-123");
-      expect(result.name).toBe("Barbería Vintage");
+      expect(result.name).toBe("Barberï¿½a Vintage");
       expect(result.slug).toBe("barberia-vintage");
       expect(result.services).toHaveLength(2);
       expect(result.services[0].id).toBe("srv-1");
-      expect(result.services[0].name).toBe("Corte Clásico");
+      expect(result.services[0].name).toBe("Corte Clï¿½sico");
       expect(result.services[1].id).toBe("srv-2");
       expect(result.services[1].name).toBe("Barba Completa");
-      expect(result.local.name).toBe("Barbería Vintage");
+      expect(result.business.name).toBe("Barberï¿½a Vintage");
     });
 
     it("should fetch tenant details and services from Firestore by slug when ID lookup misses", async () => {
@@ -169,15 +169,15 @@ describe("LocalesService & LocalesController - Public Query", () => {
 
       expect(mockTenantsCollection.where).toHaveBeenCalledWith("slug", "==", "barberia-vintage");
       expect(result.id).toBe("tenant-123");
-      expect(result.name).toBe("Barbería Vintage");
+      expect(result.name).toBe("Barberï¿½a Vintage");
       expect(result.services).toHaveLength(2);
     });
 
     it("should fallback to Prisma if Firestore is not enabled", async () => {
       mockFirebase.isEnabled.mockReturnValue(false);
 
-      mockPrisma.local.findFirst.mockResolvedValue({
-        id: "local-prisma-1",
+      mockPrisma.business.findFirst.mockResolvedValue({
+        id: "business-prisma-1",
         name: "Salon Prisma",
         description: "Salon de prueba en Prisma",
         ownerId: "owner-1",
@@ -188,31 +188,31 @@ describe("LocalesService & LocalesController - Public Query", () => {
             description: "Lavado y secado",
             duration: 15,
             price: 800,
-            localId: "local-prisma-1",
+            businessId: "business-prisma-1",
           },
         ],
       });
 
-      const result = await service.getPublicProfile("local-prisma-1");
+      const result = await service.getPublicProfile("business-prisma-1");
 
-      expect(mockPrisma.local.findFirst).toHaveBeenCalledWith({
+      expect(mockPrisma.business.findFirst).toHaveBeenCalledWith({
         where: {
-          OR: [{ id: "local-prisma-1" }, { name: "local-prisma-1" }],
+          OR: [{ id: "business-prisma-1" }, { name: "business-prisma-1" }],
         },
         include: {
           services: true,
         },
       });
-      expect(result.id).toBe("local-prisma-1");
+      expect(result.id).toBe("business-prisma-1");
       expect(result.name).toBe("Salon Prisma");
       expect(result.services).toHaveLength(1);
       expect(result.services[0].name).toBe("Lavado");
     });
 
     it("should fallback to Prisma if tenant is not found in Firestore", async () => {
-      mockPrisma.local.findFirst.mockResolvedValue({
+      mockPrisma.business.findFirst.mockResolvedValue({
         id: "fallback-id",
-        name: "Barbería Fallback",
+        name: "Barberï¿½a Fallback",
         description: "Desde base de datos relacional",
         ownerId: "owner-2",
         services: [],
@@ -220,13 +220,13 @@ describe("LocalesService & LocalesController - Public Query", () => {
 
       const result = await service.getPublicProfile("non-existent-in-firestore");
 
-      expect(mockPrisma.local.findFirst).toHaveBeenCalled();
+      expect(mockPrisma.business.findFirst).toHaveBeenCalled();
       expect(result.id).toBe("fallback-id");
-      expect(result.name).toBe("Barbería Fallback");
+      expect(result.name).toBe("Barberï¿½a Fallback");
     });
 
     it("should throw NotFoundException if not found in Firestore or Prisma", async () => {
-      mockPrisma.local.findFirst.mockResolvedValue(null);
+      mockPrisma.business.findFirst.mockResolvedValue(null);
 
       await expect(service.getPublicProfile("unknown-tenant")).rejects.toThrow(
         NotFoundException,
@@ -238,19 +238,19 @@ describe("LocalesService & LocalesController - Public Query", () => {
     });
   });
 
-  describe("LocalesService.getPublicServices", () => {
+  describe("BusinessesService.getPublicServices", () => {
     it("should return only services array", async () => {
       const services = await service.getPublicServices("tenant-123");
       expect(Array.isArray(services)).toBe(true);
       expect(services).toHaveLength(2);
-      expect(services[0].name).toBe("Corte Clásico");
+      expect(services[0].name).toBe("Corte Clï¿½sico");
     });
   });
 
-  describe("LocalesController public routes", () => {
+  describe("BusinessesController public routes", () => {
     it("getPublicProfile should delegate to service with identifier", async () => {
       const result = await controller.getPublicProfile("barberia-vintage");
-      expect(result.name).toBe("Barbería Vintage");
+      expect(result.name).toBe("Barberï¿½a Vintage");
     });
 
     it("getPublicProfileById should delegate to service with id", async () => {
@@ -260,7 +260,7 @@ describe("LocalesService & LocalesController - Public Query", () => {
 
     it("getPublicProfileQuery should delegate to service with query parameter", async () => {
       const result = await controller.getPublicProfileQuery("barberia-vintage");
-      expect(result.name).toBe("Barbería Vintage");
+      expect(result.name).toBe("Barberï¿½a Vintage");
     });
 
     it("getPublicProfileQuery should throw BadRequestException if no query param provided", () => {

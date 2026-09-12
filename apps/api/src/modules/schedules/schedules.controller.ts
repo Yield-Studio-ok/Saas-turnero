@@ -42,11 +42,11 @@ export class SchedulesController {
   }
 
   @Get()
-  @ApiOperation({ summary: "Get all schedules of a local" })
-  @ApiQuery({ name: "localId", required: true, type: String })
-  findAll(@Req() req: Request, @Query("localId") localId: string) {
+  @ApiOperation({ summary: "Get all schedules of a business" })
+  @ApiQuery({ name: "businessId", required: true, type: String })
+  findAll(@Req() req: Request, @Query("businessId") businessId: string) {
     const user = req.user as AuthUser;
-    return this.schedulesService.findAllByLocal(user.uid, localId);
+    return this.schedulesService.findAllByBusiness(user.uid, businessId);
   }
 
   @Get(":id")
