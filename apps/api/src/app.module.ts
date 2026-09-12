@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+﻿import { Module } from "@nestjs/common";
 import { APP_GUARD } from "@nestjs/core";
 import { ConfigModule } from "@nestjs/config";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
@@ -13,6 +13,7 @@ import { AppointmentsModule } from "./modules/appointments/appointments.module";
 import { LegalNoticesModule } from "./modules/legal-notices/legal-notices.module";
 import { ProductsModule } from "./modules/products/products.module";
 import { ReviewsModule } from "./modules/reviews/reviews.module";
+import { WebhooksModule } from "./modules/webhooks/webhooks.module";
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { ReviewsModule } from "./modules/reviews/reviews.module";
     LegalNoticesModule,
     ProductsModule,
     ReviewsModule,
+    WebhooksModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
