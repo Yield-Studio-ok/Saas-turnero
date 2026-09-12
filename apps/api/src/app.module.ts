@@ -11,7 +11,8 @@ import { SchedulesModule } from "./modules/schedules/schedules.module";
 import { ServicesModule } from "./modules/services/services.module";
 import { AppointmentsModule } from "./modules/appointments/appointments.module";
 import { LegalNoticesModule } from "./modules/legal-notices/legal-notices.module";
-import { ProductsModule } from './modules/products/products.module';
+import { ProductsModule } from "./modules/products/products.module";
+import { ReviewsModule } from "./modules/reviews/reviews.module";
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { ProductsModule } from './modules/products/products.module';
     AppointmentsModule,
     LegalNoticesModule,
     ProductsModule,
+    ReviewsModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

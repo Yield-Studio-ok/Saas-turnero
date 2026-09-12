@@ -1,9 +1,9 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex bg-gray-50">
-      {/* Sidebar Dueño */}
+      {/* Sidebar DueÃ±o */}
       <aside className="w-64 bg-blue-900 text-white flex flex-col">
         <div className="p-4 border-b border-blue-800">
           <h2 className="text-xl font-bold">Mi Local</h2>
@@ -26,7 +26,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             href="/dashboard/catalogo"
             className="block px-4 py-2 rounded-md hover:bg-blue-800 transition"
           >
-            Cat�logo
+            Catï¿½logo
+          </Link>
+          <Link
+            href="/dashboard/reviews"
+            className="block px-4 py-2 rounded-md hover:bg-blue-800 transition"
+          >
+            Reseñas
           </Link>
           <Link
             href="/dashboard/perfil"
@@ -37,7 +43,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </nav>
         <div className="p-4 border-t border-blue-800">
           <button className="w-full text-left px-4 py-2 text-sm text-blue-200 hover:text-white transition">
-            Cerrar Sesión
+            Cerrar SesiÃ³n
           </button>
         </div>
       </aside>
@@ -50,7 +56,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="h-8 w-8 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold">
               D
             </div>
-            <span className="text-sm font-medium text-gray-600">Dueño</span>
+            <span className="text-sm font-medium text-gray-600">DueÃ±o</span>
           </div>
         </header>
         <div className="p-6 flex-1 overflow-auto text-gray-900">{children}</div>

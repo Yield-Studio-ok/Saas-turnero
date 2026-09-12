@@ -1,4 +1,4 @@
-generator client {
+﻿generator client {
   provider = "prisma-client-js"
 }
 
@@ -14,11 +14,14 @@ model User {
   name        String?
   role        String     @default("user")
   credits     Int        @default(0)
+  loyaltyPoints Int      @default(0)
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @updatedAt @map("updated_at")
 
   businesses  Business[]
+  reviews     Review[]
   legalNoticeAcceptances LegalNoticeAcceptance[]
+
 
   @@map("users")
 }
@@ -36,7 +39,9 @@ model Business {
   schedules   Schedule[]
   services    Service[]
   products    Product[]
+  reviews     Review[]
   appointments Appointment[]
+
 
   @@map("businesses")
 }
@@ -54,6 +59,7 @@ model Employee {
   schedules Schedule[]
   shifts    Shift[]
   appointments Appointment[]
+
 
   @@map("employees")
 }
@@ -84,6 +90,7 @@ model Service {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
   appointments Appointment[]
+
 
   @@map("services")
 }
@@ -162,6 +169,7 @@ model Appointment {
 
   serviceId          String
   service            Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  review             Review?
 
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
@@ -170,3 +178,19 @@ model Appointment {
 }
 
 
+
+model Review {
+  id            String       @id @default(uuid())
+  rating        Int
+  comment       String?
+  businessId    String
+  business      Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  appointmentId String?      @unique
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  userId        String?
+  user          User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  @@map("reviews")
+}
