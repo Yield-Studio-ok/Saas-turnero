@@ -150,6 +150,8 @@ model Appointment {
   customerPhone      String?
   notes              String?
   cancellationReason String?
+  paidAmount         Float?
+  tip                Float?
 
   businessId         String
   business           Business @relation(fields: [businessId], references: [id], onDelete: Cascade)

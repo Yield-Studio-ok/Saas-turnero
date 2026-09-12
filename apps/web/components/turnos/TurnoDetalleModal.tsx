@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useState } from "react";
 import AlertDialog from "@/components/ui/AlertDialog";
@@ -30,6 +30,10 @@ interface TurnoDetalleModalProps {
   turno: Turno | null;
   onClose: () => void;
   onCancelTurno?: (turnoId: number | string) => void | Promise<void>;
+  onCompleteTurno?: (
+    turnoId: number | string,
+    data: { paidAmount?: number; tip?: number },
+  ) => void | Promise<void>;
 }
 
 export function formatHoraDecimal(horaDecimal: number): string {
@@ -59,8 +63,13 @@ export default function TurnoDetalleModal({
   turno,
   onClose,
   onCancelTurno,
+  onCompleteTurno,
 }: TurnoDetalleModalProps) {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isCompleteOpen, setIsCompleteOpen] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [paidAmount, setPaidAmount] = useState<string>("");
+  const [tip, setTip] = useState<string>("");
   const [isCancelling, setIsCancelling] = useState(false);
 
   // Cerrar al presionar la tecla Escape
@@ -105,6 +114,24 @@ export default function TurnoDetalleModal({
     }
   };
 
+  const handleConfirmComplete = async () => {
+    if (!onCompleteTurno || !turno) return;
+    try {
+      setIsCompleting(true);
+      await Promise.resolve(
+        onCompleteTurno(turno.id, {
+          paidAmount: Number(paidAmount) || undefined,
+          tip: Number(tip) || undefined,
+        }),
+      );
+      setIsCompleteOpen(false);
+    } catch (error) {
+      console.error("Error al completar el turno:", error);
+    } finally {
+      setIsCompleting(false);
+    }
+  };
+
   // Iniciales para el avatar
   const iniciales = cliente.nombre
     .split(" ")
@@ -140,7 +167,7 @@ export default function TurnoDetalleModal({
   // Enlace WhatsApp con mensaje pre-rellenado
   const whatsappCleanNumber = cliente.telefono?.replace(/\D/g, "") || "";
   const whatsappMensaje = encodeURIComponent(
-    `Hola ${cliente.nombre}, te contactamos desde el local respecto a tu turno de ${turno.servicio} (${rangoHorario}).`
+    `Hola ${cliente.nombre}, te contactamos desde el local respecto a tu turno de ${turno.servicio} (${rangoHorario}).`,
   );
   const whatsappUrl = `https://wa.me/${whatsappCleanNumber}?text=${whatsappMensaje}`;
 
@@ -162,10 +189,7 @@ export default function TurnoDetalleModal({
             <div className="flex items-center gap-3">
               <div>
                 <div className="flex items-center gap-2">
-                  <h3
-                    id="modal-turno-titulo"
-                    className="text-lg font-bold text-gray-900"
-                  >
+                  <h3 id="modal-turno-titulo" className="text-lg font-bold text-gray-900">
                     Detalle del Turno
                   </h3>
                   <span className="text-xs font-semibold px-2 py-0.5 rounded bg-gray-200 text-gray-700">
@@ -180,9 +204,7 @@ export default function TurnoDetalleModal({
               <span
                 className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${estadoBadgeConfig.badgeClass}`}
               >
-                <span
-                  className={`w-1.5 h-1.5 rounded-full ${estadoBadgeConfig.dotClass}`}
-                />
+                <span className={`w-1.5 h-1.5 rounded-full ${estadoBadgeConfig.dotClass}`} />
                 {estadoBadgeConfig.label}
               </span>
 
@@ -191,12 +213,7 @@ export default function TurnoDetalleModal({
                 className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                 aria-label="Cerrar modal"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -217,12 +234,7 @@ export default function TurnoDetalleModal({
                 className="bg-red-50 border border-red-200 rounded-xl p-3.5 flex items-center gap-3 text-red-800"
               >
                 <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0 text-red-600">
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -236,17 +248,18 @@ export default function TurnoDetalleModal({
                     Este turno se encuentra cancelado
                   </p>
                   <p className="text-red-700 mt-0.5">
-                    El horario asignado ha quedado liberado en la grilla diaria para nuevas reservas.
+                    El horario asignado ha quedado liberado en la grilla diaria para nuevas
+                    reservas.
                   </p>
                 </div>
               </div>
             )}
 
-            {/* Tarjeta de Información del Cliente */}
+            {/* Tarjeta de Informaci�n del Cliente */}
             <div className="bg-gray-50/60 rounded-xl p-4 border border-gray-100 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                  Información del Cliente
+                  Informaci�n del Cliente
                 </span>
                 {cliente.historialTurnos && (
                   <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full font-medium">
@@ -312,7 +325,7 @@ export default function TurnoDetalleModal({
                 </div>
               </div>
 
-              {/* Acciones de contacto rápido */}
+              {/* Acciones de contacto r�pido */}
               {cliente.telefono && (
                 <div className="pt-2 flex items-center gap-2 border-t border-gray-200/60">
                   <a
@@ -321,11 +334,7 @@ export default function TurnoDetalleModal({
                     rel="noopener noreferrer"
                     className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition"
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" />
                     </svg>
                     Enviar WhatsApp
@@ -356,11 +365,9 @@ export default function TurnoDetalleModal({
               {(cliente.notas || turno.notas) && (
                 <div className="bg-amber-50/70 border border-amber-200/70 rounded-lg p-2.5 text-xs text-amber-900 mt-2">
                   <span className="font-semibold block mb-0.5 text-amber-800">
-                    Nota / Observación:
+                    Nota / Observaci�n:
                   </span>
-                  <p className="leading-relaxed">
-                    {cliente.notas || turno.notas}
-                  </p>
+                  <p className="leading-relaxed">{cliente.notas || turno.notas}</p>
                 </div>
               )}
             </div>
@@ -390,9 +397,7 @@ export default function TurnoDetalleModal({
                     </svg>
                     <span>Servicio</span>
                   </div>
-                  <div className="font-semibold text-gray-900 text-sm">
-                    {turno.servicio}
-                  </div>
+                  <div className="font-semibold text-gray-900 text-sm">{turno.servicio}</div>
                   {turno.precio !== undefined && (
                     <div className="text-xs text-gray-600 mt-0.5 font-medium">
                       ${turno.precio.toLocaleString("es-AR")}
@@ -424,7 +429,7 @@ export default function TurnoDetalleModal({
                   <div className="text-xs text-gray-500 mt-0.5">Asignado</div>
                 </div>
 
-                {/* Horario y Duración */}
+                {/* Horario y Duraci�n */}
                 <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
                   <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
                     <svg
@@ -442,13 +447,11 @@ export default function TurnoDetalleModal({
                     </svg>
                     <span>Horario</span>
                   </div>
-                  <div className="font-semibold text-gray-900 text-sm">
-                    {rangoHorario}
-                  </div>
+                  <div className="font-semibold text-gray-900 text-sm">{rangoHorario}</div>
                   <div className="text-xs text-gray-500 mt-0.5">{fechaTexto}</div>
                 </div>
 
-                {/* Pago / Facturación */}
+                {/* Pago / Facturaci�n */}
                 <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
                   <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
                     <svg
@@ -523,7 +526,44 @@ export default function TurnoDetalleModal({
         </div>
       </div>
 
-      {/* Diálogo de Confirmación de Cancelación */}
+      {/* Di�logo de Confirmaci�n de Cancelaci�n */}
+      <AlertDialog
+        isOpen={isCompleteOpen}
+        onClose={() => {
+          if (!isCompleting) setIsCompleteOpen(false);
+        }}
+        onConfirm={handleConfirmComplete}
+        isLoading={isCompleting}
+        title="Completar Turno"
+        confirmText={isCompleting ? "Completando..." : "Completar"}
+        cancelText="Cancelar"
+      >
+        <div className="space-y-4 py-2">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Monto Pagado</label>
+            <input
+              type="number"
+              className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2 border"
+              placeholder="Ej. 1500"
+              value={paidAmount}
+              onChange={(e) => setPaidAmount(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Propina (Opcional)
+            </label>
+            <input
+              type="number"
+              className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2 border"
+              placeholder="Ej. 200"
+              value={tip}
+              onChange={(e) => setTip(e.target.value)}
+            />
+          </div>
+        </div>
+      </AlertDialog>
+
       <AlertDialog
         isOpen={isConfirmOpen}
         onClose={() => {
@@ -531,9 +571,9 @@ export default function TurnoDetalleModal({
         }}
         onConfirm={handleConfirmCancel}
         isLoading={isCancelling}
-        title="¿Confirmar cancelación del turno?"
+        title="�Confirmar cancelaci�n del turno?"
         variant="danger"
-        confirmText={isCancelling ? "Cancelando..." : "Sí, cancelar turno"}
+        confirmText={isCancelling ? "Cancelando..." : "S�, cancelar turno"}
         cancelText="No, conservar turno"
         icon={
           <svg
@@ -553,7 +593,7 @@ export default function TurnoDetalleModal({
         description={
           <div className="space-y-3">
             <p className="text-gray-600">
-              ¿Estás seguro de que deseas cancelar la cita de{" "}
+              �Est�s seguro de que deseas cancelar la cita de{" "}
               <span className="font-semibold text-gray-900">{cliente.nombre}</span>?
             </p>
 
@@ -579,7 +619,8 @@ export default function TurnoDetalleModal({
             </div>
 
             <p className="text-xs text-amber-700 bg-amber-50/80 border border-amber-200/80 rounded-lg p-2.5 leading-relaxed">
-              El horario quedará inmediatamente liberado en la grilla y el turno cambiará a estado cancelado.
+              El horario quedar� inmediatamente liberado en la grilla y el turno cambiar� a estado
+              cancelado.
             </p>
           </div>
         }

@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import TurnoDetalleModal, { Turno } from "@/components/turnos/TurnoDetalleModal";
 
 import { useDailyAppointments } from "@/hooks/useDailyAppointments";
-import { cancelAppointment } from "@/lib/appointments-service";
+import { cancelAppointment, AppointmentsService } from "@/lib/appointments-service";
 import { Appointment } from "@/types/appointment";
 
 // Mocks para empleados (hasta que se integre el servicio de empleados)
@@ -35,10 +35,15 @@ const mapAppointmentToTurno = (appt: Appointment): Turno => {
     },
     servicio: appt.serviceName || "Servicio",
     precio: appt.price,
-    estado: (appt.status === "pending" ? "pendiente" :
-             appt.status === "confirmed" ? "confirmado" :
-             appt.status === "cancelled" ? "cancelado" :
-             appt.status === "completed" ? "completado" : "confirmado") as any,
+    estado: (appt.status === "pending"
+      ? "pendiente"
+      : appt.status === "confirmed"
+        ? "confirmado"
+        : appt.status === "cancelled"
+          ? "cancelado"
+          : appt.status === "completed"
+            ? "completado"
+            : "confirmado") as any,
     fecha: appt.date,
   };
 };
@@ -46,21 +51,35 @@ const mapAppointmentToTurno = (appt: Appointment): Turno => {
 export default function TurnosPage() {
   // Asumimos un tenantId de demostración por ahora
   const tenantId = "demo-tenant";
-  
+
   const { appointments, loading } = useDailyAppointments(tenantId, new Date());
-  
+
   const turnos: Turno[] = appointments.map(mapAppointmentToTurno);
-  
+
   const [selectedTurno, setSelectedTurno] = useState<Turno | null>(null);
 
   const handleCancelTurno = async (turnoId: number | string) => {
     try {
       await cancelAppointment(tenantId, turnoId.toString());
       setSelectedTurno((prev) =>
-        prev && prev.id === turnoId ? { ...prev, estado: "cancelado" as const } : prev
+        prev && prev.id === turnoId ? { ...prev, estado: "cancelado" as const } : prev,
       );
     } catch (error) {
       console.error("Error cancelando turno:", error);
+    }
+  };
+
+  const handleCompleteTurno = async (
+    turnoId: number | string,
+    data: { paidAmount?: number; tip?: number },
+  ) => {
+    try {
+      await AppointmentsService.complete(turnoId.toString(), { status: "completado", ...data });
+      setSelectedTurno((prev) =>
+        prev && prev.id === turnoId ? { ...prev, estado: "completado" as const } : prev,
+      );
+    } catch (error) {
+      console.error("Error completando turno:", error);
     }
   };
   return (
@@ -119,15 +138,13 @@ export default function TurnosPage() {
                     {/* Render turnos for this employee at this hour */}
                     {turnos
                       .filter(
-                        (t) => t.empleadoId === empleado.id && Math.floor(t.horaInicio) === hora
+                        (t) => t.empleadoId === empleado.id && Math.floor(t.horaInicio) === hora,
                       )
                       .map((turno) => {
                         const topOffset = (turno.horaInicio - hora) * 64; // 64px per hour (h-16)
                         const height = turno.duracion * 64; // 64px per hour
                         const clienteNombre =
-                          typeof turno.cliente === "string"
-                            ? turno.cliente
-                            : turno.cliente.nombre;
+                          typeof turno.cliente === "string" ? turno.cliente : turno.cliente.nombre;
                         const esCancelado = turno.estado === "cancelado";
 
                         return (
@@ -145,9 +162,7 @@ export default function TurnosPage() {
                             <div className="flex items-center justify-between gap-1">
                               <span
                                 className={`font-semibold truncate ${
-                                  esCancelado
-                                    ? "text-red-800 line-through"
-                                    : "text-blue-800"
+                                  esCancelado ? "text-red-800 line-through" : "text-blue-800"
                                 }`}
                               >
                                 {clienteNombre}
@@ -173,10 +188,7 @@ export default function TurnosPage() {
                               {Math.floor(turno.horaInicio)}:
                               {((turno.horaInicio % 1) * 60).toString().padStart(2, "0")} -{" "}
                               {Math.floor(turno.horaInicio + turno.duracion)}:
-                              {(
-                                ((turno.horaInicio + turno.duracion) % 1) *
-                                60
-                              )
+                              {(((turno.horaInicio + turno.duracion) % 1) * 60)
                                 .toString()
                                 .padStart(2, "0")}
                             </div>
@@ -196,6 +208,7 @@ export default function TurnosPage() {
         turno={selectedTurno}
         onClose={() => setSelectedTurno(null)}
         onCancelTurno={handleCancelTurno}
+        onCompleteTurno={handleCompleteTurno}
       />
     </div>
   );

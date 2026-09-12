@@ -272,6 +272,19 @@ export class AppointmentsService {
   /**
    * Obtiene la información de un turno por ID (GET /appointments/:id).
    */
+  /**
+   * Completa un turno por ID (PATCH /appointments/:id/complete - Ticket 6 Epic 3).
+   */
+  static async complete(
+    id: string,
+    payload: { status: string; paidAmount?: number; tip?: number },
+  ): Promise<{ id: string; [key: string]: any }> {
+    return apiFetch<{ id: string; [key: string]: any }>(`/appointments/${id}/complete`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+  }
+
   static async getById(id: string): Promise<Appointment | any> {
     return apiFetch(`/appointments/${id}`);
   }

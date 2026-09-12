@@ -5,14 +5,11 @@ import { calculateAvailableSlots, TimeSlot } from "../../utils/availability.engi
 
 @Injectable()
 export class AppointmentsService {
-  constructor(
-    private prisma: PrismaService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async createAppointment(dto: CreateAppointmentDto) {
     const { businessId, employeeId, serviceId, date, startTime, endTime } = dto;
 
-    // 1. Validate entities
     const service = await this.prisma.service.findUnique({ where: { id: serviceId } });
     if (!service || service.businessId !== businessId)
       throw new NotFoundException("Service not found for this local");
@@ -21,14 +18,9 @@ export class AppointmentsService {
     if (!employee || employee.businessId !== businessId)
       throw new NotFoundException("Employee not found for this local");
 
-    // Get day of week (0 = Sunday, 1 = Monday)
-    // Javascript new Date('2024-01-01') is UTC and may give wrong day if not careful.
-    // Better to use a specific parsing or append "T00:00:00" depending on format.
-    // Let's assume date is YYYY-MM-DD
-    const dateObj = new Date(`${date}T12:00:00Z`);
+    const dateObj = new Date(date + "T12:00:00Z");
     const dayOfWeek = dateObj.getDay();
 
-    // Get schedule for that day
     const schedules = await this.prisma.schedule.findMany({
       where: { employeeId, dayOfWeek },
     });
@@ -42,23 +34,21 @@ export class AppointmentsService {
       endTime: s.endTime,
     }));
 
-    // Start transaction in Prisma
     try {
       const result = await this.prisma.$transaction(async (tx) => {
         const existingAppointmentsDoc = await tx.appointment.findMany({
           where: {
             employeeId,
             date,
-            status: { notIn: ["Cancelado", "cancelado"] }
-          }
+            status: { notIn: ["Cancelado", "cancelado"] },
+          },
         });
 
-        const existingAppointments: TimeSlot[] = existingAppointmentsDoc.map(data => ({
+        const existingAppointments: TimeSlot[] = existingAppointmentsDoc.map((data) => ({
           startTime: data.startTime,
           endTime: data.endTime,
         }));
 
-        // 3. Re-validate availability
         const availableSlots = calculateAvailableSlots({
           workingHours,
           appointments: existingAppointments,
@@ -74,7 +64,6 @@ export class AppointmentsService {
           throw new BadRequestException("The selected time slot is no longer available");
         }
 
-        // 4. Save the document
         return await tx.appointment.create({
           data: {
             date,
@@ -87,7 +76,7 @@ export class AppointmentsService {
             businessId,
             employeeId,
             serviceId,
-          }
+          },
         });
       });
 
@@ -107,7 +96,7 @@ export class AppointmentsService {
     const service = await this.prisma.service.findUnique({ where: { id: serviceId } });
     if (!service) throw new NotFoundException("Service not found");
 
-    const dateObj = new Date(`${date}T12:00:00Z`);
+    const dateObj = new Date(date + "T12:00:00Z");
     const dayOfWeek = dateObj.getDay();
 
     const schedules = await this.prisma.schedule.findMany({
@@ -127,11 +116,11 @@ export class AppointmentsService {
       where: {
         employeeId,
         date,
-        status: { notIn: ["Cancelado", "cancelado"] }
-      }
+        status: { notIn: ["Cancelado", "cancelado"] },
+      },
     });
 
-    const existingAppointments: TimeSlot[] = existingAppointmentsDoc.map(data => ({
+    const existingAppointments: TimeSlot[] = existingAppointmentsDoc.map((data) => ({
       startTime: data.startTime,
       endTime: data.endTime,
     }));
@@ -146,11 +135,39 @@ export class AppointmentsService {
     return availableSlots;
   }
 
+  async getAppointmentsByEmployeeAndDate(employeeId: string, date: string) {
+    const appointments = await this.prisma.appointment.findMany({
+      where: { employeeId, date },
+      include: { service: true },
+      orderBy: { startTime: "asc" },
+    });
+    return appointments;
+  }
+
+  async completeAppointment(
+    id: string,
+    updateData: { status: string; paidAmount?: number; tip?: number },
+  ) {
+    const appointment = await this.prisma.appointment.findUnique({ where: { id } });
+    if (!appointment) {
+      throw new NotFoundException("Appointment not found");
+    }
+
+    return await this.prisma.appointment.update({
+      where: { id },
+      data: {
+        status: updateData.status,
+        paidAmount: updateData.paidAmount,
+        tip: updateData.tip,
+      },
+    });
+  }
+
   async cancelAppointment(id: string, reason?: string): Promise<Record<string, any>> {
     const appointment = await this.prisma.appointment.findUnique({ where: { id } });
 
     if (!appointment) {
-      throw new NotFoundException(`Appointment with ID ${id} not found`);
+      throw new NotFoundException("Appointment with ID ${id} not found");
     }
 
     return await this.prisma.appointment.update({
@@ -158,7 +175,7 @@ export class AppointmentsService {
       data: {
         status: "Cancelado",
         cancellationReason: reason,
-      }
+      },
     });
   }
 
@@ -166,7 +183,7 @@ export class AppointmentsService {
     const appointment = await this.prisma.appointment.findUnique({ where: { id } });
 
     if (!appointment) {
-      throw new NotFoundException(`Appointment with ID ${id} not found`);
+      throw new NotFoundException("Appointment with ID ${id} not found");
     }
 
     return appointment;
