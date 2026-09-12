@@ -163,20 +163,38 @@ export class AppointmentsService {
     });
   }
 
-  async cancelAppointment(id: string, reason?: string): Promise<Record<string, any>> {
-    const appointment = await this.prisma.appointment.findUnique({ where: { id } });
+    async cancelAppointment(id: string, reason?: string): Promise<Record<string, any>> {
+    const appointment = await this.prisma.appointment.findUnique({ where: { id }, include: { service: true } });
 
     if (!appointment) {
-      throw new NotFoundException("Appointment with ID ${id} not found");
+      throw new NotFoundException(`Appointment with ID ${id} not found`);
     }
 
-    return await this.prisma.appointment.update({
+    const updated = await this.prisma.appointment.update({
       where: { id },
       data: {
-        status: "Cancelado",
+        status: "cancelled",
         cancellationReason: reason,
       },
     });
+
+    // Añadir creditos al usuario si existe
+    if (appointment.customerEmail) {
+      const user = await this.prisma.user.findUnique({ where: { email: appointment.customerEmail } });
+      if (user) {
+        // sumamos creditos basados en el precio del servicio (o un monto fijo)
+        const creditToAdd = appointment.service ? appointment.service.price : 10;
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: { credits: { increment: creditToAdd } }
+        });
+      }
+    }
+
+    // Mock envio de email
+    console.log(`Simulando envio de email de cancelacion a: ${appointment.customerEmail}`);
+
+    return updated;
   }
 
   async getAppointmentById(id: string) {
@@ -189,3 +207,4 @@ export class AppointmentsService {
     return appointment;
   }
 }
+
