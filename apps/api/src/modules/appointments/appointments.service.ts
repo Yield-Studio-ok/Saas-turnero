@@ -1,6 +1,5 @@
 import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
-import { FirebaseService } from "../auth/firebase.service";
 import { CreateAppointmentDto } from "./dto/create-appointment.dto";
 import { calculateAvailableSlots, TimeSlot } from "../../utils/availability.engine";
 
@@ -8,7 +7,6 @@ import { calculateAvailableSlots, TimeSlot } from "../../utils/availability.engi
 export class AppointmentsService {
   constructor(
     private prisma: PrismaService,
-    private firebase: FirebaseService,
   ) {}
 
   async createAppointment(dto: CreateAppointmentDto) {
@@ -24,7 +22,11 @@ export class AppointmentsService {
       throw new NotFoundException("Employee not found for this local");
 
     // Get day of week (0 = Sunday, 1 = Monday)
-    const dayOfWeek = new Date(date).getDay();
+    // Javascript new Date('2024-01-01') is UTC and may give wrong day if not careful.
+    // Better to use a specific parsing or append "T00:00:00" depending on format.
+    // Let's assume date is YYYY-MM-DD
+    const dateObj = new Date(`${date}T12:00:00Z`);
+    const dayOfWeek = dateObj.getDay();
 
     // Get schedule for that day
     const schedules = await this.prisma.schedule.findMany({
@@ -40,36 +42,27 @@ export class AppointmentsService {
       endTime: s.endTime,
     }));
 
-    // 2. Start Firestore transaction
-    const db = this.firebase.getFirestore();
-    const appointmentsRef = db.collection("appointments");
-
+    // Start transaction in Prisma
     try {
-      const result = await db.runTransaction(async (t) => {
-        // Query existing appointments for the same date and employee
-        // Note: Firestore transactions require reads before writes.
-        // We do a query inside transaction (requires all returned docs to not change)
-        const querySnapshot = await t.get(
-          appointmentsRef.where("employeeId", "==", employeeId).where("date", "==", date),
-        );
-
-        const existingAppointments: TimeSlot[] = [];
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          if (data.status !== "Cancelado" && data.status !== "cancelado") {
-            existingAppointments.push({
-              startTime: data.startTime,
-              endTime: data.endTime,
-            });
+      const result = await this.prisma.$transaction(async (tx) => {
+        const existingAppointmentsDoc = await tx.appointment.findMany({
+          where: {
+            employeeId,
+            date,
+            status: { notIn: ["Cancelado", "cancelado"] }
           }
         });
+
+        const existingAppointments: TimeSlot[] = existingAppointmentsDoc.map(data => ({
+          startTime: data.startTime,
+          endTime: data.endTime,
+        }));
 
         // 3. Re-validate availability
         const availableSlots = calculateAvailableSlots({
           workingHours,
           appointments: existingAppointments,
           serviceDuration: service.duration,
-          // interval could be service.duration
           slotInterval: service.duration,
         });
 
@@ -82,15 +75,20 @@ export class AppointmentsService {
         }
 
         // 4. Save the document
-        const newDocRef = appointmentsRef.doc();
-        const appointmentData = {
-          ...dto,
-          status: "confirmed",
-          createdAt: new Date().toISOString(),
-        };
-        t.set(newDocRef, appointmentData);
-
-        return { id: newDocRef.id, ...appointmentData };
+        return await tx.appointment.create({
+          data: {
+            date,
+            startTime,
+            endTime,
+            status: "confirmed",
+            customerName: dto.customerName || "Guest",
+            customerEmail: dto.customerEmail || "guest@example.com",
+            customerPhone: dto.customerPhone || null,
+            businessId,
+            employeeId,
+            serviceId,
+          }
+        });
       });
 
       return result;
@@ -102,49 +100,75 @@ export class AppointmentsService {
     }
   }
 
-  async cancelAppointment(id: string, reason?: string): Promise<Record<string, any>> {
-    const db = this.firebase.getFirestore();
-    const appointmentRef = db.collection("appointments").doc(id);
-    const doc = await appointmentRef.get();
+  async getAvailableSlots(date: string, employeeId: string, serviceId: string) {
+    const employee = await this.prisma.employee.findUnique({ where: { id: employeeId } });
+    if (!employee) throw new NotFoundException("Employee not found");
 
-    if (!doc.exists) {
+    const service = await this.prisma.service.findUnique({ where: { id: serviceId } });
+    if (!service) throw new NotFoundException("Service not found");
+
+    const dateObj = new Date(`${date}T12:00:00Z`);
+    const dayOfWeek = dateObj.getDay();
+
+    const schedules = await this.prisma.schedule.findMany({
+      where: { employeeId, dayOfWeek },
+    });
+
+    if (schedules.length === 0) {
+      return [];
+    }
+
+    const workingHours: TimeSlot[] = schedules.map((s) => ({
+      startTime: s.startTime,
+      endTime: s.endTime,
+    }));
+
+    const existingAppointmentsDoc = await this.prisma.appointment.findMany({
+      where: {
+        employeeId,
+        date,
+        status: { notIn: ["Cancelado", "cancelado"] }
+      }
+    });
+
+    const existingAppointments: TimeSlot[] = existingAppointmentsDoc.map(data => ({
+      startTime: data.startTime,
+      endTime: data.endTime,
+    }));
+
+    const availableSlots = calculateAvailableSlots({
+      workingHours,
+      appointments: existingAppointments,
+      serviceDuration: service.duration,
+      slotInterval: service.duration,
+    });
+
+    return availableSlots;
+  }
+
+  async cancelAppointment(id: string, reason?: string): Promise<Record<string, any>> {
+    const appointment = await this.prisma.appointment.findUnique({ where: { id } });
+
+    if (!appointment) {
       throw new NotFoundException(`Appointment with ID ${id} not found`);
     }
 
-    const updateData: Record<string, any> = {
-      status: "Cancelado",
-      updatedAt: new Date().toISOString(),
-      cancelledAt: new Date().toISOString(),
-    };
-
-    if (reason) {
-      updateData.cancellationReason = reason;
-    }
-
-    await appointmentRef.update(updateData);
-
-    return {
-      id: doc.id,
-      ...doc.data(),
-      ...updateData,
-    };
-  }
-
-  async cancel(id: string, reason?: string): Promise<Record<string, any>> {
-    return this.cancelAppointment(id, reason);
+    return await this.prisma.appointment.update({
+      where: { id },
+      data: {
+        status: "Cancelado",
+        cancellationReason: reason,
+      }
+    });
   }
 
   async getAppointmentById(id: string) {
-    const db = this.firebase.getFirestore();
-    const doc = await db.collection("appointments").doc(id).get();
+    const appointment = await this.prisma.appointment.findUnique({ where: { id } });
 
-    if (!doc.exists) {
+    if (!appointment) {
       throw new NotFoundException(`Appointment with ID ${id} not found`);
     }
 
-    return {
-      id: doc.id,
-      ...doc.data(),
-    };
+    return appointment;
   }
 }

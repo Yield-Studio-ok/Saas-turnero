@@ -1,5 +1,5 @@
-import { Controller, Post, Patch, Delete, Get, Param, Body } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiParam } from "@nestjs/swagger";
+import { Controller, Post, Patch, Delete, Get, Param, Body, Query } from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiParam, ApiQuery } from "@nestjs/swagger";
 import { AppointmentsService } from "./appointments.service";
 import { CreateAppointmentDto } from "./dto/create-appointment.dto";
 import { CancelAppointmentDto } from "./dto/cancel-appointment.dto";
@@ -8,6 +8,19 @@ import { CancelAppointmentDto } from "./dto/cancel-appointment.dto";
 @Controller("appointments")
 export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) {}
+
+  @Get("available-slots")
+  @ApiOperation({ summary: "Get available slots for booking" })
+  @ApiQuery({ name: "date", description: "Date in YYYY-MM-DD format" })
+  @ApiQuery({ name: "employeeId", description: "ID of the employee" })
+  @ApiQuery({ name: "serviceId", description: "ID of the service" })
+  async getAvailableSlots(
+    @Query("date") date: string,
+    @Query("employeeId") employeeId: string,
+    @Query("serviceId") serviceId: string,
+  ) {
+    return this.appointmentsService.getAvailableSlots(date, employeeId, serviceId);
+  }
 
   @Post()
   @ApiOperation({ summary: "Create an appointment" })
