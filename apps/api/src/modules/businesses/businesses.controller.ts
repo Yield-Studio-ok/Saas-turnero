@@ -80,6 +80,22 @@ export class BusinessesController {
     return this.businessesService.getPublicServices(id);
   }
 
+  @Get("my-analytics/data")
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Get My Business Analytics" })
+  getMyAnalytics(@Req() req: Request) {
+    const user = req.user as AuthUser;
+    if (!user.tenantId) throw new BadRequestException("No tenant ID found for user");
+    return this.businessesService.getAnalytics(user.tenantId);
+  }
+
+  @Get(":id/analytics")
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Get Business Analytics" })
+  getAnalytics(@Param("id") id: string) {
+    return this.businessesService.getAnalytics(id);
+  }
+
   @Get(":id")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get Business profile" })
@@ -99,4 +115,3 @@ export class BusinessesController {
     return this.businessesService.updateProfile(id, user.uid, updateBusinessDto);
   }
 }
-
