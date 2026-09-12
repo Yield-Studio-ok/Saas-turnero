@@ -11,6 +11,7 @@ import { SchedulesModule } from "./modules/schedules/schedules.module";
 import { ServicesModule } from "./modules/services/services.module";
 import { AppointmentsModule } from "./modules/appointments/appointments.module";
 import { LegalNoticesModule } from "./modules/legal-notices/legal-notices.module";
+import { ProductsModule } from './modules/products/products.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { LegalNoticesModule } from "./modules/legal-notices/legal-notices.module
     ServicesModule,
     AppointmentsModule,
     LegalNoticesModule,
+    ProductsModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

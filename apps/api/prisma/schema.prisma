@@ -34,6 +34,7 @@ model Business {
   employees   Employee[]
   schedules   Schedule[]
   services    Service[]
+  products    Product[]
 
   @@map("businesses")
 }
@@ -109,7 +110,6 @@ model LegalNoticeAcceptance {
   @@unique([userId, legalNoticeId])
   @@map("legal_notice_acceptances")
 }
-
 model Shift {
   id         String   @id @default(uuid())
   employeeId String
@@ -122,3 +122,16 @@ model Shift {
   @@map("shifts")
 }
 
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  price       Float
+  stock       Int      @default(0)
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("products")
+}
