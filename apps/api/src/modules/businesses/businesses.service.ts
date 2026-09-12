@@ -21,12 +21,17 @@ export class BusinessesService {
     if (!user) {
       user = await this.prisma.user.findUnique({ where: { email } });
       if (user) {
-        user = await this.prisma.user.update({ where: { email }, data: { firebaseUid, role: "owner" } });
+        user = await this.prisma.user.update({
+          where: { email },
+          data: { firebaseUid, role: "owner" },
+        });
       } else {
         user = await this.prisma.user.create({ data: { firebaseUid, email, role: "owner" } });
       }
     }
-    const business = await this.prisma.business.create({ data: { ...createBusinessDto, ownerId: user.id } });
+    const business = await this.prisma.business.create({
+      data: { ...createBusinessDto, ownerId: user.id },
+    });
 
     if (this.firebase.isEnabled()) {
       try {
@@ -312,6 +317,44 @@ export class BusinessesService {
         slug: resolvedSlug,
       },
     };
+  }
+
+  async getAnalytics(businessId: string) {
+    const business = await this.prisma.business.findUnique({
+      where: { id: businessId },
+    });
+    if (!business) throw new NotFoundException("Business not found");
+
+    const now = new Date();
+    const currentMonthStr = now.toISOString().slice(0, 7);
+
+    const revenueResult = await this.prisma.appointment.aggregate({
+      where: {
+        businessId,
+        status: "COMPLETED",
+        date: { startsWith: currentMonthStr },
+      },
+      _sum: { paidAmount: true },
+    });
+    const totalRevenue = revenueResult._sum.paidAmount || 0;
+
+    const statusCounts = await this.prisma.appointment.groupBy({
+      by: ["status"],
+      where: { businessId, date: { startsWith: currentMonthStr } },
+      _count: { id: true },
+    });
+
+    let totalAppointments = 0;
+    let noShowAppointments = 0;
+    statusCounts.forEach((group) => {
+      totalAppointments += group._count.id;
+      if (group.status === "NO_SHOW") noShowAppointments = group._count.id;
+    });
+
+    const absenteeismRate =
+      totalAppointments > 0 ? (noShowAppointments / totalAppointments) * 100 : 0;
+
+    return { totalRevenue, absenteeismRate, totalAppointments, noShowAppointments };
   }
 
   async getPublicServices(identifier: string) {
