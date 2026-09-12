@@ -1,4 +1,4 @@
-﻿import { Injectable, ForbiddenException, NotFoundException } from "@nestjs/common";
+import { Injectable, ForbiddenException, NotFoundException } from "@nestjs/common";
 import { CreateEmployeeDto } from "./dto/create-employee.dto";
 import { UpdateEmployeeDto } from "./dto/update-employee.dto";
 import { PrismaService } from "../../prisma/prisma.service";
@@ -22,7 +22,7 @@ export class EmployeesService {
 
   async findAllByBusiness(userId: string, businessId: string) {
     await this.checkBusinessOwnership(userId, businessId);
-    return this.prisma.employee.findMany({ where: { businessId } });
+    return this.prisma.employee.findMany({ where: { businessId }, include: { shifts: { where: { clockOut: null }, take: 1 } } });
   }
 
   async findOne(userId: string, id: string) {
@@ -46,5 +46,25 @@ export class EmployeesService {
   async remove(userId: string, id: string) {
     await this.findOne(userId, id); // validates ownership
     return this.prisma.employee.delete({ where: { id } });
+  }
+  async toggleShift(id: string) {
+    const employee = await this.prisma.employee.findUnique({ where: { id } });
+    if (!employee) throw new NotFoundException('Employee not found');
+
+    const activeShift = await this.prisma.shift.findFirst({
+      where: { employeeId: id, clockOut: null },
+      orderBy: { clockIn: 'desc' },
+    });
+
+    if (activeShift) {
+      return this.prisma.shift.update({
+        where: { id: activeShift.id },
+        data: { clockOut: new Date() },
+      });
+    } else {
+      return this.prisma.shift.create({
+        data: { employeeId: id },
+      });
+    }
   }
 }

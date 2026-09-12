@@ -1,4 +1,4 @@
-﻿import { Controller, Get, Post, Body, Patch, Param, Delete, Req, Query } from "@nestjs/common";
+import { Controller, Get, Post, Body, Patch, Param, Delete, Req, Query } from "@nestjs/common";
 import { EmployeesService } from "./employees.service";
 import { CreateEmployeeDto } from "./dto/create-employee.dto";
 import { UpdateEmployeeDto } from "./dto/update-employee.dto";
@@ -50,5 +50,10 @@ export class EmployeesController {
   remove(@Req() req: Request, @Param("id") id: string) {
     const user = req.user as AuthUser;
     return this.employeesService.remove(user.uid, id);
+  }
+  @Post(':id/shift')
+  @ApiOperation({ summary: 'Clock in or out for a shift' })
+  toggleShift(@Param('id') id: string) {
+    return this.employeesService.toggleShift(id);
   }
 }

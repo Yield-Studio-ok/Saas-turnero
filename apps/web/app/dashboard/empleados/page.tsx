@@ -1,9 +1,9 @@
 "use client";
 import { useState } from "react";
 
-const initialEmpleados = [
-  { id: 1, nombre: "Juan Pérez", especialidad: "Barbero", telefono: "12345678" },
-  { id: 2, nombre: "María Gómez", especialidad: "Colorista", telefono: "87654321" },
+const initialEmpleados: any[] = [
+  { id: 1, nombre: "Juan Pérez", especialidad: "Barbero", telefono: "12345678", isClockedIn: false },
+  { id: 2, nombre: "María Gómez", especialidad: "Colorista", telefono: "87654321", isClockedIn: true },
 ];
 
 export default function EmpleadosPage() {
@@ -30,13 +30,22 @@ export default function EmpleadosPage() {
         empleados.map((emp) => (emp.id === editingId ? { ...formData, id: editingId } : emp)),
       );
     } else {
-      setEmpleados([...empleados, { ...formData, id: Date.now() }]);
+      setEmpleados([...empleados, { ...formData, id: Date.now(), isClockedIn: false }]);
     }
     setShowModal(false);
   };
 
   const handleDelete = (id: number) => {
     setEmpleados(empleados.filter((emp) => emp.id !== id));
+  };
+
+  const handleToggleShift = async (id: number) => {
+    setEmpleados(empleados.map(emp => emp.id === id ? { ...emp, isClockedIn: !emp.isClockedIn } : emp));
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/employees/${id}/shift`, { method: 'POST' });
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
@@ -64,6 +73,9 @@ export default function EmpleadosPage() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Teléfono
               </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Fichaje
+              </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Acciones
               </th>
@@ -80,6 +92,16 @@ export default function EmpleadosPage() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {empleado.telefono}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <button
+                    onClick={() => handleToggleShift(empleado.id)}
+                    className={`px-3 py-1 rounded text-white font-medium ${
+                      empleado.isClockedIn ? "bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600"
+                    }`}
+                  >
+                    {empleado.isClockedIn ? "Fichar Salida" : "Fichar Entrada"}
+                  </button>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <button

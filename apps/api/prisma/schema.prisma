@@ -49,6 +49,7 @@ model Employee {
   updatedAt  DateTime @updatedAt @map("updated_at")
 
   schedules Schedule[]
+  shifts    Shift[]
 
   @@map("employees")
 }
@@ -108,3 +109,16 @@ model LegalNoticeAcceptance {
   @@unique([userId, legalNoticeId])
   @@map("legal_notice_acceptances")
 }
+
+model Shift {
+  id         String   @id @default(uuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  clockIn    DateTime @default(now())
+  clockOut   DateTime?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("shifts")
+}
+
