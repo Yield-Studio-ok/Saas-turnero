@@ -23,10 +23,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             Turnos
           </Link>
           <Link
-            href="/dashboard/servicios"
+            href="/dashboard/catalogo"
             className="block px-4 py-2 rounded-md hover:bg-blue-800 transition"
           >
-            Servicios
+            Cat�logo
           </Link>
           <Link
             href="/dashboard/perfil"
