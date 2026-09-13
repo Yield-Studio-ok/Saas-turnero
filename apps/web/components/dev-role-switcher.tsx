@@ -2,10 +2,12 @@
 
 import { useAuth, MOCK_USERS, type MockUserKey } from "@/lib/auth-context";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export function DevRoleSwitcher() {
-  const { switchMockUser, currentMockKey, user } = useAuth();
+  const { switchMockUser, currentMockKey } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
 
   // Only show in dev mode (no real Firebase)
   if (process.env.NEXT_PUBLIC_FIREBASE_API_KEY && process.env.NEXT_PUBLIC_FIREBASE_API_KEY !== "demo-api-key") {
@@ -20,6 +22,27 @@ export function DevRoleSwitcher() {
     customer: "bg-amber-500",
   };
 
+  const handleSwitch = (key: MockUserKey) => {
+    switchMockUser(key);
+    setIsOpen(false);
+    
+    // Redirect based on role so the dashboard actually changes!
+    setTimeout(() => {
+      if (key === "superadmin") {
+        router.push("/admin");
+      } else if (key === "customer") {
+        router.push("/explorar");
+      } else if (key === "employee") {
+        router.push("/dashboard/turnos");
+      } else {
+        router.push("/dashboard");
+      }
+      
+      // Force a hard refresh to ensure layout completely resets with new auth state
+      window.location.reload();
+    }, 100);
+  };
+
   return (
     <div className="fixed bottom-4 left-4 z-[9999]">
       {isOpen && (
@@ -32,7 +55,7 @@ export function DevRoleSwitcher() {
             {(Object.entries(MOCK_USERS) as [MockUserKey, typeof MOCK_USERS[MockUserKey]][]).map(([key, mock]) => (
               <button
                 key={key}
-                onClick={() => { switchMockUser(key); setIsOpen(false); }}
+                onClick={() => handleSwitch(key)}
                 className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-all ${
                   currentMockKey === key
                     ? "bg-blue-50 border border-blue-200 text-blue-900 font-semibold"

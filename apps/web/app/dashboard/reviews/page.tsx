@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { PaywallModal } from "@/components/paywall-modal";
+import { useRouter } from "next/navigation";
 
 type Review = {
   id: string;
@@ -18,6 +19,7 @@ export default function ReviewsDashboard() {
   const [showPaywall, setShowPaywall] = useState(false);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   // En un caso real se obtendría del contexto del negocio actual
   const businessId = "YOUR_BUSINESS_ID";
@@ -130,7 +132,7 @@ export default function ReviewsDashboard() {
       
       <PaywallModal 
         isOpen={showPaywall} 
-        onClose={() => {}}
+        onClose={() => router.push("/dashboard")}
         title="Gestiona tu Reputación"
         description="Actualiza a PRO para leer y responder reseñas de tus clientes, centralizando la reputación de tu negocio."
       />

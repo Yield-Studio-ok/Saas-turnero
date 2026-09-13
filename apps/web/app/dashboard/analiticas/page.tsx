@@ -3,10 +3,12 @@
 import { useAuth } from "@/lib/auth-context";
 import { PaywallModal } from "@/components/paywall-modal";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function AnaliticasPage() {
   const { user } = useAuth();
   const [showPaywall, setShowPaywall] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     // Si el usuario no tiene plan PRO (o no está cargado y por defecto es BASIC), mostramos el paywall
@@ -46,7 +48,7 @@ export default function AnaliticasPage() {
 
       <PaywallModal 
         isOpen={showPaywall} 
-        onClose={() => {}} // No dejamos que lo cierre para que no vea la página sin pagar
+        onClose={() => router.push("/dashboard")}
         title="Desbloquea Analíticas Avanzadas"
         description="Actualiza a PRO para entender a fondo el rendimiento de tu negocio, comparar periodos y tomar mejores decisiones."
       />
