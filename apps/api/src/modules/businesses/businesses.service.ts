@@ -372,7 +372,7 @@ export class BusinessesService {
           const tenantData = doc.data();
           const tenantId = doc.id;
           
-          let services = [];
+          let services: any[] = [];
           try {
             const servicesSnap = await db.collection("tenants").doc(tenantId).collection("services").get();
             servicesSnap.forEach(sDoc => {
@@ -429,7 +429,7 @@ export class BusinessesService {
           description: s.description || "",
           duration: s.duration,
           price: s.price,
-          category: s.category || "General",
+          category: (s as any).category || "General",
         })),
       };
     });
