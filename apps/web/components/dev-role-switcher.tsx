@@ -26,21 +26,15 @@ export function DevRoleSwitcher() {
     switchMockUser(key);
     setIsOpen(false);
     
-    // Redirect based on role so the dashboard actually changes!
+    // Redirect based on role and force a full page reload so layouts update correctly
     setTimeout(() => {
-      if (key === "superadmin") {
-        router.push("/admin");
-      } else if (key === "customer") {
-        router.push("/explorar");
-      } else if (key === "employee") {
-        router.push("/dashboard/turnos");
-      } else {
-        router.push("/dashboard");
-      }
+      let targetPath = "/dashboard";
+      if (key === "superadmin") targetPath = "/admin";
+      else if (key === "customer") targetPath = "/explorar";
+      else if (key === "employee") targetPath = "/dashboard/turnos";
       
-      // Force a hard refresh to ensure layout completely resets with new auth state
-      window.location.reload();
-    }, 100);
+      window.location.href = targetPath;
+    }, 50);
   };
 
   return (

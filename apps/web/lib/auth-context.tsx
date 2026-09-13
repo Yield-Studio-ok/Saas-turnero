@@ -86,12 +86,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(mockUser);
     setToken(`mock-token-${key}`);
     setCurrentMockKey(key);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("mock_role", key);
+    }
   };
 
   useEffect(() => {
     // If no real Firebase API key is provided, mock the login for local development
     if (process.env.NEXT_PUBLIC_FIREBASE_API_KEY === undefined || process.env.NEXT_PUBLIC_FIREBASE_API_KEY === "demo-api-key") {
-      switchMockUser("owner"); // Default to owner
+      const savedRole = (typeof window !== 'undefined' ? localStorage.getItem("mock_role") : "owner") as MockUserKey;
+      switchMockUser(MOCK_USERS[savedRole] ? savedRole : "owner");
       setLoading(false);
       return;
     }
