@@ -11,7 +11,7 @@ async function fetchLocalProfile(slug: string) {
   try {
     const rootUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
     
-    const res = await fetch(\`\${rootUrl}/business/public?slug=\${slug}\`, {
+    const res = await fetch(`${rootUrl}/business/public?slug=${slug}`, {
       next: { revalidate: 60 } // optional cache revalidation
     });
     if (!res.ok) {
@@ -32,8 +32,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const title = profile?.name || slug.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
 
   return {
-    title: \`\${title} | Reservar Turno\`,
-    description: \`Reserva tu turno online en \${title}. Selecciona tu servicio y horario de atención.\`,
+    title: `${title} | Reservar Turno`,
+    description: `Reserva tu turno online en ${title}. Selecciona tu servicio y horario de atención.`,
   };
 }
 

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 
@@ -29,14 +29,14 @@ export function PaywallModal({
   if (!isVisible && !isOpen) return null;
 
   return (
-    <div className={ixed inset-0 z-50 flex items-center justify-center transition-all duration-300 }>
+    <div className={`fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ${isOpen ? "opacity-100" : "opacity-0"}`}>
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
       
       <div 
-        className={elative w-full max-w-lg mx-4 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-3xl shadow-2xl overflow-hidden transform transition-all duration-300 }
+        className={`relative w-full max-w-lg mx-4 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-3xl shadow-2xl overflow-hidden transform transition-all duration-300 ${isOpen ? "scale-100 translate-y-0" : "scale-95 translate-y-4"}`}
       >
         <div className="absolute top-0 right-0 p-4">
           <button 

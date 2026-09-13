@@ -94,8 +94,8 @@ export default function ExplorarPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filtered.map((business) => (
               <Link
-                key={business.id || business.slug}
-                href={\`/\${business.slug}\`}
+                key={business.slug}
+                href={`/${business.slug}`}
                 className="group block bg-white rounded-3xl overflow-hidden border border-slate-200 hover:border-blue-400 hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300 flex flex-col"
               >
                 {/* Card Image Area (Placeholder gradient) */}

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useAuth } from "@/lib/auth-context";
 import { PaywallModal } from "@/components/paywall-modal";
@@ -22,8 +22,7 @@ export default function AnaliticasPage() {
   return (
     <div className="space-y-6 relative">
       <h2 className="text-2xl font-bold">Analíticas Avanzadas</h2>
-      
-      <div className={\grid grid-cols-1 md:grid-cols-3 gap-6 \\}>
+      <div className={`grid grid-cols-1 md:grid-cols-3 gap-6`}>
         <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
           <h3 className="text-gray-500 text-sm font-medium">Ingresos del Mes</h3>
           <p className="text-3xl font-bold text-gray-900 mt-2">,500</p>
@@ -41,7 +40,7 @@ export default function AnaliticasPage() {
         </div>
       </div>
 
-      <div className={\g-white p-6 rounded-lg shadow border border-gray-200 h-64 flex items-center justify-center \\}>
+      <div className={`bg-white p-6 rounded-lg shadow border border-gray-200 h-64 flex items-center justify-center`}>
         <span className="text-gray-400">Gráfico de Analíticas (Simulado)</span>
       </div>
 
