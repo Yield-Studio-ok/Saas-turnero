@@ -1,90 +1,135 @@
-﻿import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("Seeding demo data...");
+  console.log("Seeding B2B2C demo data...");
 
-  const user = await prisma.user.upsert({
-    where: { email: "admin@ejemplo.com" },
-    update: {},
+  // 1. Crear Superadmin
+  await prisma.user.upsert({
+    where: { email: "superadmin@turnero.com" },
+    update: { role: "superadmin" },
     create: {
-      email: "admin@ejemplo.com",
-      name: "Admin Demo",
+      email: "superadmin@turnero.com",
+      name: "Super Admin",
+      role: "superadmin",
+    },
+  });
+
+  // 2. Crear Dueños de Locales
+  const ownerBasic = await prisma.user.upsert({
+    where: { email: "owner_basic@ejemplo.com" },
+    update: { role: "owner" },
+    create: {
+      email: "owner_basic@ejemplo.com",
+      name: "Owner Basic",
       role: "owner",
     },
   });
 
-  const business = await prisma.business.upsert({
-    where: { id: "demo-local" },
-    update: { ownerId: user.id },
+  const ownerPro = await prisma.user.upsert({
+    where: { email: "owner_pro@ejemplo.com" },
+    update: { role: "owner" },
     create: {
-      id: "demo-local",
-      name: "Peluquería de Demo",
-      ownerId: user.id,
+      email: "owner_pro@ejemplo.com",
+      name: "Owner Pro",
+      role: "owner",
     },
   });
 
-  const services = await Promise.all([
-    prisma.service.upsert({
-      where: { id: "service-1" },
+  const ownerPremium = await prisma.user.upsert({
+    where: { email: "owner_premium@ejemplo.com" },
+    update: { role: "owner" },
+    create: {
+      email: "owner_premium@ejemplo.com",
+      name: "Owner Premium",
+      role: "owner",
+    },
+  });
+
+  // 3. Crear Cliente Final
+  const customer = await prisma.user.upsert({
+    where: { email: "cliente@b2c.com" },
+    update: { role: "user" },
+    create: {
+      email: "cliente@b2c.com",
+      name: "Cliente Final",
+      role: "user",
+    },
+  });
+
+  // 4. Crear Locales en distintos planes
+  const businessBasic = await prisma.business.upsert({
+    where: { id: "local-basic" },
+    update: { plan: "BASIC", ownerId: ownerBasic.id },
+    create: {
+      id: "local-basic",
+      name: "Barberia Basic",
+      ownerId: ownerBasic.id,
+      plan: "BASIC",
+    },
+  });
+
+  const businessPro = await prisma.business.upsert({
+    where: { id: "local-pro" },
+    update: { plan: "PRO", ownerId: ownerPro.id },
+    create: {
+      id: "local-pro",
+      name: "Estetica Pro",
+      ownerId: ownerPro.id,
+      plan: "PRO",
+    },
+  });
+
+  const businessPremium = await prisma.business.upsert({
+    where: { id: "local-premium" },
+    update: { plan: "PREMIUM", ownerId: ownerPremium.id },
+    create: {
+      id: "local-premium",
+      name: "Spa Premium",
+      ownerId: ownerPremium.id,
+      plan: "PREMIUM",
+    },
+  });
+
+  // 5. Crear Servicios
+  const businesses = [businessBasic, businessPro, businessPremium];
+  for (const b of businesses) {
+    await prisma.service.upsert({
+      where: { id: `srv-1-${b.id}` },
       update: {},
       create: {
-        id: "service-1",
-        name: "Corte Clásico",
+        id: `srv-1-${b.id}`,
+        name: "Servicio Estandar",
         price: 15,
         duration: 30,
-        businessId: business.id,
+        businessId: b.id,
       },
-    }),
-    prisma.service.upsert({
-      where: { id: "service-2" },
+    });
+  }
+
+  // 6. Crear Empleados
+  const employees = [];
+  for (const b of businesses) {
+    const emp = await prisma.employee.upsert({
+      where: { id: `emp-${b.id}` },
       update: {},
       create: {
-        id: "service-2",
-        name: "Barba y Perfilado",
-        price: 10,
-        duration: 20,
-        businessId: business.id,
+        id: `emp-${b.id}`,
+        name: `Empleado ${b.name}`,
+        businessId: b.id,
       },
-    }),
-    prisma.service.upsert({
-      where: { id: "service-3" },
-      update: {},
-      create: {
-        id: "service-3",
-        name: "Coloración",
-        price: 40,
-        duration: 60,
-        businessId: business.id,
-      },
-    }),
-  ]);
+    });
+    employees.push(emp);
+  }
 
-  const employees = await Promise.all([
-    prisma.employee.upsert({
-      where: { id: "emp-1" },
-      update: {},
-      create: { id: "emp-1", name: "Juan Perez", businessId: business.id },
-    }),
-    prisma.employee.upsert({
-      where: { id: "emp-2" },
-      update: {},
-      create: { id: "emp-2", name: "Maria Gomez", businessId: business.id },
-    }),
-    prisma.employee.upsert({
-      where: { id: "emp-3" },
-      update: {},
-      create: { id: "emp-3", name: "Carlos Ruiz", businessId: business.id },
-    }),
-  ]);
-
+  // 7. Crear Horarios para Empleados
   for (const emp of employees) {
     for (let day = 1; day <= 5; day++) {
       await prisma.schedule
         .create({
           data: {
             employeeId: emp.id,
-            businessId: business.id,
+            businessId: emp.businessId,
             dayOfWeek: day,
             startTime: "09:00",
             endTime: "18:00",
@@ -94,77 +139,27 @@ async function main() {
     }
   }
 
+  // 8. Limpiar y Crear Turnos de Demo
   const today = new Date().toISOString().split("T")[0];
-  await prisma.appointment.deleteMany({ where: { businessId: business.id } });
+  await prisma.appointment.deleteMany();
 
-  const appointmentsData = [
-    {
-      empId: "emp-1",
-      srvId: "service-1",
-      start: "09:00",
-      end: "09:30",
-      cust: "Lucas",
-      status: "completed",
-    },
-    {
-      empId: "emp-1",
-      srvId: "service-2",
-      start: "10:00",
-      end: "10:20",
-      cust: "Martin",
-      status: "confirmed",
-    },
-    {
-      empId: "emp-1",
-      srvId: "service-1",
-      start: "11:00",
-      end: "11:30",
-      cust: "Pedro",
-      status: "confirmed",
-    },
-    {
-      empId: "emp-2",
-      srvId: "service-3",
-      start: "09:00",
-      end: "10:00",
-      cust: "Ana",
-      status: "cancelled",
-    },
-    {
-      empId: "emp-2",
-      srvId: "service-1",
-      start: "13:00",
-      end: "13:30",
-      cust: "Laura",
-      status: "confirmed",
-    },
-    {
-      empId: "emp-3",
-      srvId: "service-2",
-      start: "15:00",
-      end: "15:20",
-      cust: "Diego",
-      status: "confirmed",
-    },
-  ];
-
-  for (const appt of appointmentsData) {
+  for (const b of businesses) {
     await prisma.appointment.create({
       data: {
         date: today,
-        startTime: appt.start,
-        endTime: appt.end,
-        status: appt.status,
-        customerName: appt.cust,
-        customerEmail: appt.cust.toLowerCase() + "@test.com",
-        businessId: business.id,
-        employeeId: appt.empId,
-        serviceId: appt.srvId,
+        startTime: "10:00",
+        endTime: "10:30",
+        status: "confirmed",
+        customerName: customer.name || "Cliente Demo",
+        customerEmail: customer.email,
+        businessId: b.id,
+        employeeId: `emp-${b.id}`,
+        serviceId: `srv-1-${b.id}`,
       },
     });
   }
 
-  console.log("Demo data seeded successfully!");
+  console.log("B2B2C demo data seeded successfully!");
 }
 
 main().then(() => prisma.$disconnect());
