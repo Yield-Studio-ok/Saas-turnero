@@ -7,41 +7,46 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum SubscriptionPlan {
+  BASIC
+  PRO
+  PREMIUM
+}
+
 model User {
-  id          String     @id @default(uuid())
-  email       String     @unique
-  firebaseUid String?    @unique
-  name        String?
-  role        String     @default("user")
-  credits     Int        @default(0)
+  id            String   @id @default(uuid())
+  email         String   @unique
+  firebaseUid   String?  @unique
+  name          String?
+  role          String   @default("user")
+  credits       Int      @default(0)
   loyaltyPoints Int      @default(0)
-  createdAt   DateTime   @default(now()) @map("created_at")
-  updatedAt   DateTime   @updatedAt @map("updated_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
-  businesses  Business[]
-  reviews     Review[]
+  businesses             Business[]
+  reviews                Review[]
   legalNoticeAcceptances LegalNoticeAcceptance[]
-
 
   @@map("users")
 }
 
 model Business {
-  id          String   @id @default(uuid())
+  id          String           @id @default(uuid())
   name        String
   description String?
   ownerId     String
-  owner       User     @relation(fields: [ownerId], references: [id])
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  owner       User             @relation(fields: [ownerId], references: [id])
+  plan        SubscriptionPlan @default(BASIC)
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
 
-  employees   Employee[]
-  schedules   Schedule[]
-  services    Service[]
-  products    Product[]
-  reviews     Review[]
+  employees    Employee[]
+  schedules    Schedule[]
+  services     Service[]
+  products     Product[]
+  reviews      Review[]
   appointments Appointment[]
-
 
   @@map("businesses")
 }
@@ -56,56 +61,54 @@ model Employee {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
-  schedules Schedule[]
-  shifts    Shift[]
+  schedules    Schedule[]
+  shifts       Shift[]
   appointments Appointment[]
-
 
   @@map("employees")
 }
 
 model Schedule {
-  id          String   @id @default(uuid())
-  employeeId  String
-  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  businessId  String
-  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  dayOfWeek   Int      // 0 = Sunday, 1 = Monday, etc.
-  startTime   String   // e.g. "09:00"
-  endTime     String   // e.g. "18:00"
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id         String   @id @default(uuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  dayOfWeek  Int // 0 = Sunday, 1 = Monday, etc.
+  startTime  String // e.g. "09:00"
+  endTime    String // e.g. "18:00"
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
   @@map("schedules")
 }
 
 model Service {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  price       Float
-  duration    Int      // duration in minutes
-  businessId  String
-  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id           String        @id @default(uuid())
+  name         String
+  description  String?
+  price        Float
+  duration     Int // duration in minutes
+  businessId   String
+  business     Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
   appointments Appointment[]
-
 
   @@map("services")
 }
 
 model LegalNotice {
-  id             String                  @id @default(uuid())
+  id             String   @id @default(uuid())
   title          String
-  content        String                  @db.Text
-  version        String                  @default("1.0")
-  targetUserRole String?                 @map("target_user_role")
-  isActive       Boolean                 @default(true) @map("is_active")
-  createdAt      DateTime                @default(now()) @map("created_at")
-  updatedAt      DateTime                @updatedAt @map("updated_at")
+  content        String   @db.Text
+  version        String   @default("1.0")
+  targetUserRole String?  @map("target_user_role")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
-  acceptances    LegalNoticeAcceptance[]
+  acceptances LegalNoticeAcceptance[]
 
   @@map("legal_notices")
 }
@@ -121,14 +124,15 @@ model LegalNoticeAcceptance {
   @@unique([userId, legalNoticeId])
   @@map("legal_notice_acceptances")
 }
+
 model Shift {
-  id         String   @id @default(uuid())
+  id         String    @id @default(uuid())
   employeeId String
-  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  clockIn    DateTime @default(now())
+  employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  clockIn    DateTime  @default(now())
   clockOut   DateTime?
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
 
   @@map("shifts")
 }
@@ -148,11 +152,11 @@ model Product {
 }
 
 model Appointment {
-  id                 String   @id @default(uuid())
-  date               String   // YYYY-MM-DD
-  startTime          String   // HH:mm
-  endTime            String   // HH:mm
-  status             String   @default("confirmed") // "confirmed", "cancelled"
+  id                 String  @id @default(uuid())
+  date               String // YYYY-MM-DD
+  startTime          String // HH:mm
+  endTime            String // HH:mm
+  status             String  @default("confirmed") // "confirmed", "cancelled"
   customerName       String
   customerEmail      String
   customerPhone      String?
@@ -161,23 +165,21 @@ model Appointment {
   paidAmount         Float?
   tip                Float?
 
-  businessId         String
-  business           Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
-  employeeId         String
-  employee           Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
-  serviceId          String
-  service            Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  review             Review?
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  review    Review?
 
-  createdAt          DateTime @default(now()) @map("created_at")
-  updatedAt          DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("appointments")
 }
-
-
 
 model Review {
   id            String       @id @default(uuid())
