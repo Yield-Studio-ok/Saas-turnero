@@ -46,7 +46,7 @@ export default function HomePage() {
         {/* Placeholder for Hero Image */}
         <div className="relative h-[500px] w-full rounded-3xl overflow-hidden bg-slate-100 shadow-2xl border border-slate-200">
            <div className="absolute inset-0 flex items-center justify-center text-slate-400">
-             [Hero Image Placeholder]
+             <img src="https://images.pexels.com/photos/3993444/pexels-photo-3993444.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="Salon de belleza y barbería" className="w-full h-full object-cover" />
            </div>
         </div>
       </main>
@@ -125,3 +125,4 @@ export default function HomePage() {
     </div>
   );
 }
+
