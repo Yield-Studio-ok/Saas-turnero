@@ -47,3 +47,6 @@ lefthook-local.yml
 
 # Firebase (opcional)
 firebase-credentials.json
+
+# Agent skills (local only)
+.agents/skills/impeccable/
