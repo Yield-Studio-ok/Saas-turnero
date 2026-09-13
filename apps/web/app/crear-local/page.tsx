@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../lib/auth-context";
 
@@ -10,11 +10,14 @@ export default function CrearLocalPage() {
   const { token, loading, user } = useAuth();
   const router = useRouter();
 
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/login");
+    }
+  }, [loading, user, router]);
+
   if (loading) return <div className="p-8 text-center">Cargando...</div>;
-  if (!user) {
-    router.push("/login");
-    return null;
-  }
+  if (!user) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
