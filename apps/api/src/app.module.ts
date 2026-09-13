@@ -14,6 +14,7 @@ import { LegalNoticesModule } from "./modules/legal-notices/legal-notices.module
 import { ProductsModule } from "./modules/products/products.module";
 import { ReviewsModule } from "./modules/reviews/reviews.module";
 import { ChatbotModule } from "./modules/chatbot/chatbot.module";
+import { WebhooksModule } from "./modules/webhooks/webhooks.module";
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { ChatbotModule } from "./modules/chatbot/chatbot.module";
     ProductsModule,
     ReviewsModule,
     ChatbotModule,
+    WebhooksModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
