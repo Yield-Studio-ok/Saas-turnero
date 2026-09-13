@@ -1,4 +1,4 @@
-﻿import { Module, Global } from "@nestjs/common";
+import { Module, Global } from "@nestjs/common";
 import { APP_GUARD } from "@nestjs/core";
 import { JwtModule } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
@@ -8,6 +8,7 @@ import { AuthGuard } from "./auth.guard";
 import { AuthService } from "./auth.service";
 import { AuthController } from "./auth.controller";
 import { MeController } from "./me.controller";
+import { SuperadminGuard } from "./guards/superadmin.guard";
 
 @Global()
 @Module({
@@ -28,7 +29,7 @@ import { MeController } from "./me.controller";
     }),
   ],
   controllers: [AuthController, MeController],
-  providers: [FirebaseService, AuthService, AuthGuard, { provide: APP_GUARD, useClass: AuthGuard }],
-  exports: [FirebaseService, AuthService, AuthGuard],
+  providers: [FirebaseService, AuthService, AuthGuard, SuperadminGuard, { provide: APP_GUARD, useClass: AuthGuard }],
+  exports: [FirebaseService, AuthService, AuthGuard, SuperadminGuard],
 })
 export class AuthModule {}
