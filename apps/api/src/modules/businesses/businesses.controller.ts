@@ -51,7 +51,7 @@ export class BusinessesController {
   ) {
     const identifier = slug || id || businessId;
     if (!identifier) {
-      throw new BadRequestException("slug, id or businessId query parameter is required");
+      return this.businessesService.getDirectory();
     }
     return this.businessesService.getPublicProfile(identifier);
   }
