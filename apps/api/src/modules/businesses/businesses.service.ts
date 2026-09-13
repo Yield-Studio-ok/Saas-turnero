@@ -361,4 +361,77 @@ export class BusinessesService {
     const profile = await this.getPublicProfile(identifier);
     return profile.services;
   }
+
+  async getDirectory() {
+    if (this.firebase.isEnabled()) {
+      try {
+        const db = this.firebase.getFirestore();
+        const tenantsSnap = await db.collection("tenants").get();
+        const results = [];
+        for (const doc of tenantsSnap.docs) {
+          const tenantData = doc.data();
+          const tenantId = doc.id;
+          
+          let services = [];
+          try {
+            const servicesSnap = await db.collection("tenants").doc(tenantId).collection("services").get();
+            servicesSnap.forEach(sDoc => {
+              services.push({ id: sDoc.id, ...sDoc.data() });
+            });
+          } catch (e) {}
+          
+          const resolvedSlug = tenantData.slug || (tenantData.name ? tenantData.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") : tenantId);
+          
+          results.push({
+            ...tenantData,
+            id: tenantId,
+            name: tenantData.name || "Unknown",
+            slug: resolvedSlug,
+            description: tenantData.description || tenantData.tagline || "",
+            tagline: tenantData.tagline || tenantData.description || "",
+            rating: typeof tenantData.rating === "number" ? tenantData.rating : 5.0,
+            reviewCount: typeof tenantData.reviewCount === "number" ? tenantData.reviewCount : 0,
+            isOpen: typeof tenantData.isOpen === "boolean" ? tenantData.isOpen : true,
+            services
+          });
+        }
+        if (results.length > 0) return results;
+      } catch (err) {
+        console.warn("Firestore fetch directory failed, falling back to database:", err);
+      }
+    }
+
+    const businesses = await this.prisma.business.findMany({
+      include: {
+        services: true,
+      },
+    });
+
+    return businesses.map((business) => {
+      const resolvedSlug = business.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      const { services = [], ...businessData } = business;
+      return {
+        ...businessData,
+        id: business.id,
+        name: business.name,
+        slug: resolvedSlug,
+        description: business.description || "",
+        tagline: business.description || "",
+        address: "",
+        phone: "",
+        openHours: "09:00 - 20:00",
+        rating: 5.0,
+        reviewCount: 0,
+        isOpen: true,
+        services: services.map((s) => ({
+          id: s.id,
+          name: s.name,
+          description: s.description || "",
+          duration: s.duration,
+          price: s.price,
+          category: s.category || "General",
+        })),
+      };
+    });
+  }
 }
