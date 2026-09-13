@@ -16,4 +16,4 @@ WORKDIR /app/apps/api
 RUN npx prisma generate
 
 EXPOSE 3001
-CMD ["sh", "-c", "npx prisma migrate deploy && npx nest start --watch"]
+CMD ["npx", "nest", "start", "--watch"]
