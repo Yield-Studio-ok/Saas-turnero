@@ -26,6 +26,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // If no real Firebase API key is provided, mock the login for local development
+    if (process.env.NEXT_PUBLIC_FIREBASE_API_KEY === undefined || process.env.NEXT_PUBLIC_FIREBASE_API_KEY === "demo-api-key") {
+      const mockUser = {
+        uid: "mock-owner-123",
+        email: "dueño@ejemplo.com",
+        plan: "BASIC",
+        getIdToken: async () => "mock-token-123"
+      } as unknown as ExtendedUser;
+      
+      setUser(mockUser);
+      setToken("mock-token-123");
+      setLoading(false);
+      return;
+    }
+
     const unsubscribe = onIdTokenChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const idToken = await firebaseUser.getIdToken();
