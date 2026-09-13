@@ -9,12 +9,7 @@ interface PageProps {
 
 async function fetchLocalProfile(slug: string) {
   try {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
-    // Usually NestJS endpoints are configured on the root or /api. We can try absolute url directly.
-    // If it's a server component we can't easily rely on relative paths for fetch.
-    const baseUrl = API_URL.replace(/\\/api$/, ""); // strip trailing /api if present to be safe, wait! The API might be on root or /api. 
-    // Wait, the nestjs app in main.ts does not have setGlobalPrefix, so it's on root!
-    const rootUrl = process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL : "http://localhost:3001";
+    const rootUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
     
     const res = await fetch(\`\${rootUrl}/business/public?slug=\${slug}\`, {
       next: { revalidate: 60 } // optional cache revalidation
