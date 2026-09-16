@@ -35,6 +35,7 @@ export class AuthService implements OnModuleInit {
 
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
+      include: { businesses: true },
     });
 
     if (!user) {
@@ -49,6 +50,7 @@ export class AuthService implements OnModuleInit {
       uid: user.id,
       email: user.email,
       role: user.role,
+      tenantId: user.businesses?.[0]?.id,
     };
 
     return {
@@ -56,6 +58,7 @@ export class AuthService implements OnModuleInit {
         sub: authUser.uid,
         email: authUser.email,
         role: authUser.role,
+        tenantId: authUser.tenantId,
       }),
       user: authUser,
     };
@@ -70,12 +73,14 @@ export class AuthService implements OnModuleInit {
       sub: string;
       email: string;
       role: string;
+      tenantId?: string;
     }>(token);
 
     return {
       uid: payload.sub,
       email: payload.email,
       role: payload.role,
+      tenantId: payload.tenantId,
     };
   }
 }
