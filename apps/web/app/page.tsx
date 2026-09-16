@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { ArrowRight, CheckCircle, Calendar, Users, BarChart, Check } from "lucide-react";
 
 export default function HomePage() {
@@ -11,7 +11,7 @@ export default function HomePage() {
           <Link href="/login" className="text-slate-600 hover:text-slate-900 font-medium transition-colors">
             Iniciar sesión
           </Link>
-          <Link href="/crear-local" className="bg-slate-900 text-white px-5 py-2.5 rounded-full font-medium hover:bg-slate-800 transition-colors">
+          <Link href="/login" className="bg-slate-900 text-white px-5 py-2.5 rounded-full font-medium hover:bg-slate-800 transition-colors">
             Empezar gratis
           </Link>
         </div>
@@ -27,7 +27,7 @@ export default function HomePage() {
             Gestiona citas, personal y clientes desde un solo lugar. Haz crecer tu negocio con la plataforma de reservas más intuitiva del mercado.
           </p>
           <div className="flex items-center gap-4">
-            <Link href="/crear-local" className="bg-blue-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2">
+            <Link href="/login" className="bg-blue-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2">
               Prueba gratis <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
@@ -73,7 +73,7 @@ export default function HomePage() {
                 <li className="flex items-center gap-3 text-slate-600"><Check className="w-5 h-5 text-blue-600" /> Citas ilimitadas</li>
                 <li className="flex items-center gap-3 text-slate-600"><Check className="w-5 h-5 text-blue-600" /> Recordatorios básicos</li>
               </ul>
-              <Link href="/crear-local" className="block text-center w-full py-3 rounded-full border-2 border-slate-200 text-slate-900 font-semibold hover:border-slate-300 transition-colors">
+              <Link href="/login" className="block text-center w-full py-3 rounded-full border-2 border-slate-200 text-slate-900 font-semibold hover:border-slate-300 transition-colors">
                 Comenzar gratis
               </Link>
             </div>
@@ -95,7 +95,7 @@ export default function HomePage() {
                 <li className="flex items-center gap-3 text-slate-300"><Check className="w-5 h-5 text-blue-400" /> Reportes avanzados</li>
                 <li className="flex items-center gap-3 text-slate-300"><Check className="w-5 h-5 text-blue-400" /> Control de inventario</li>
               </ul>
-              <Link href="/crear-local" className="block text-center w-full py-3 rounded-full bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors">
+              <Link href="/login" className="block text-center w-full py-3 rounded-full bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors">
                 Probar Pro
               </Link>
             </div>
@@ -114,7 +114,7 @@ export default function HomePage() {
                 <li className="flex items-center gap-3 text-slate-600"><Check className="w-5 h-5 text-blue-600" /> API de integración</li>
                 <li className="flex items-center gap-3 text-slate-600"><Check className="w-5 h-5 text-blue-600" /> Soporte prioritario 24/7</li>
               </ul>
-              <Link href="/crear-local" className="block text-center w-full py-3 rounded-full border-2 border-slate-200 text-slate-900 font-semibold hover:border-slate-300 transition-colors">
+              <Link href="/login" className="block text-center w-full py-3 rounded-full border-2 border-slate-200 text-slate-900 font-semibold hover:border-slate-300 transition-colors">
                 Contactar ventas
               </Link>
             </div>
