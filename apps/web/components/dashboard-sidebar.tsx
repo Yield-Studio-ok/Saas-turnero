@@ -64,10 +64,12 @@ export function DashboardSidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={group flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 }
+              className={`group flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 ${
+                isActive ? "bg-blue-600/10 text-blue-400 font-medium" : "hover:bg-slate-800/50 hover:text-slate-100"
+              }`}
             >
               <div className="flex items-center gap-3">
-                <Icon className={w-5 h-5 transition-colors } />
+                <Icon className={`w-5 h-5 transition-colors ${isActive ? "text-blue-500" : "text-slate-400 group-hover:text-slate-200"}`} />
                 <span>{item.name}</span>
               </div>
               {isActive && <ChevronRight className="w-4 h-4 text-blue-500" />}
@@ -87,10 +89,10 @@ export function DashboardSidebar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={group flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 }
+                  className={`group flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 ${isActive ? "bg-blue-600/10 text-blue-400 font-medium" : "hover:bg-slate-800/50 hover:text-slate-100"}`}
                 >
                   <div className="flex items-center gap-3">
-                    <Icon className={w-5 h-5 transition-colors } />
+                    <Icon className={`w-5 h-5 transition-colors ${isActive ? "text-blue-500" : "text-slate-400 group-hover:text-slate-200"}`} />
                     <span>{item.name}</span>
                   </div>
                   {isActive && <ChevronRight className="w-4 h-4 text-blue-500" />}
@@ -115,10 +117,10 @@ export function DashboardSidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={group flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 }
+                className={`group flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 ${isActive ? "bg-blue-600/10 text-blue-400 font-medium" : "hover:bg-slate-800/50 hover:text-slate-100"}`}
               >
                 <div className="flex items-center gap-3">
-                  <Icon className={w-5 h-5 transition-colors } />
+                  <Icon className={`w-5 h-5 transition-colors ${isActive ? "text-blue-500" : "text-slate-400 group-hover:text-slate-200"}`} />
                   <span>{item.name}</span>
                 </div>
                 {isActive && <ChevronRight className="w-4 h-4 text-amber-500" />}

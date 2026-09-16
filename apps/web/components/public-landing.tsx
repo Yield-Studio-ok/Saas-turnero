@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { apiFetch } from "@/lib/api";
 import { DateTimePickerModal, type SelectedDateTime } from "./booking/date-time-picker-modal";
 import {
   CustomerBookingModal,
@@ -35,10 +36,10 @@ export interface LocalInfo {
 }
 
 const DEFAULT_LOCAL: LocalInfo = {
-  name: "Barbería Vintage",
+  name: "Barberï¿½a Vintage",
   slug: "barberia-vintage",
   tagline:
-    "Especialistas en cortes clásicos, modernos y perfilado de barba. Atención personalizada.",
+    "Especialistas en cortes clï¿½sicos, modernos y perfilado de barba. Atenciï¿½n personalizada.",
   address: "Av. Siempre Viva 123, CABA",
   phone: "+54 9 11 1234-5678",
   openHours: "09:00 - 20:00",
@@ -50,9 +51,9 @@ const DEFAULT_LOCAL: LocalInfo = {
 const DEFAULT_SERVICES: ServiceItem[] = [
   {
     id: "srv-1",
-    name: "Corte Clásico & Peinado",
+    name: "Corte Clï¿½sico & Peinado",
     description:
-      "Corte tradicional a tijera o máquina según tu preferencia. Incluye lavado y peinado con cera mate premium.",
+      "Corte tradicional a tijera o mï¿½quina segï¿½n tu preferencia. Incluye lavado y peinado con cera mate premium.",
     duration: 30,
     price: 1500,
     category: "Cortes",
@@ -62,7 +63,7 @@ const DEFAULT_SERVICES: ServiceItem[] = [
     id: "srv-2",
     name: "Corte + Perfilado de Barba",
     description:
-      "Servicio insignia: diseño y corte completo, tratamiento de toalla caliente, perfilado con navaja y bálsamo hidratante.",
+      "Servicio insignia: diseï¿½o y corte completo, tratamiento de toalla caliente, perfilado con navaja y bï¿½lsamo hidratante.",
     duration: 50,
     price: 2800,
     category: "Combos",
@@ -79,27 +80,27 @@ const DEFAULT_SERVICES: ServiceItem[] = [
   },
   {
     id: "srv-4",
-    name: "Fade / Degradé Urbano",
+    name: "Fade / Degradï¿½ Urbano",
     description:
-      "Técnica de degradé milimétrico (Skin, Low, Mid o High Fade) finalizado con máquina shaver y detalles a navaja.",
+      "Tï¿½cnica de degradï¿½ milimï¿½trico (Skin, Low, Mid o High Fade) finalizado con mï¿½quina shaver y detalles a navaja.",
     duration: 40,
     price: 1800,
     category: "Cortes",
   },
   {
     id: "srv-5",
-    name: "Coloración & Matizado",
+    name: "Coloraciï¿½n & Matizado",
     description:
-      "Decoloración global, mechas o platinado profesional. Incluye mascarilla nutritiva restauradora.",
+      "Decoloraciï¿½n global, mechas o platinado profesional. Incluye mascarilla nutritiva restauradora.",
     duration: 90,
     price: 5200,
     category: "Tratamientos",
   },
   {
     id: "srv-6",
-    name: "Tratamiento Anticaída & Lavado Spa",
+    name: "Tratamiento Anticaï¿½da & Lavado Spa",
     description:
-      "Exfoliación suave de cuero cabelludo, ampolla fortalecedora y masaje descontracturante.",
+      "Exfoliaciï¿½n suave de cuero cabelludo, ampolla fortalecedora y masaje descontracturante.",
     duration: 35,
     price: 2100,
     category: "Tratamientos",
@@ -126,6 +127,16 @@ export function PublicLanding({
   initialLocal,
   initialServices = DEFAULT_SERVICES,
 }: PublicLandingProps) {
+  const { user } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const local: LocalInfo = {
+    ...DEFAULT_LOCAL,
+    ...initialLocal,
+    name: initialLocal?.name || (initialSlug ? formatSlugToTitle(initialSlug) : DEFAULT_LOCAL.name),
+  };
+
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>("Todos");
   const [searchQuery, setSearchQuery] = useState("");
@@ -139,7 +150,7 @@ export function PublicLanding({
   useEffect(() => {
     if (local.id) {
       apiFetch<any[]>(`/employees?businessId=${local.id}`)
-        .then(data => {
+        .then((data: any) => {
           if (data) setEmployees(data);
         })
         .catch(console.error);
@@ -170,11 +181,7 @@ const [selectedDateTime, setSelectedDateTime] = useState<SelectedDateTime | null
     return { id };
   };
 
-  const local: LocalInfo = {
-    ...DEFAULT_LOCAL,
-    ...initialLocal,
-    name: initialLocal?.name || (initialSlug ? formatSlugToTitle(initialSlug) : DEFAULT_LOCAL.name),
-  };
+  
 
   const filteredServices = useMemo(() => {
     return initialServices.filter((service) => {
@@ -257,7 +264,7 @@ const [selectedDateTime, setSelectedDateTime] = useState<SelectedDateTime | null
               </div>
             </div>
 
-            {/* Calificación y Reseñas */}
+            {/* Calificaciï¿½n y Reseï¿½as */}
             <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full text-xs font-bold text-amber-900 shadow-sm">
               <StarIcon className="w-4 h-4 fill-amber-400 text-amber-400" />
               <span>{local.rating.toFixed(1)}</span>
@@ -265,13 +272,13 @@ const [selectedDateTime, setSelectedDateTime] = useState<SelectedDateTime | null
             </div>
           </div>
 
-          {/* Título y descripción */}
+          {/* Tï¿½tulo y descripciï¿½n */}
           <div className="mt-3">
             <h1 className="text-2xl font-black tracking-tight text-slate-900">{local.name}</h1>
             <p className="text-sm text-slate-600 mt-1 leading-relaxed">{local.tagline}</p>
           </div>
 
-          {/* Información rápida (Dirección, Horarios, Teléfono) */}
+          {/* Informaciï¿½n rï¿½pida (Direcciï¿½n, Horarios, Telï¿½fono) */}
           <div className="mt-3 pt-3 border-t border-slate-100 flex flex-col gap-1.5 text-xs text-slate-600">
             <div className="flex items-center gap-2">
               <MapPinIcon className="w-4 h-4 text-blue-600 shrink-0" />
@@ -291,7 +298,7 @@ const [selectedDateTime, setSelectedDateTime] = useState<SelectedDateTime | null
         {/* Separador suave */}
         <div className="h-2 bg-slate-100 border-y border-slate-200/60" />
 
-        {/* Sección de Selección de Servicios */}
+        {/* Secciï¿½n de Selecciï¿½n de Servicios */}
         <main className="px-5 pt-4 pb-28 flex-1">
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -323,7 +330,7 @@ const [selectedDateTime, setSelectedDateTime] = useState<SelectedDateTime | null
             )}
           </div>
 
-          {/* Filtro por Categorías (Tabs Horizontales) */}
+          {/* Filtro por Categorï¿½as (Tabs Horizontales) */}
           <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 mb-3">
             {CATEGORIES.map((cat) => {
               const isActive = activeCategory === cat;
@@ -349,7 +356,7 @@ const [selectedDateTime, setSelectedDateTime] = useState<SelectedDateTime | null
               <div className="text-center py-10 px-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                 <p className="text-sm font-semibold text-slate-700">No se encontraron servicios</p>
                 <p className="text-xs text-slate-400 mt-1">
-                  Intenta cambiar de categoría o buscar con otra palabra clave.
+                  Intenta cambiar de categorï¿½a o buscar con otra palabra clave.
                 </p>
                 <button
                   onClick={() => {
@@ -400,13 +407,13 @@ const [selectedDateTime, setSelectedDateTime] = useState<SelectedDateTime | null
                       </p>
 
                       <div className="flex items-center gap-3 mt-2.5">
-                        {/* Duración */}
+                        {/* Duraciï¿½n */}
                         <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
                           <ClockIcon className="w-3 h-3 text-slate-500" />
                           {service.duration} min
                         </span>
 
-                        {/* Categoría */}
+                        {/* Categorï¿½a */}
                         <span className="text-[11px] text-slate-400 font-medium">
                           {service.category}
                         </span>
@@ -419,7 +426,7 @@ const [selectedDateTime, setSelectedDateTime] = useState<SelectedDateTime | null
                         ${service.price.toLocaleString("es-AR")}
                       </span>
 
-                      {/* Indicador de selección */}
+                      {/* Indicador de selecciï¿½n */}
                       <div
                         className={`w-6 h-6 rounded-full border flex items-center justify-center transition-all ${
                           isSelected
@@ -437,7 +444,7 @@ const [selectedDateTime, setSelectedDateTime] = useState<SelectedDateTime | null
           </div>
         </main>
 
-        {/* Barra Flotante Inferior de Acción (Mobile Sticky Action Bar) */}
+        {/* Barra Flotante Inferior de Acciï¿½n (Mobile Sticky Action Bar) */}
         <footer className="fixed bottom-0 max-w-md w-full bg-white/95 backdrop-blur-md border-t border-slate-200 p-4 shadow-[0_-8px_20px_rgba(0,0,0,0.06)] z-20">
           {selectedService ? (
             <div className="space-y-2.5">
@@ -561,7 +568,7 @@ const [selectedDateTime, setSelectedDateTime] = useState<SelectedDateTime | null
           </div>
         )}
 
-        {/* Modal de Selección de Fecha y Hora (Ticket 25) */}
+        {/* Modal de Selecciï¿½n de Fecha y Hora (Ticket 25) */}
         <DateTimePickerModal
           isOpen={showNextStepModal}
           onClose={() => setShowNextStepModal(false)}
@@ -575,7 +582,7 @@ const [selectedDateTime, setSelectedDateTime] = useState<SelectedDateTime | null
           }}
         />
 
-        {/* Modal de Formulario de Cliente y Pantalla de Éxito (Ticket 27 y 29) */}
+        {/* Modal de Formulario de Cliente y Pantalla de ï¿½xito (Ticket 27 y 29) */}
         <CustomerBookingModal
           isOpen={showCustomerModal}
           onClose={() => setShowCustomerModal(false)}

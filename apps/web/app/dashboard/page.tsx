@@ -39,7 +39,7 @@ export default function DashboardPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">
-            ¡Hola, {user?.displayName || "Usuario"}! 👋
+            ¡Hola, {user?.email || "Usuario"}! 👋
           </h1>
           <p className="text-slate-500 mt-1">Este es el resumen de tu local al día de hoy.</p>
         </div>
