@@ -6,6 +6,7 @@ import TurnoDetalleModal, { Turno } from "@/components/turnos/TurnoDetalleModal"
 import { useDailyAppointments } from "@/hooks/useDailyAppointments";
 import { cancelAppointment, AppointmentsService } from "@/lib/appointments-service";
 import { Appointment } from "@/types/appointment";
+import { useAuth } from "@/lib/auth-context";
 
 // Mocks para empleados (hasta que se integre el servicio de empleados)
 const empleados = [
@@ -51,12 +52,26 @@ const mapAppointmentToTurno = (appt: Appointment): Turno => {
 export default function TurnosPage() {
   // Asumimos un tenantId de demostración por ahora
   const tenantId = "demo-tenant";
+  const { user } = useAuth();
 
   const { appointments, loading } = useDailyAppointments(tenantId, new Date());
+  
+  const isOwner = user?.role === "owner" || user?.role === "superadmin";
+  const filteredEmpleados = empleados.filter(e => {
+    if (!isOwner) {
+      // Si es empleado, asume que emp1 es él (para mockup)
+      return e.id === "emp1";
+    }
+    if (selectedEmployeeFilter !== "all") {
+      return e.id === selectedEmployeeFilter;
+    }
+    return true;
+  });
 
   const turnos: Turno[] = appointments.map(mapAppointmentToTurno);
 
   const [selectedTurno, setSelectedTurno] = useState<Turno | null>(null);
+  const [selectedEmployeeFilter, setSelectedEmployeeFilter] = useState<string>("all");
 
   const handleCancelTurno = async (turnoId: number | string) => {
     try {
@@ -92,6 +107,18 @@ export default function TurnosPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          {isOwner && (
+            <select 
+              value={selectedEmployeeFilter} 
+              onChange={(e) => setSelectedEmployeeFilter(e.target.value)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">Todos los empleados</option>
+              {empleados.map(e => (
+                <option key={e.id} value={e.id}>{e.nombre}</option>
+              ))}
+            </select>
+          )}
           <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 cursor-pointer">
             Hoy
           </button>
@@ -108,7 +135,7 @@ export default function TurnosPage() {
             <div className="w-24 shrink-0 border-r border-gray-200 flex items-center justify-center py-3">
               <span className="text-sm font-medium text-gray-500">Hora</span>
             </div>
-            {empleados.map((empleado) => (
+            {filteredEmpleados.map((empleado) => (
               <div
                 key={empleado.id}
                 className="flex-1 shrink-0 border-r last:border-r-0 border-gray-200 text-center py-3"
@@ -130,7 +157,7 @@ export default function TurnosPage() {
                 </div>
 
                 {/* Employee Columns for this Hour */}
-                {empleados.map((empleado) => (
+                {filteredEmpleados.map((empleado) => (
                   <div
                     key={empleado.id}
                     className="flex-1 shrink-0 border-r last:border-r-0 border-gray-200 relative"
