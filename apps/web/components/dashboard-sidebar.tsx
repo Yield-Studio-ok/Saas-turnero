@@ -27,9 +27,14 @@ const proItems = [
   { name: "Analíticas", href: "/dashboard/analiticas", icon: TrendingUp },
 ];
 
+const ownerItems = [
+  { name: "Finanzas", href: "/dashboard/finanzas", icon: TrendingUp },
+  { name: "Legal", href: "/dashboard/legal", icon: BookOpen },
+];
+
 export function DashboardSidebar() {
   const pathname = usePathname();
-  const { currentMockKey } = useAuth();
+  const { user } = useAuth(); const isOwner = user?.role === "owner" || user?.role === "superadmin";
 
   return (
     <aside className="w-72 bg-[#0F172A] text-slate-300 flex flex-col border-r border-slate-800 transition-all duration-300">
@@ -73,6 +78,31 @@ export function DashboardSidebar() {
           );
         })}
 
+        {isOwner && (
+          <div className="pt-4">
+            <div className="px-3 flex items-center gap-2 mb-2">
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Gestión</p>
+            </div>
+            {ownerItems.map((item) => {
+              const isActive = pathname === item.href;
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={group flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 }
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon className={w-5 h-5 transition-colors } />
+                    <span>{item.name}</span>
+                  </div>
+                  {isActive && <ChevronRight className="w-4 h-4 text-blue-500" />}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+
         {/* PRO Section */}
         <div className="pt-8 mb-2">
           <div className="px-3 flex items-center gap-2 mb-4">
@@ -115,3 +145,4 @@ export function DashboardSidebar() {
     </aside>
   );
 }
+
