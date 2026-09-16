@@ -1,4 +1,4 @@
-﻿import {
+import {
   BadRequestException,
   Injectable,
   Logger,
@@ -38,6 +38,10 @@ export class AuthService implements OnModuleInit {
     });
 
     if (!user) {
+      throw new UnauthorizedException("Invalid credentials");
+    }
+
+    if (!user.password || !(await bcrypt.compare(dto.password, user.password))) {
       throw new UnauthorizedException("Invalid credentials");
     }
 
