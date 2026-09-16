@@ -52,9 +52,9 @@ export class EmployeesController {
     const user = req.user as AuthUser;
     return this.employeesService.remove(user.uid, id);
   }
-  @Post(':id/shift')
-  @ApiOperation({ summary: 'Clock in or out for a shift' })
-  toggleShift(@Param('id') id: string) {
+  @Post(":id/shift")
+  @ApiOperation({ summary: "Clock in or out for a shift" })
+  toggleShift(@Param("id") id: string) {
     return this.employeesService.toggleShift(id);
   }
 }

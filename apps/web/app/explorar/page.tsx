@@ -9,9 +9,7 @@ function Carousel({ images }: { images: string[] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   if (!images || images.length === 0) {
-    return (
-      <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-100" />
-    );
+    return <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-100" />;
   }
 
   const prev = (e: React.MouseEvent) => {
@@ -31,15 +29,24 @@ function Carousel({ images }: { images: string[] }) {
       <img src={images[currentIndex]} alt="Local" className="w-full h-full object-cover" />
       {images.length > 1 && (
         <>
-          <button onClick={prev} className="absolute left-1 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-1 opacity-0 group-hover/carousel:opacity-100 transition-opacity">
+          <button
+            onClick={prev}
+            className="absolute left-1 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-1 opacity-0 group-hover/carousel:opacity-100 transition-opacity"
+          >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <button onClick={next} className="absolute right-1 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-1 opacity-0 group-hover/carousel:opacity-100 transition-opacity">
+          <button
+            onClick={next}
+            className="absolute right-1 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-1 opacity-0 group-hover/carousel:opacity-100 transition-opacity"
+          >
             <ChevronRight className="w-4 h-4" />
           </button>
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
             {images.map((_, idx) => (
-              <div key={idx} className={`w-1.5 h-1.5 rounded-full ${idx === currentIndex ? 'bg-white' : 'bg-white/50'}`} />
+              <div
+                key={idx}
+                className={`w-1.5 h-1.5 rounded-full ${idx === currentIndex ? "bg-white" : "bg-white/50"}`}
+              />
             ))}
           </div>
         </>
@@ -72,10 +79,7 @@ export default function ExplorarPage() {
   const filtered = useMemo(() => {
     return businesses.filter((b) => {
       const q = searchQuery.toLowerCase();
-      return (
-        b.name.toLowerCase().includes(q) ||
-        (b.tagline && b.tagline.toLowerCase().includes(q))
-      );
+      return b.name.toLowerCase().includes(q) || (b.tagline && b.tagline.toLowerCase().includes(q));
     });
   }, [businesses, searchQuery]);
 
@@ -120,7 +124,10 @@ export default function ExplorarPage() {
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="bg-white rounded-2xl h-72 animate-pulse shadow-sm border border-slate-100" />
+              <div
+                key={i}
+                className="bg-white rounded-2xl h-72 animate-pulse shadow-sm border border-slate-100"
+              />
             ))}
           </div>
         ) : filtered.length === 0 ? (
@@ -159,7 +166,7 @@ export default function ExplorarPage() {
                   {/* Avatar Icon */}
                   <div className="absolute -bottom-6 left-5 w-16 h-16 rounded-2xl bg-white p-1 shadow-lg border border-slate-100 z-10">
                     <div className="w-full h-full bg-slate-900 rounded-xl flex items-center justify-center text-white">
-                       <Scissors className="w-6 h-6 text-blue-400" />
+                      <Scissors className="w-6 h-6 text-blue-400" />
                     </div>
                   </div>
                 </div>
@@ -172,7 +179,7 @@ export default function ExplorarPage() {
                     </h3>
                     <div className="flex items-center gap-1 bg-amber-50 text-amber-900 px-2 py-0.5 rounded-md text-xs font-bold shrink-0">
                       <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                      {business.rating ? (Number(business.rating)).toFixed(1) : "5.0"}
+                      {business.rating ? Number(business.rating).toFixed(1) : "5.0"}
                     </div>
                   </div>
 
@@ -183,7 +190,9 @@ export default function ExplorarPage() {
                   <div className="mt-auto space-y-2 border-t border-slate-100 pt-3">
                     <div className="flex items-center gap-2 text-xs text-slate-600">
                       <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                      <span className="truncate">{business.address || "Dirección no especificada"}</span>
+                      <span className="truncate">
+                        {business.address || "Dirección no especificada"}
+                      </span>
                     </div>
                   </div>
                 </div>
