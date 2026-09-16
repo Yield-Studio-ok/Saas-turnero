@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import * as bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
@@ -12,6 +13,7 @@ async function main() {
       email: "superadmin@turnero.com",
       name: "Super Admin",
       role: "superadmin",
+      password: await bcrypt.hash("123456", 10),
     },
   });
 
@@ -23,6 +25,7 @@ async function main() {
       email: "owner_basic@ejemplo.com",
       name: "Owner Basic",
       role: "owner",
+      password: await bcrypt.hash("123456", 10),
     },
   });
 
@@ -33,6 +36,7 @@ async function main() {
       email: "owner_pro@ejemplo.com",
       name: "Owner Pro",
       role: "owner",
+      password: await bcrypt.hash("123456", 10),
     },
   });
 
@@ -43,6 +47,7 @@ async function main() {
       email: "owner_premium@ejemplo.com",
       name: "Owner Premium",
       role: "owner",
+      password: await bcrypt.hash("123456", 10),
     },
   });
 
@@ -54,6 +59,7 @@ async function main() {
       email: "cliente@b2c.com",
       name: "Cliente Final",
       role: "user",
+      password: await bcrypt.hash("123456", 10),
     },
   });
 
@@ -66,6 +72,7 @@ async function main() {
       name: "Barberia Basic",
       ownerId: ownerBasic.id,
       plan: "BASIC",
+      imageUrls: ["https://images.pexels.com/photos/3998365/pexels-photo-3998365.jpeg"],
     },
   });
 
@@ -77,6 +84,7 @@ async function main() {
       name: "Estetica Pro",
       ownerId: ownerPro.id,
       plan: "PRO",
+      imageUrls: ["https://images.pexels.com/photos/3998365/pexels-photo-3998365.jpeg"],
     },
   });
 
@@ -88,6 +96,7 @@ async function main() {
       name: "Spa Premium",
       ownerId: ownerPremium.id,
       plan: "PREMIUM",
+      imageUrls: ["https://images.pexels.com/photos/3998365/pexels-photo-3998365.jpeg"],
     },
   });
 
