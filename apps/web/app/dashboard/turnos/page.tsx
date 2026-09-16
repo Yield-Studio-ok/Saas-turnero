@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from "react";
 import TurnoDetalleModal, { Turno } from "@/components/turnos/TurnoDetalleModal";
@@ -56,6 +56,9 @@ export default function TurnosPage() {
 
   const { appointments, loading } = useDailyAppointments(tenantId, new Date());
   
+  const [selectedTurno, setSelectedTurno] = useState<Turno | null>(null);
+  const [selectedEmployeeFilter, setSelectedEmployeeFilter] = useState<string>("all");
+
   const isOwner = user?.role === "owner" || user?.role === "superadmin";
   const filteredEmpleados = empleados.filter(e => {
     if (!isOwner) {
@@ -69,9 +72,6 @@ export default function TurnosPage() {
   });
 
   const turnos: Turno[] = appointments.map(mapAppointmentToTurno);
-
-  const [selectedTurno, setSelectedTurno] = useState<Turno | null>(null);
-  const [selectedEmployeeFilter, setSelectedEmployeeFilter] = useState<string>("all");
 
   const handleCancelTurno = async (turnoId: number | string) => {
     try {
