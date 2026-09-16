@@ -3,15 +3,15 @@ import { PublicLanding } from "@/components/public-landing";
 
 interface PageProps {
   params: Promise<{
-    slug: string;
+    id: string;
   }>;
 }
 
-async function fetchLocalProfile(slug: string) {
+async function fetchLocalProfile(id: string) {
   try {
     const rootUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
     
-    const res = await fetch(`${rootUrl}/business/public?slug=${slug}`, {
+    const res = await fetch(`${rootUrl}/business/public/${id}`, {
       next: { revalidate: 60 } // optional cache revalidation
     });
     if (!res.ok) {
@@ -26,10 +26,10 @@ async function fetchLocalProfile(slug: string) {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { slug } = await params;
+  const { id } = await params;
   
-  const profile = await fetchLocalProfile(slug);
-  const title = profile?.name || slug.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  const profile = await fetchLocalProfile(id);
+  const title = profile?.name || id.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
 
   return {
     title: `${title} | Reservar Turno`,
@@ -38,9 +38,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function PublicTenantLandingPage({ params }: PageProps) {
-  const { slug } = await params;
+  const { id } = await params;
   
-  const profile = await fetchLocalProfile(slug);
+  const profile = await fetchLocalProfile(id);
 
   if (!profile) {
     // If not found, you can show a not found page or just fallback to default for demo purposes
@@ -57,7 +57,7 @@ export default async function PublicTenantLandingPage({ params }: PageProps) {
 
   return (
     <PublicLanding 
-      initialSlug={slug} 
+      initialSlug={id} 
       initialLocal={{
         name: profile.name,
         slug: profile.slug,

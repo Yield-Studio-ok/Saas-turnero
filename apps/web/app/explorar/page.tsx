@@ -3,7 +3,51 @@
 import { useEffect, useState, useMemo } from "react";
 import { apiFetch } from "@/lib/api";
 import Link from "next/link";
-import { Search, MapPin, Star, Scissors } from "lucide-react";
+import { Search, MapPin, Star, Scissors, ChevronLeft, ChevronRight } from "lucide-react";
+
+function Carousel({ images }: { images: string[] }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  if (!images || images.length === 0) {
+    return (
+      <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-100" />
+    );
+  }
+
+  const prev = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentIndex((c) => (c === 0 ? images.length - 1 : c - 1));
+  };
+
+  const next = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentIndex((c) => (c === images.length - 1 ? 0 : c + 1));
+  };
+
+  return (
+    <div className="relative w-full h-full overflow-hidden group/carousel">
+      <img src={images[currentIndex]} alt="Local" className="w-full h-full object-cover" />
+      {images.length > 1 && (
+        <>
+          <button onClick={prev} className="absolute left-1 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-1 opacity-0 group-hover/carousel:opacity-100 transition-opacity">
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button onClick={next} className="absolute right-1 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-1 opacity-0 group-hover/carousel:opacity-100 transition-opacity">
+            <ChevronRight className="w-4 h-4" />
+          </button>
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+            {images.map((_, idx) => (
+              <div key={idx} className={`w-1.5 h-1.5 rounded-full ${idx === currentIndex ? 'bg-white' : 'bg-white/50'}`} />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 import type { LocalInfo } from "@/components/public-landing";
 
 export default function ExplorarPage() {
@@ -38,13 +82,13 @@ export default function ExplorarPage() {
   return (
     <div className="min-h-screen bg-slate-50 antialiased font-sans">
       {/* Header / Hero */}
-      <div className="bg-gradient-to-br from-slate-900 to-indigo-950 text-white py-16 px-5 relative overflow-hidden">
+      <div className="bg-white text-slate-900 border-b border-slate-200 py-16 px-5 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:24px_24px]" />
         <div className="max-w-4xl mx-auto relative z-10 text-center">
           <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4">
             Encuentra tu próximo look
           </h1>
-          <p className="text-slate-300 text-lg max-w-xl mx-auto mb-8">
+          <p className="text-slate-600 text-lg max-w-xl mx-auto mb-8">
             Reserva turnos en las mejores barberías y salones de belleza de tu zona.
           </p>
 
@@ -55,7 +99,7 @@ export default function ExplorarPage() {
             </div>
             <input
               type="text"
-              className="block w-full pl-12 pr-4 py-4 rounded-full border-none ring-4 ring-white/10 bg-white/10 backdrop-blur-md text-white placeholder-slate-300 focus:ring-white/30 focus:bg-white/20 transition-all text-lg shadow-2xl"
+              className="block w-full pl-12 pr-4 py-4 rounded-full border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all text-lg shadow-2xl"
               placeholder="Buscar por nombre, servicio..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -95,11 +139,12 @@ export default function ExplorarPage() {
             {filtered.map((business) => (
               <Link
                 key={business.slug}
-                href={`/${business.slug}`}
+                href={`/local/${business.id || business.slug}`}
                 className="group block bg-white rounded-3xl overflow-hidden border border-slate-200 hover:border-blue-400 hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300 flex flex-col"
               >
                 {/* Card Image Area (Placeholder gradient) */}
-                <div className="h-32 bg-gradient-to-br from-slate-200 to-slate-100 relative group-hover:scale-[1.02] transition-transform duration-500">
+                <div className="h-40 relative">
+                  <Carousel images={business.imageUrls || []} />
                   <div className="absolute top-3 left-3 flex gap-2">
                     {business.isOpen ? (
                       <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wider shadow-sm">
@@ -112,7 +157,7 @@ export default function ExplorarPage() {
                     )}
                   </div>
                   {/* Avatar Icon */}
-                  <div className="absolute -bottom-6 left-5 w-16 h-16 rounded-2xl bg-white p-1 shadow-lg border border-slate-100">
+                  <div className="absolute -bottom-6 left-5 w-16 h-16 rounded-2xl bg-white p-1 shadow-lg border border-slate-100 z-10">
                     <div className="w-full h-full bg-slate-900 rounded-xl flex items-center justify-center text-white">
                        <Scissors className="w-6 h-6 text-blue-400" />
                     </div>
