@@ -4,6 +4,7 @@ import { CreateEmployeeDto } from "./dto/create-employee.dto";
 import { UpdateEmployeeDto } from "./dto/update-employee.dto";
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiQuery } from "@nestjs/swagger";
 import { Request } from "express";
+import { Public } from "../auth/public.decorator";
 import { AuthUser } from "../auth/auth.types";
 
 @ApiTags("Employees")
@@ -20,11 +21,11 @@ export class EmployeesController {
   }
 
   @Get()
+  @Public()
   @ApiOperation({ summary: "Get all employees of a business" })
   @ApiQuery({ name: "businessId", required: true, type: String })
   findAll(@Req() req: Request, @Query("businessId") businessId: string) {
-    const user = req.user as AuthUser;
-    return this.employeesService.findAllByBusiness(user.uid, businessId);
+    return this.employeesService.findAllByBusiness("public", businessId);
   }
 
   @Get(":id")

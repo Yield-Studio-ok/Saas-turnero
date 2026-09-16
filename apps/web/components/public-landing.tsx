@@ -1,4 +1,4 @@
-Ôªø"use client";
+"use client";
 
 import { useState, useMemo } from "react";
 import { DateTimePickerModal, type SelectedDateTime } from "./booking/date-time-picker-modal";
@@ -18,7 +18,10 @@ export interface ServiceItem {
   popular?: boolean;
 }
 
+import { useAuth } from "@/lib/auth-context";
+import { useRouter, usePathname } from "next/navigation";
 export interface LocalInfo {
+  id?: string;
   name: string;
   slug: string;
   tagline: string;
@@ -28,13 +31,14 @@ export interface LocalInfo {
   rating: number;
   reviewCount: number;
   isOpen: boolean;
+  imageUrls?: string[];
 }
 
 const DEFAULT_LOCAL: LocalInfo = {
-  name: "Barber√≠a Vintage",
+  name: "BarberÌa Vintage",
   slug: "barberia-vintage",
   tagline:
-    "Especialistas en cortes cl√°sicos, modernos y perfilado de barba. Atenci√≥n personalizada.",
+    "Especialistas en cortes cl·sicos, modernos y perfilado de barba. AtenciÛn personalizada.",
   address: "Av. Siempre Viva 123, CABA",
   phone: "+54 9 11 1234-5678",
   openHours: "09:00 - 20:00",
@@ -46,9 +50,9 @@ const DEFAULT_LOCAL: LocalInfo = {
 const DEFAULT_SERVICES: ServiceItem[] = [
   {
     id: "srv-1",
-    name: "Corte Cl√°sico & Peinado",
+    name: "Corte Cl·sico & Peinado",
     description:
-      "Corte tradicional a tijera o m√°quina seg√∫n tu preferencia. Incluye lavado y peinado con cera mate premium.",
+      "Corte tradicional a tijera o m·quina seg˙n tu preferencia. Incluye lavado y peinado con cera mate premium.",
     duration: 30,
     price: 1500,
     category: "Cortes",
@@ -58,7 +62,7 @@ const DEFAULT_SERVICES: ServiceItem[] = [
     id: "srv-2",
     name: "Corte + Perfilado de Barba",
     description:
-      "Servicio insignia: dise√±o y corte completo, tratamiento de toalla caliente, perfilado con navaja y b√°lsamo hidratante.",
+      "Servicio insignia: diseÒo y corte completo, tratamiento de toalla caliente, perfilado con navaja y b·lsamo hidratante.",
     duration: 50,
     price: 2800,
     category: "Combos",
@@ -75,27 +79,27 @@ const DEFAULT_SERVICES: ServiceItem[] = [
   },
   {
     id: "srv-4",
-    name: "Fade / Degrad√© Urbano",
+    name: "Fade / DegradÈ Urbano",
     description:
-      "T√©cnica de degrad√© milim√©trico (Skin, Low, Mid o High Fade) finalizado con m√°quina shaver y detalles a navaja.",
+      "TÈcnica de degradÈ milimÈtrico (Skin, Low, Mid o High Fade) finalizado con m·quina shaver y detalles a navaja.",
     duration: 40,
     price: 1800,
     category: "Cortes",
   },
   {
     id: "srv-5",
-    name: "Coloraci√≥n & Matizado",
+    name: "ColoraciÛn & Matizado",
     description:
-      "Decoloraci√≥n global, mechas o platinado profesional. Incluye mascarilla nutritiva restauradora.",
+      "DecoloraciÛn global, mechas o platinado profesional. Incluye mascarilla nutritiva restauradora.",
     duration: 90,
     price: 5200,
     category: "Tratamientos",
   },
   {
     id: "srv-6",
-    name: "Tratamiento Antica√≠da & Lavado Spa",
+    name: "Tratamiento AnticaÌda & Lavado Spa",
     description:
-      "Exfoliaci√≥n suave de cuero cabelludo, ampolla fortalecedora y masaje descontracturante.",
+      "ExfoliaciÛn suave de cuero cabelludo, ampolla fortalecedora y masaje descontracturante.",
     duration: 35,
     price: 2100,
     category: "Tratamientos",
@@ -126,8 +130,22 @@ export function PublicLanding({
   const [activeCategory, setActiveCategory] = useState<string>("Todos");
   const [searchQuery, setSearchQuery] = useState("");
   const [showNextStepModal, setShowNextStepModal] = useState(false);
+  const [showEmployeeModal, setShowEmployeeModal] = useState(false);
   const [showCustomerModal, setShowCustomerModal] = useState(false);
-  const [selectedDateTime, setSelectedDateTime] = useState<SelectedDateTime | null>(null);
+  const [employees, setEmployees] = useState<any[]>([]);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+  
+  // Fetch employees
+  useEffect(() => {
+    if (local.id) {
+      apiFetch<any[]>(`/employees?businessId=${local.id}`)
+        .then(data => {
+          if (data) setEmployees(data);
+        })
+        .catch(console.error);
+    }
+  }, [local.id]);
+const [selectedDateTime, setSelectedDateTime] = useState<SelectedDateTime | null>(null);
 
   const handleBookingSubmit = async (formData: CustomerBookingFormData) => {
     if (!selectedService || !selectedDateTime) return;
@@ -174,6 +192,26 @@ export function PublicLanding({
     return initialServices.find((s) => s.id === selectedServiceId) || null;
   }, [initialServices, selectedServiceId]);
 
+  
+  // Restore pending booking
+  useEffect(() => {
+    if (user && typeof window !== "undefined") {
+      const pending = localStorage.getItem("pendingBooking");
+      if (pending) {
+        try {
+          const data = JSON.parse(pending);
+          if (data.localId === local.id) {
+            setSelectedServiceId(data.serviceId);
+            setSelectedEmployeeId(data.employeeId);
+            setSelectedDateTime(data.dateTime);
+            setShowCustomerModal(true);
+          }
+        } catch(e) {}
+        localStorage.removeItem("pendingBooking");
+      }
+    }
+  }, [user, local.id]);
+
   return (
     <div className="min-h-screen bg-slate-100 flex justify-center text-slate-900 antialiased">
       {/* Contenedor mobile viewport centrado */}
@@ -219,7 +257,7 @@ export function PublicLanding({
               </div>
             </div>
 
-            {/* Calificaci√≥n y Rese√±as */}
+            {/* CalificaciÛn y ReseÒas */}
             <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full text-xs font-bold text-amber-900 shadow-sm">
               <StarIcon className="w-4 h-4 fill-amber-400 text-amber-400" />
               <span>{local.rating.toFixed(1)}</span>
@@ -227,13 +265,13 @@ export function PublicLanding({
             </div>
           </div>
 
-          {/* T√≠tulo y descripci√≥n */}
+          {/* TÌtulo y descripciÛn */}
           <div className="mt-3">
             <h1 className="text-2xl font-black tracking-tight text-slate-900">{local.name}</h1>
             <p className="text-sm text-slate-600 mt-1 leading-relaxed">{local.tagline}</p>
           </div>
 
-          {/* Informaci√≥n r√°pida (Direcci√≥n, Horarios, Tel√©fono) */}
+          {/* InformaciÛn r·pida (DirecciÛn, Horarios, TelÈfono) */}
           <div className="mt-3 pt-3 border-t border-slate-100 flex flex-col gap-1.5 text-xs text-slate-600">
             <div className="flex items-center gap-2">
               <MapPinIcon className="w-4 h-4 text-blue-600 shrink-0" />
@@ -253,7 +291,7 @@ export function PublicLanding({
         {/* Separador suave */}
         <div className="h-2 bg-slate-100 border-y border-slate-200/60" />
 
-        {/* Secci√≥n de Selecci√≥n de Servicios */}
+        {/* SecciÛn de SelecciÛn de Servicios */}
         <main className="px-5 pt-4 pb-28 flex-1">
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -280,12 +318,12 @@ export function PublicLanding({
                 onClick={() => setSearchQuery("")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600"
               >
-                ‚úï
+                ?
               </button>
             )}
           </div>
 
-          {/* Filtro por Categor√≠as (Tabs Horizontales) */}
+          {/* Filtro por CategorÌas (Tabs Horizontales) */}
           <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 mb-3">
             {CATEGORIES.map((cat) => {
               const isActive = activeCategory === cat;
@@ -311,7 +349,7 @@ export function PublicLanding({
               <div className="text-center py-10 px-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                 <p className="text-sm font-semibold text-slate-700">No se encontraron servicios</p>
                 <p className="text-xs text-slate-400 mt-1">
-                  Intenta cambiar de categor√≠a o buscar con otra palabra clave.
+                  Intenta cambiar de categorÌa o buscar con otra palabra clave.
                 </p>
                 <button
                   onClick={() => {
@@ -362,13 +400,13 @@ export function PublicLanding({
                       </p>
 
                       <div className="flex items-center gap-3 mt-2.5">
-                        {/* Duraci√≥n */}
+                        {/* DuraciÛn */}
                         <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
                           <ClockIcon className="w-3 h-3 text-slate-500" />
                           {service.duration} min
                         </span>
 
-                        {/* Categor√≠a */}
+                        {/* CategorÌa */}
                         <span className="text-[11px] text-slate-400 font-medium">
                           {service.category}
                         </span>
@@ -381,7 +419,7 @@ export function PublicLanding({
                         ${service.price.toLocaleString("es-AR")}
                       </span>
 
-                      {/* Indicador de selecci√≥n */}
+                      {/* Indicador de selecciÛn */}
                       <div
                         className={`w-6 h-6 rounded-full border flex items-center justify-center transition-all ${
                           isSelected
@@ -399,7 +437,7 @@ export function PublicLanding({
           </div>
         </main>
 
-        {/* Barra Flotante Inferior de Acci√≥n (Mobile Sticky Action Bar) */}
+        {/* Barra Flotante Inferior de AcciÛn (Mobile Sticky Action Bar) */}
         <footer className="fixed bottom-0 max-w-md w-full bg-white/95 backdrop-blur-md border-t border-slate-200 p-4 shadow-[0_-8px_20px_rgba(0,0,0,0.06)] z-20">
           {selectedService ? (
             <div className="space-y-2.5">
@@ -415,6 +453,22 @@ export function PublicLanding({
                   ${selectedService.price.toLocaleString("es-AR")}
                 </span>
               </div>
+
+              
+              {selectedEmployeeId && (
+                <div className="flex items-center justify-between bg-emerald-50/90 border border-emerald-200/80 rounded-xl px-3 py-2 text-xs text-emerald-900 mt-2">
+                  <div className="flex items-center gap-1.5 font-medium truncate">
+                    <span className="truncate">Profesional: {selectedEmployeeId === 'general' ? 'Cualquiera' : employees.find(e => e.id === selectedEmployeeId)?.firstName}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowEmployeeModal(true)}
+                    className="font-bold bg-white px-2 py-0.5 rounded-md border border-emerald-200 text-emerald-700 shrink-0 hover:bg-emerald-50 transition"
+                  >
+                    (cambiar)
+                  </button>
+                </div>
+              )}
 
               {selectedDateTime && (
                 <div className="flex items-center justify-between bg-blue-50/90 border border-blue-200/80 rounded-xl px-3 py-2 text-xs text-blue-900">
@@ -435,11 +489,28 @@ export function PublicLanding({
               <button
                 type="button"
                 onClick={() => {
+                  
                   if (selectedDateTime) {
-                    setShowCustomerModal(true);
-                  } else {
-                    setShowNextStepModal(true);
+                    if (!user) {
+                      // Save state and redirect
+                      localStorage.setItem("pendingBooking", JSON.stringify({
+                        localId: local.id,
+                        serviceId: selectedService.id,
+                        employeeId: selectedEmployeeId || "general",
+                        dateTime: selectedDateTime
+                      }));
+                      router.push("/login?callbackUrl=" + encodeURIComponent(pathname));
+                    } else {
+                      setShowCustomerModal(true);
+                    }
+                  } else if (selectedService) {
+                    if (employees.length > 0) {
+                      setShowEmployeeModal(true);
+                    } else {
+                      setShowNextStepModal(true);
+                    }
                   }
+
                 }}
                 className="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-bold py-3 px-4 rounded-xl shadow-md shadow-blue-600/25 flex items-center justify-center gap-2 transition-all"
               >
@@ -467,7 +538,30 @@ export function PublicLanding({
           </div>
         </footer>
 
-        {/* Modal de Selecci√≥n de Fecha y Hora (Ticket 25) */}
+        
+        {/* Employee Selection Modal */}
+        {showEmployeeModal && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+             <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl p-6">
+               <h2 className="text-xl font-bold mb-4 text-slate-900">Selecciona un profesional</h2>
+               <div className="space-y-3 max-h-96 overflow-y-auto">
+                 <button onClick={() => { setSelectedEmployeeId("general"); setShowEmployeeModal(false); setShowNextStepModal(true); }} className="w-full text-left p-4 rounded-2xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50/50 transition">
+                   <div className="font-bold text-slate-900">Cualquier profesional</div>
+                   <div className="text-xs text-slate-500">Horarios mas flexibles</div>
+                 </button>
+                 {employees?.map(emp => (
+                   <button key={emp.id} onClick={() => { setSelectedEmployeeId(emp.id); setShowEmployeeModal(false); setShowNextStepModal(true); }} className="w-full text-left p-4 rounded-2xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50/50 transition">
+                     <div className="font-bold text-slate-900">{emp.firstName} {emp.lastName}</div>
+                     <div className="text-xs text-slate-500">{emp.role || "Especialista"}</div>
+                   </button>
+                 ))}
+               </div>
+               <button onClick={() => setShowEmployeeModal(false)} className="mt-5 w-full py-3 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200 transition">Cancelar</button>
+             </div>
+          </div>
+        )}
+
+        {/* Modal de SelecciÛn de Fecha y Hora (Ticket 25) */}
         <DateTimePickerModal
           isOpen={showNextStepModal}
           onClose={() => setShowNextStepModal(false)}
@@ -481,7 +575,7 @@ export function PublicLanding({
           }}
         />
 
-        {/* Modal de Formulario de Cliente y Pantalla de √âxito (Ticket 27 y 29) */}
+        {/* Modal de Formulario de Cliente y Pantalla de …xito (Ticket 27 y 29) */}
         <CustomerBookingModal
           isOpen={showCustomerModal}
           onClose={() => setShowCustomerModal(false)}
@@ -489,12 +583,12 @@ export function PublicLanding({
           selectedDateTime={selectedDateTime}
           localInfo={local}
           localId={(local as any).id || local.slug}
-          employeeId={(selectedService as any)?.employeeId || "general"}
+          employeeId={selectedEmployeeId || "general"}
           onBack={() => {
             setShowCustomerModal(false);
             setShowNextStepModal(true);
           }}
-          onSubmit={handleBookingSubmit}
+          
         />
       </div>
     </div>
@@ -626,4 +720,5 @@ function CalendarIcon({ className = "w-4 h-4" }: { className?: string }) {
     </svg>
   );
 }
+
 

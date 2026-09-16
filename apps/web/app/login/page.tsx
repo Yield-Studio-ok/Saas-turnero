@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../lib/firebase";
 import { useAuth } from "../../lib/auth-context";
@@ -12,11 +12,17 @@ export default function LoginPage() {
   const [isRegister, setIsRegister] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
   const { user } = useAuth();
 
   useEffect(() => {
     if (user) {
-      router.push("/dashboard");
+      if (callbackUrl) {
+          router.push(callbackUrl);
+        } else {
+          router.push("/dashboard");
+        }
     }
   }, [user, router]);
 
@@ -31,7 +37,11 @@ export default function LoginPage() {
       } else {
         await signInWithEmailAndPassword(auth, email, password);
         // Could check if business exists, but for now redirect to dashboard
-        router.push("/dashboard");
+        if (callbackUrl) {
+          router.push(callbackUrl);
+        } else {
+          router.push("/dashboard");
+        }
       }
     } catch (err: any) {
       setError(err.message);
