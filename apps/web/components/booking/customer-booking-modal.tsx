@@ -81,6 +81,7 @@ export function CustomerBookingModal({
   onSuccess,
   initialData,
 }: CustomerBookingModalProps) {
+  const { token } = useAuth();
   const nameInputId = useId();
   const phoneInputId = useId();
   const emailInputId = useId();
