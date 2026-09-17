@@ -9,7 +9,11 @@ interface PageProps {
 
 async function fetchLocalProfile(id: string) {
   try {
-    const rootUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+    // In Docker, SSR needs to talk to the 'api' container, not 'localhost'
+    const isDocker = process.env.NEXT_PUBLIC_API_URL?.includes('localhost');
+    const rootUrl = typeof window === "undefined" && isDocker 
+      ? "http://api:3001" 
+      : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001");
 
     const res = await fetch(`${rootUrl}/business/public/${id}`, {
       next: { revalidate: 60 }, // optional cache revalidation
