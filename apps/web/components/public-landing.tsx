@@ -176,8 +176,7 @@ const [selectedDateTime, setSelectedDateTime] = useState<SelectedDateTime | null
       customerPhone: formData.customerPhone,
       customerEmail: formData.customerEmail,
       notes: formData.notes,
-      status: "confirmed",
-    });
+      status: "confirmed",}, token || undefined);
     return { id };
   };
 

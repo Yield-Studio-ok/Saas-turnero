@@ -240,7 +240,8 @@ export class AppointmentsService {
    * Invoca el endpoint transaccional del backend para crear un turno (POST /appointments - Ticket 28).
    * Valida disponibilidad mediante el motor y asegura persistencia atómica en Firestore.
    */
-  static async create(dto: CreateAppointmentDto): Promise<{ id: string; [key: string]: any }> {
+  static async create(dto: CreateAppointmentDto, token?: string): Promise<{ id: string; [key: string]: any }> {
+    
     // Sanitizamos el payload asegurando los campos requeridos por el backend
     const payload = {
       localId: dto.localId,
@@ -254,8 +255,12 @@ export class AppointmentsService {
     };
 
     return apiFetch<{ id: string; [key: string]: any }>("/appointments", {
+      
       method: "POST",
+      
       body: JSON.stringify(payload),
+      token,
+    
     });
   }
 
@@ -297,6 +302,7 @@ export class AppointmentsService {
 export async function createAppointment(
   localId: string,
   input: CreateAppointmentInput,
+  token?: string,
 ): Promise<string> {
   const duration = input.duration ?? 30;
   const date = formatDateToYYYYMMDD(input.date);
@@ -320,7 +326,7 @@ export async function createAppointment(
 
   try {
     // 1. Invocar endpoint transaccional del backend (POST /appointments - Ticket 28)
-    const result = await AppointmentsService.create(dto);
+    const result = await AppointmentsService.create(dto, token);
     if (result && result.id) {
       // Guardar en subcolección local si está disponible para sincronía en tiempo real
       try {
