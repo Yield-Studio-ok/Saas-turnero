@@ -584,6 +584,7 @@ const [selectedDateTime, setSelectedDateTime] = useState<SelectedDateTime | null
         {/* Modal de Formulario de Cliente y Pantalla de �xito (Ticket 27 y 29) */}
         <CustomerBookingModal
           isOpen={showCustomerModal}
+          onSubmit={handleBookingSubmit}
           onClose={() => setShowCustomerModal(false)}
           service={selectedService}
           selectedDateTime={selectedDateTime}
