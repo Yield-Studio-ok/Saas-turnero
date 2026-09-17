@@ -207,7 +207,7 @@ export function CustomerBookingModal({
           customerEmail: email,
           customerPhone: formData.customerPhone,
           notes: formData.notes,
-        });
+        }, token || undefined);
 
         if (res && res.id) {
           bookingId = res.id;
