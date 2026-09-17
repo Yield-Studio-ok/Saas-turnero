@@ -1,4 +1,4 @@
-"use client";
+ï»¿"use client";
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -12,11 +12,8 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     if (!loading && !user) {
       router.push("/login");
     } else if (!loading && user) {
-      // Validate roles (Dueño or Empleado could be 'owner' or 'employee', or check if valid role)
-      if (user.role !== "owner" && user.role !== "employee") {
-         // redirect somewhere else if not authorized for dashboard? Or just let them be if they have a dashboard.
-         // Wait, the ticket says "validates the user role (Dueño vs Empleado) using the JWT token and redirects unauthorized access"
-         router.push("/login"); // or another page
+      if (user.role !== "owner" && user.role !== "employee" && user.role !== "superadmin") {
+         router.push("/explorar"); 
       }
     }
   }, [user, loading, router]);
@@ -29,9 +26,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // We could conditionally render different dashboards based on role, 
-  // but for now, just validate they are authorized
-  if (user.role !== "owner" && user.role !== "employee") {
+  if (user.role !== "owner" && user.role !== "employee" && user.role !== "superadmin") {
     return null;
   }
 

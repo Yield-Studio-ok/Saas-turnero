@@ -18,7 +18,7 @@ export default function LoginPage() {
       if (callbackUrl) {
         router.push(callbackUrl);
       } else {
-        router.push("/dashboard");
+        router.push(user.role === "user" ? "/explorar" : "/dashboard");
       }
     }
   }, [user, router, callbackUrl]);
@@ -32,7 +32,7 @@ export default function LoginPage() {
       if (callbackUrl) {
         router.push(callbackUrl);
       } else {
-        router.push("/dashboard");
+        router.push(user.role === "user" ? "/explorar" : "/dashboard");
       }
     } catch (err: any) {
       setError(err.message || "Error al iniciar sesion");
