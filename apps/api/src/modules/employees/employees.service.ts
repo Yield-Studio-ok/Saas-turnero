@@ -21,7 +21,9 @@ export class EmployeesService {
   }
 
   async findAllByBusiness(userId: string, businessId: string) {
-    await this.checkBusinessOwnership(userId, businessId);
+    if (userId !== "public") {
+      await this.checkBusinessOwnership(userId, businessId);
+    }
     return this.prisma.employee.findMany({ where: { businessId }, include: { shifts: { where: { clockOut: null }, take: 1 } } });
   }
 
