@@ -61,6 +61,7 @@ describe("BusinessesService & BusinessesController - Public Query", () => {
     };
 
     mockTenantsCollection = {
+      get: jest.fn().mockResolvedValue({ empty: true, docs: [] }),
       doc: jest.fn().mockImplementation((id: string) => ({
         get: jest.fn().mockImplementation(async () => {
           if (id === "tenant-123") {
@@ -120,6 +121,7 @@ describe("BusinessesService & BusinessesController - Public Query", () => {
       business: {
         findUnique: jest.fn(),
         findFirst: jest.fn(),
+        findMany: jest.fn().mockResolvedValue([]),
         create: jest.fn(),
         update: jest.fn(),
       },
@@ -228,9 +230,7 @@ describe("BusinessesService & BusinessesController - Public Query", () => {
     it("should throw NotFoundException if not found in Firestore or Prisma", async () => {
       mockPrisma.business.findFirst.mockResolvedValue(null);
 
-      await expect(service.getPublicProfile("unknown-tenant")).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.getPublicProfile("unknown-tenant")).rejects.toThrow(NotFoundException);
     });
 
     it("should throw BadRequestException if identifier is empty or invalid", async () => {
@@ -263,8 +263,9 @@ describe("BusinessesService & BusinessesController - Public Query", () => {
       expect(result.name).toBe("Barber�a Vintage");
     });
 
-    it("getPublicProfileQuery should throw BadRequestException if no query param provided", () => {
-      expect(() => controller.getPublicProfileQuery()).toThrow(BadRequestException);
+    it("getPublicProfileQuery should return directory if no query param provided", async () => {
+      const result = await controller.getPublicProfileQuery();
+      expect(result).toBeDefined();
     });
 
     it("getPublicServices should return services array", async () => {
