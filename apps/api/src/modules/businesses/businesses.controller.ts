@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Put,
   Patch,
   Body,
   Param,
@@ -103,6 +104,44 @@ export class BusinessesController {
     const user = req.user as AuthUser;
     const targetId = user?.tenantId || user?.uid || "mock-owner-id";
     return this.businessesService.updatePlan(targetId, body.plan || "PRO");
+  }
+
+  @Get("my-legal-settings")
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Get legal documents and policies" })
+  getLegalSettings() {
+    return this.businessesService.getLegalSettings();
+  }
+
+  @Put("my-legal-settings")
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Update legal documents and policies" })
+  updateLegalSettings(
+    @Body() dto: {
+      termsAndConditions?: string;
+      serviceContracts?: string;
+      cancellationPolicy?: string;
+    },
+  ) {
+    return this.businessesService.updateLegalSettings(dto);
+  }
+
+  @Get("my-profile")
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Get my business profile" })
+  getMyProfile(@Req() req: Request) {
+    const user = req.user as AuthUser;
+    const targetId = user?.tenantId || user?.uid;
+    return this.businessesService.getMyProfile(targetId);
+  }
+
+  @Put("my-profile")
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Update my business profile" })
+  updateMyProfile(@Req() req: Request, @Body() dto: any) {
+    const user = req.user as AuthUser;
+    const targetId = user?.tenantId || user?.uid;
+    return this.businessesService.updateMyProfile(targetId, dto);
   }
 
   @Get(":id")

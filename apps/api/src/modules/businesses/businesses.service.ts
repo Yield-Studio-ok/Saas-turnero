@@ -473,4 +473,139 @@ export class BusinessesService {
       data: { plan: upperPlan },
     });
   }
+
+  async getLegalSettings(): Promise<{
+    termsAndConditions: string;
+    serviceContracts: string;
+    cancellationPolicy: string;
+  }> {
+    const notices = await this.prisma.legalNotice.findMany();
+    const terms = notices.find(
+      (n) => n.title.toLowerCase().includes("término") || n.title.toLowerCase().includes("termino"),
+    );
+    const contracts = notices.find((n) => n.title.toLowerCase().includes("contrato"));
+    const cancellation = notices.find(
+      (n) =>
+        n.title.toLowerCase().includes("cancelaci") || n.title.toLowerCase().includes("politica"),
+    );
+
+    return {
+      termsAndConditions:
+        terms?.content || "Términos y condiciones estándar del servicio de reservas y turnos.",
+      serviceContracts:
+        contracts?.content ||
+        "Contrato estándar de prestación de servicios entre el establecimiento y el profesional.",
+      cancellationPolicy:
+        cancellation?.content ||
+        "Las cancelaciones deben realizarse con al menos 2 horas de anticipación para reembolsos.",
+    };
+  }
+
+  async updateLegalSettings(dto: {
+    termsAndConditions?: string;
+    serviceContracts?: string;
+    cancellationPolicy?: string;
+  }) {
+    if (dto.termsAndConditions !== undefined) {
+      const existing = await this.prisma.legalNotice.findFirst({
+        where: { title: { contains: "Término", mode: "insensitive" } },
+      });
+      if (existing) {
+        await this.prisma.legalNotice.update({
+          where: { id: existing.id },
+          data: { content: dto.termsAndConditions },
+        });
+      } else {
+        await this.prisma.legalNotice.create({
+          data: {
+            title: "Términos y Condiciones",
+            content: dto.termsAndConditions,
+          },
+        });
+      }
+    }
+
+    if (dto.serviceContracts !== undefined) {
+      const existing = await this.prisma.legalNotice.findFirst({
+        where: { title: { contains: "Contrato", mode: "insensitive" } },
+      });
+      if (existing) {
+        await this.prisma.legalNotice.update({
+          where: { id: existing.id },
+          data: { content: dto.serviceContracts },
+        });
+      } else {
+        await this.prisma.legalNotice.create({
+          data: {
+            title: "Contratos de Servicios",
+            content: dto.serviceContracts,
+          },
+        });
+      }
+    }
+
+    if (dto.cancellationPolicy !== undefined) {
+      const existing = await this.prisma.legalNotice.findFirst({
+        where: { title: { contains: "Cancelaci", mode: "insensitive" } },
+      });
+      if (existing) {
+        await this.prisma.legalNotice.update({
+          where: { id: existing.id },
+          data: { content: dto.cancellationPolicy },
+        });
+      } else {
+        await this.prisma.legalNotice.create({
+          data: {
+            title: "Política de Cancelación",
+            content: dto.cancellationPolicy,
+          },
+        });
+      }
+    }
+
+    return this.getLegalSettings();
+  }
+
+  async getMyProfile(identifier?: string) {
+    let business = null;
+    if (identifier) {
+      business = await this.prisma.business.findFirst({
+        where: {
+          OR: [{ id: identifier }, { ownerId: identifier }],
+        },
+      });
+    }
+    if (!business) {
+      business = await this.prisma.business.findFirst();
+    }
+    if (!business) {
+      throw new NotFoundException("Business not found");
+    }
+    return business;
+  }
+
+  async updateMyProfile(identifier: string, data: any) {
+    let business = null;
+    if (identifier) {
+      business = await this.prisma.business.findFirst({
+        where: {
+          OR: [{ id: identifier }, { ownerId: identifier }],
+        },
+      });
+    }
+    if (!business) {
+      business = await this.prisma.business.findFirst();
+    }
+    if (!business) {
+      throw new NotFoundException("Business not found");
+    }
+
+    return this.prisma.business.update({
+      where: { id: business.id },
+      data: {
+        name: data.name !== undefined ? data.name : undefined,
+        description: data.description !== undefined ? data.description : undefined,
+      },
+    });
+  }
 }
