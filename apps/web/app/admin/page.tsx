@@ -3,14 +3,14 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import { 
-  Building2, 
-  Search, 
-  MoreVertical, 
-  Mail, 
+import {
+  Building2,
+  Search,
+  MoreVertical,
+  Mail,
   User as UserIcon,
   Calendar,
-  AlertCircle
+  AlertCircle,
 } from "lucide-react";
 
 type Plan = "BASIC" | "PRO" | "PREMIUM";
@@ -84,12 +84,10 @@ export default function AdminBusinessesPage() {
 
   const handlePlanChange = async (businessId: string, newPlan: Plan) => {
     if (!token) return;
-    
+
     // Optimistic UI update
     const previousBusinesses = [...businesses];
-    setBusinesses((prev) =>
-      prev.map((b) => (b.id === businessId ? { ...b, plan: newPlan } : b))
-    );
+    setBusinesses((prev) => prev.map((b) => (b.id === businessId ? { ...b, plan: newPlan } : b)));
     setUpdatingPlanId(businessId);
 
     try {
@@ -107,22 +105,25 @@ export default function AdminBusinessesPage() {
     }
   };
 
-  const filteredBusinesses = businesses.filter((b) =>
-    b.name.toLowerCase().includes(search.toLowerCase()) ||
-    b.owner.email.toLowerCase().includes(search.toLowerCase()) ||
-    b.owner.name.toLowerCase().includes(search.toLowerCase())
+  const filteredBusinesses = businesses.filter(
+    (b) =>
+      b.name.toLowerCase().includes(search.toLowerCase()) ||
+      b.owner.email.toLowerCase().includes(search.toLowerCase()) ||
+      b.owner.name.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Locales Registrados</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
+            Locales Registrados
+          </h1>
           <p className="text-sm text-gray-500 mt-1">
             Gestiona los negocios, propietarios y planes de suscripción activos.
           </p>
         </div>
-        
+
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search className="h-4 w-4 text-gray-400" />
@@ -151,16 +152,28 @@ export default function AdminBusinessesPage() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50/50">
                 <tr>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Negocio
                   </th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Propietario
                   </th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Fecha de Registro
                   </th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Plan
                   </th>
                   <th scope="col" className="relative px-6 py-4">
@@ -200,7 +213,9 @@ export default function AdminBusinessesPage() {
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center">
                       <Building2 className="mx-auto h-12 w-12 text-gray-300" />
-                      <h3 className="mt-2 text-sm font-medium text-gray-900">No se encontraron negocios</h3>
+                      <h3 className="mt-2 text-sm font-medium text-gray-900">
+                        No se encontraron negocios
+                      </h3>
                       <p className="mt-1 text-sm text-gray-500">
                         Intenta ajustar los términos de búsqueda o verifica más tarde.
                       </p>
@@ -217,7 +232,9 @@ export default function AdminBusinessesPage() {
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">{business.name}</div>
                             <div className="text-xs text-gray-500 mt-0.5 flex items-center">
-                              <span className="font-mono text-gray-400">{business.id.split('-')[0]}</span>
+                              <span className="font-mono text-gray-400">
+                                {business.id.split("-")[0]}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -240,7 +257,7 @@ export default function AdminBusinessesPage() {
                           {new Date(business.createdAt).toLocaleDateString("es-AR", {
                             day: "2-digit",
                             month: "short",
-                            year: "numeric"
+                            year: "numeric",
                           })}
                         </div>
                       </td>
@@ -261,8 +278,17 @@ export default function AdminBusinessesPage() {
                             <option value="PREMIUM">PREMIUM</option>
                           </select>
                           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
-                            <svg className={`h-4 w-4 ${planColors[business.plan].text}`} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                              <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                            <svg
+                              className={`h-4 w-4 ${planColors[business.plan].text}`}
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                              aria-hidden="true"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                                clipRule="evenodd"
+                              />
                             </svg>
                           </div>
                         </div>
@@ -278,18 +304,26 @@ export default function AdminBusinessesPage() {
               </tbody>
             </table>
           </div>
-          
+
           {/* Pagination Footer */}
           {!loading && businesses.length > 0 && (
             <div className="bg-white px-6 py-4 border-t border-gray-200 flex items-center justify-between">
               <div className="text-sm text-gray-500">
-                Mostrando <span className="font-medium text-gray-900">{filteredBusinesses.length}</span> locales
+                Mostrando{" "}
+                <span className="font-medium text-gray-900">{filteredBusinesses.length}</span>{" "}
+                locales
               </div>
               <div className="flex space-x-2">
-                <button disabled className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-500 bg-gray-50 cursor-not-allowed">
+                <button
+                  disabled
+                  className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-500 bg-gray-50 cursor-not-allowed"
+                >
                   Anterior
                 </button>
-                <button disabled className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-500 bg-gray-50 cursor-not-allowed">
+                <button
+                  disabled
+                  className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-500 bg-gray-50 cursor-not-allowed"
+                >
                   Siguiente
                 </button>
               </div>

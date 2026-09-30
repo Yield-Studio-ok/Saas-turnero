@@ -1,6 +1,6 @@
 export interface TimeSlot {
   startTime: string; // "HH:mm"
-  endTime: string;   // "HH:mm"
+  endTime: string; // "HH:mm"
 }
 
 export function timeToMinutes(time: string): number {
@@ -28,7 +28,7 @@ export function calculateAvailableSlots({
   slotInterval,
 }: AvailabilityEngineOptions): TimeSlot[] {
   const interval = slotInterval ?? serviceDuration;
-  
+
   let freeBlocks = workingHours.map((wh) => ({
     start: timeToMinutes(wh.startTime),
     end: timeToMinutes(wh.endTime),

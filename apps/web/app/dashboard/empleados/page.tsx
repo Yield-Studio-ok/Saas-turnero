@@ -2,8 +2,20 @@
 import { useState } from "react";
 
 const initialEmpleados: any[] = [
-  { id: 1, nombre: "Juan Pérez", especialidad: "Barbero", telefono: "12345678", isClockedIn: false },
-  { id: 2, nombre: "María Gómez", especialidad: "Colorista", telefono: "87654321", isClockedIn: true },
+  {
+    id: 1,
+    nombre: "Juan Pérez",
+    especialidad: "Barbero",
+    telefono: "12345678",
+    isClockedIn: false,
+  },
+  {
+    id: 2,
+    nombre: "María Gómez",
+    especialidad: "Colorista",
+    telefono: "87654321",
+    isClockedIn: true,
+  },
 ];
 
 export default function EmpleadosPage() {
@@ -40,9 +52,14 @@ export default function EmpleadosPage() {
   };
 
   const handleToggleShift = async (id: number) => {
-    setEmpleados(empleados.map(emp => emp.id === id ? { ...emp, isClockedIn: !emp.isClockedIn } : emp));
+    setEmpleados(
+      empleados.map((emp) => (emp.id === id ? { ...emp, isClockedIn: !emp.isClockedIn } : emp)),
+    );
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/employees/${id}/shift`, { method: 'POST' });
+      await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/employees/${id}/shift`,
+        { method: "POST" },
+      );
     } catch (error) {
       console.error(error);
     }
@@ -97,7 +114,9 @@ export default function EmpleadosPage() {
                   <button
                     onClick={() => handleToggleShift(empleado.id)}
                     className={`px-3 py-1 rounded text-white font-medium ${
-                      empleado.isClockedIn ? "bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600"
+                      empleado.isClockedIn
+                        ? "bg-red-500 hover:bg-red-600"
+                        : "bg-green-500 hover:bg-green-600"
                     }`}
                   >
                     {empleado.isClockedIn ? "Fichar Salida" : "Fichar Entrada"}

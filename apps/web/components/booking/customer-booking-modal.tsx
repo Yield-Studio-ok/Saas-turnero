@@ -8,6 +8,7 @@ import {
   formatDateToYYYYMMDD,
   calculateEndTime,
 } from "../../lib/appointments-service";
+import { useAuth } from "@/lib/auth-context";
 
 export interface CustomerBookingFormData {
   customerName: string;
@@ -81,6 +82,7 @@ export function CustomerBookingModal({
   onSuccess,
   initialData,
 }: CustomerBookingModalProps) {
+  const { token } = useAuth();
   const nameInputId = useId();
   const phoneInputId = useId();
   const emailInputId = useId();
@@ -195,18 +197,21 @@ export function CustomerBookingModal({
           formData.customerEmail ||
           `${formData.customerPhone.replace(/\D/g, "") || "cliente"}@notificaciones.local`;
 
-        const res = await AppointmentsService.create({
-          localId: targetLocalId,
-          employeeId: targetEmployeeId,
-          serviceId: service.id,
-          date: dateStr,
-          startTime,
-          endTime,
-          customerName: formData.customerName,
-          customerEmail: email,
-          customerPhone: formData.customerPhone,
-          notes: formData.notes,
-        });
+        const res = await AppointmentsService.create(
+          {
+            localId: targetLocalId,
+            employeeId: targetEmployeeId,
+            serviceId: service.id,
+            date: dateStr,
+            startTime,
+            endTime,
+            customerName: formData.customerName,
+            customerEmail: email,
+            customerPhone: formData.customerPhone,
+            notes: formData.notes,
+          },
+          token || undefined,
+        );
 
         if (res && res.id) {
           bookingId = res.id;
@@ -276,8 +281,7 @@ export function CustomerBookingModal({
 
     const endObj = new Date(dateObj.getTime() + srv.duration * 60000);
 
-    const formatGCalDate = (d: Date) =>
-      d.toISOString().replace(/-|:|\.\d+/g, "");
+    const formatGCalDate = (d: Date) => d.toISOString().replace(/-|:|\.\d+/g, "");
 
     const dates = `${formatGCalDate(dateObj)}/${formatGCalDate(endObj)}`;
     const title = encodeURIComponent(`Turno: ${srv.name} en ${localName}`);
@@ -307,9 +311,7 @@ export function CustomerBookingModal({
           <div className="flex items-center gap-2.5">
             <div
               className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-                successData
-                  ? "bg-emerald-50 text-emerald-600"
-                  : "bg-blue-50 text-blue-600"
+                successData ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-600"
               }`}
             >
               {successData ? (
@@ -393,9 +395,7 @@ export function CustomerBookingModal({
                   <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
                     Servicio
                   </span>
-                  <p className="text-sm font-bold text-slate-900">
-                    {successData.service.name}
-                  </p>
+                  <p className="text-sm font-bold text-slate-900">{successData.service.name}</p>
                   <span className="text-xs text-slate-500">
                     Duración: {successData.service.duration} min
                   </span>
@@ -407,9 +407,7 @@ export function CustomerBookingModal({
                   <p className="text-base font-black text-blue-600">
                     ${successData.service.price.toLocaleString("es-AR")}
                   </p>
-                  <span className="text-[10px] text-slate-400 font-medium">
-                    Pago en el local
-                  </span>
+                  <span className="text-[10px] text-slate-400 font-medium">Pago en el local</span>
                 </div>
               </div>
 
@@ -452,9 +450,7 @@ export function CustomerBookingModal({
                 {successData.customer.customerEmail && (
                   <div className="flex justify-between">
                     <span className="text-slate-500 font-medium">Email:</span>
-                    <span className="text-slate-700">
-                      {successData.customer.customerEmail}
-                    </span>
+                    <span className="text-slate-700">{successData.customer.customerEmail}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
@@ -510,9 +506,7 @@ export function CustomerBookingModal({
               <div className="bg-slate-50 px-5 py-3 border-b border-slate-100 flex items-center justify-between text-xs">
                 <div className="space-y-0.5 min-w-0 pr-2">
                   <div className="flex items-center gap-1.5">
-                    <span className="font-bold text-slate-900 truncate">
-                      {service.name}
-                    </span>
+                    <span className="font-bold text-slate-900 truncate">{service.name}</span>
                     <span className="text-slate-400">•</span>
                     <span className="font-bold text-blue-600 shrink-0">
                       ${service.price.toLocaleString("es-AR")}
@@ -557,10 +551,7 @@ export function CustomerBookingModal({
 
               {/* Campo 1: Nombre y Apellido (Obligatorio) */}
               <div className="space-y-1.5">
-                <label
-                  htmlFor={nameInputId}
-                  className="block text-xs font-bold text-slate-700"
-                >
+                <label htmlFor={nameInputId} className="block text-xs font-bold text-slate-700">
                   Nombre y Apellido <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
@@ -600,10 +591,7 @@ export function CustomerBookingModal({
               {/* Campo 2: WhatsApp / Teléfono (Obligatorio) */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label
-                    htmlFor={phoneInputId}
-                    className="block text-xs font-bold text-slate-700"
-                  >
+                  <label htmlFor={phoneInputId} className="block text-xs font-bold text-slate-700">
                     WhatsApp (Celular) <span className="text-rose-500">*</span>
                   </label>
                   <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
@@ -646,10 +634,7 @@ export function CustomerBookingModal({
 
               {/* Campo 3: Correo Electrónico (Opcional) */}
               <div className="space-y-1.5">
-                <label
-                  htmlFor={emailInputId}
-                  className="block text-xs font-bold text-slate-700"
-                >
+                <label htmlFor={emailInputId} className="block text-xs font-bold text-slate-700">
                   Email <span className="text-slate-400 font-normal">(Opcional)</span>
                 </label>
                 <div className="relative">
@@ -683,10 +668,7 @@ export function CustomerBookingModal({
 
               {/* Campo 4: Notas o Preferencias (Opcional) */}
               <div className="space-y-1.5">
-                <label
-                  htmlFor={notesInputId}
-                  className="block text-xs font-bold text-slate-700"
-                >
+                <label htmlFor={notesInputId} className="block text-xs font-bold text-slate-700">
                   Notas o comentarios <span className="text-slate-400 font-normal">(Opcional)</span>
                 </label>
                 <textarea
@@ -864,14 +846,7 @@ function InfoIcon({ className = "w-4 h-4" }: { className?: string }) {
 function SpinnerIcon({ className = "w-4 h-4" }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24">
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      />
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
       <path
         className="opacity-75"
         fill="currentColor"
@@ -881,7 +856,13 @@ function SpinnerIcon({ className = "w-4 h-4" }: { className?: string }) {
   );
 }
 
-function WhatsAppIcon({ className = "w-4 h-4", fill = "currentColor" }: { className?: string; fill?: string }) {
+function WhatsAppIcon({
+  className = "w-4 h-4",
+  fill = "currentColor",
+}: {
+  className?: string;
+  fill?: string;
+}) {
   return (
     <svg className={className} fill={fill} viewBox="0 0 24 24">
       <path d="M12.031 0C5.385 0 0 5.385 0 12.031c0 2.12.553 4.17 1.603 5.986L0 24l6.155-1.614c1.758.96 3.754 1.465 5.876 1.465h.005c6.642 0 12.026-5.385 12.026-12.031 0-3.213-1.252-6.233-3.525-8.508C18.263 1.252 15.244 0 12.031 0zm-.005 21.99c-1.8 0-3.565-.484-5.105-1.399l-.366-.217-3.795.996 1.013-3.7-.238-.379c-1.006-1.6-1.536-3.46-1.536-5.36 0-5.518 4.49-10.007 10.015-10.007 2.673 0 5.187 1.042 7.078 2.934 1.89 1.892 2.931 4.407 2.93 7.08-.002 5.519-4.492 10.012-10.013 10.012zm5.485-7.498c-.3-.15-1.776-.876-2.051-.976-.275-.1-.475-.15-.675.15s-.776.976-.951 1.176c-.175.2-.35.225-.65.075-.3-.15-1.267-.467-2.413-1.488-.892-.796-1.494-1.78-1.669-2.08-.175-.3-.019-.462.131-.612.135-.135.3-.35.45-.525.15-.175.2-.3.3-.5.1-.2.05-.375-.025-.525s-.675-1.626-.925-2.226c-.244-.585-.492-.505-.675-.515-.175-.009-.375-.011-.575-.011s-.525.075-.8.375c-.275.3-1.05 1.026-1.05 2.502s1.075 2.898 1.225 3.098c.15.2 2.115 3.23 5.125 4.53.716.31 1.275.495 1.71.634.719.229 1.373.197 1.891.119.578-.087 1.776-.726 2.026-1.427.25-.701.25-1.302.175-1.427-.075-.125-.275-.2-.575-.35z" />
@@ -896,7 +877,6 @@ function GoogleCalendarIcon({ className = "w-4 h-4" }: { className?: string }) {
     </svg>
   );
 }
-
 
 function AlertCircleIcon({ className = "w-4 h-4" }: { className?: string }) {
   return (

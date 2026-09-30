@@ -28,4 +28,3 @@ export class CreateProductDto {
   @IsNotEmpty()
   businessId: string;
 }
-

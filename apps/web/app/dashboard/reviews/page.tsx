@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { PaywallModal } from "@/components/paywall-modal";
+import { useRouter } from "next/navigation";
 
 type Review = {
   id: string;
@@ -18,6 +19,7 @@ export default function ReviewsDashboard() {
   const [showPaywall, setShowPaywall] = useState(false);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   // En un caso real se obtendría del contexto del negocio actual
   const businessId = "YOUR_BUSINESS_ID";
@@ -54,7 +56,11 @@ export default function ReviewsDashboard() {
 
   return (
     <div className="relative">
-      <div className={showPaywall ? "blur-sm pointer-events-none select-none opacity-50 space-y-6" : "space-y-6"}>
+      <div
+        className={
+          showPaywall ? "blur-sm pointer-events-none select-none opacity-50 space-y-6" : "space-y-6"
+        }
+      >
         <div className="p-6 max-w-5xl mx-auto">
           <h1 className="text-2xl font-bold mb-6 text-gray-800">Reseñas y Fidelidad</h1>
 
@@ -71,8 +77,8 @@ export default function ReviewsDashboard() {
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
               <h2 className="text-lg font-semibold text-gray-600 mb-2">Programa de Fidelidad</h2>
               <p className="text-sm text-gray-600 mb-4">
-                Tus clientes suman <span className="font-bold text-blue-600">10 puntos</span> por cada
-                reseña que dejan después de su turno.
+                Tus clientes suman <span className="font-bold text-blue-600">10 puntos</span> por
+                cada reseña que dejan después de su turno.
               </p>
               <div className="bg-blue-50 text-blue-800 px-4 py-2 rounded-md text-sm font-medium inline-block">
                 Activo
@@ -127,10 +133,10 @@ export default function ReviewsDashboard() {
           </div>
         </div>
       </div>
-      
-      <PaywallModal 
-        isOpen={showPaywall} 
-        onClose={() => {}}
+
+      <PaywallModal
+        isOpen={showPaywall}
+        onClose={() => router.push("/dashboard")}
         title="Gestiona tu Reputación"
         description="Actualiza a PRO para leer y responder reseñas de tus clientes, centralizando la reputación de tu negocio."
       />

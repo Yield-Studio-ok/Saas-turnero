@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { AuthProvider } from "@/lib/auth-context";
 import LegalNoticeModal from "@/components/legal-notice-modal";
-import { DevRoleSwitcher } from "@/components/dev-role-switcher";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -18,7 +17,6 @@ export default function RootLayout({
       <body>
         <AuthProvider>
           <LegalNoticeModal />
-          <DevRoleSwitcher />
           {children}
         </AuthProvider>
       </body>

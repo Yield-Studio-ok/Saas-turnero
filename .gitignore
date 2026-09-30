@@ -32,6 +32,7 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+.env.neon
 
 # IDE / Editor
 .vscode/
@@ -49,4 +50,4 @@ lefthook-local.yml
 firebase-credentials.json
 
 # Agent skills (local only)
-.agents/skills/impeccable/
+.agents/

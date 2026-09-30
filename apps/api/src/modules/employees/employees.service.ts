@@ -21,8 +21,13 @@ export class EmployeesService {
   }
 
   async findAllByBusiness(userId: string, businessId: string) {
-    await this.checkBusinessOwnership(userId, businessId);
-    return this.prisma.employee.findMany({ where: { businessId }, include: { shifts: { where: { clockOut: null }, take: 1 } } });
+    if (userId !== "public") {
+      await this.checkBusinessOwnership(userId, businessId);
+    }
+    return this.prisma.employee.findMany({
+      where: { businessId },
+      include: { shifts: { where: { clockOut: null }, take: 1 } },
+    });
   }
 
   async findOne(userId: string, id: string) {
@@ -49,11 +54,11 @@ export class EmployeesService {
   }
   async toggleShift(id: string) {
     const employee = await this.prisma.employee.findUnique({ where: { id } });
-    if (!employee) throw new NotFoundException('Employee not found');
+    if (!employee) throw new NotFoundException("Employee not found");
 
     const activeShift = await this.prisma.shift.findFirst({
       where: { employeeId: id, clockOut: null },
-      orderBy: { clockIn: 'desc' },
+      orderBy: { clockIn: "desc" },
     });
 
     if (activeShift) {

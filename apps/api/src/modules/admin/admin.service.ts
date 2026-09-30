@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { SubscriptionPlan } from '@prisma/client';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { SubscriptionPlan } from "@prisma/client";
 
 @Injectable()
 export class AdminService {
@@ -39,7 +39,7 @@ export class AdminService {
   async updateBusinessPlan(id: string, plan: SubscriptionPlan) {
     const business = await this.prisma.business.findUnique({ where: { id } });
     if (!business) {
-      throw new NotFoundException('Business not found');
+      throw new NotFoundException("Business not found");
     }
 
     return this.prisma.business.update({

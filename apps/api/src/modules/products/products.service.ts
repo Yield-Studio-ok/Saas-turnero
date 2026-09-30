@@ -52,4 +52,3 @@ export class ProductsService {
     return this.prisma.product.delete({ where: { id } });
   }
 }
-

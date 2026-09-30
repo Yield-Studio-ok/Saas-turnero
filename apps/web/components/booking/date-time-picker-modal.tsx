@@ -7,7 +7,7 @@ import type { ServiceItem } from "../public-landing";
 export interface TimeSlotOption {
   id: string;
   startTime: string; // "09:00"
-  endTime: string;   // "09:30"
+  endTime: string; // "09:30"
   available: boolean;
   period: "morning" | "afternoon";
 }
@@ -60,7 +60,9 @@ function generateDefaultSlots(durationMinutes = 30, selectedDate: Date): TimeSlo
       const startM = min.toString().padStart(2, "0");
 
       const totalEndMin = hour * 60 + min + durationMinutes;
-      const endH = Math.floor(totalEndMin / 60).toString().padStart(2, "0");
+      const endH = Math.floor(totalEndMin / 60)
+        .toString()
+        .padStart(2, "0");
       const endM = (totalEndMin % 60).toString().padStart(2, "0");
 
       const timeStr = `${startH}:${startM}`;
@@ -85,7 +87,9 @@ function generateDefaultSlots(durationMinutes = 30, selectedDate: Date): TimeSlo
       const startM = min.toString().padStart(2, "0");
 
       const totalEndMin = hour * 60 + min + durationMinutes;
-      const endH = Math.floor(totalEndMin / 60).toString().padStart(2, "0");
+      const endH = Math.floor(totalEndMin / 60)
+        .toString()
+        .padStart(2, "0");
       const endM = (totalEndMin % 60).toString().padStart(2, "0");
 
       const timeStr = `${startH}:${startM}`;
@@ -125,11 +129,11 @@ export function DateTimePickerModal({
   const [activePeriod, setActivePeriod] = useState<"all" | "morning" | "afternoon">("all");
   const [stepConfirmed, setStepConfirmed] = useState(false);
 
-  const { availableSlots: fetchedSlots, isLoading: isFetchingSlots } = useAvailability(
+  const { availableSlots: fetchedSlots } = useAvailability(
     localId || "",
     selectedDate,
     openHours || "09:00 - 20:00",
-    service?.duration || 30
+    service?.duration || 30,
   );
 
   // Reiniciar estado si se abre/cierra
@@ -147,10 +151,7 @@ export function DateTimePickerModal({
   const currentMonth = currentMonthDate.getMonth();
 
   const isPrevMonthDisabled = useMemo(() => {
-    return (
-      currentYear === today.getFullYear() &&
-      currentMonth <= today.getMonth()
-    );
+    return currentYear === today.getFullYear() && currentMonth <= today.getMonth();
   }, [currentYear, currentMonth, today]);
 
   const handlePrevMonth = () => {
@@ -268,7 +269,6 @@ export function DateTimePickerModal({
       aria-labelledby="modal-title"
     >
       <div className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden border border-slate-200/80 animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200">
-        
         {/* Handle bar para mobile */}
         <div className="pt-2.5 pb-1 flex justify-center sm:hidden">
           <div className="w-12 h-1.5 bg-slate-200 rounded-full" />
@@ -320,7 +320,6 @@ export function DateTimePickerModal({
 
         {/* Contenido scrolleable del modal */}
         <div className="px-5 py-4 overflow-y-auto space-y-6 flex-1 text-slate-900">
-          
           {stepConfirmed ? (
             /* Vista de confirmaciÃ³n de fecha/hora (TransiciÃ³n para Ticket 27) */
             <div className="py-6 text-center space-y-4 animate-in fade-in zoom-in-95 duration-200">
@@ -328,7 +327,9 @@ export function DateTimePickerModal({
                 <CheckCircleIcon className="w-8 h-8" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-lg font-bold text-slate-900">Â¡Horario seleccionado con Ã©xito!</h3>
+                <h3 className="text-lg font-bold text-slate-900">
+                  Â¡Horario seleccionado con Ã©xito!
+                </h3>
                 <p className="text-xs text-slate-500">
                   Tu turno ha sido pre-reservado. Completa tus datos para confirmar.
                 </p>
@@ -374,7 +375,8 @@ export function DateTimePickerModal({
                 <div>
                   <p className="font-bold">Paso siguiente:</p>
                   <p className="text-blue-700 mt-0.5">
-                    Completa tus datos de contacto (Nombre y WhatsApp) para confirmar la reserva y recibir tu comprobante.
+                    Completa tus datos de contacto (Nombre y WhatsApp) para confirmar la reserva y
+                    recibir tu comprobante.
                   </p>
                 </div>
               </div>
@@ -412,7 +414,9 @@ export function DateTimePickerModal({
                       type="button"
                       onClick={handleQuickSelectToday}
                       className={`text-xs px-2.5 py-1 rounded-lg border font-medium transition ${
-                        selectedDate && isDateToday(selectedDate.getDate()) && selectedDate.getMonth() === today.getMonth()
+                        selectedDate &&
+                        isDateToday(selectedDate.getDate()) &&
+                        selectedDate.getMonth() === today.getMonth()
                           ? "bg-blue-50 border-blue-300 text-blue-700 font-semibold"
                           : "border-slate-200 hover:bg-slate-50 text-slate-600"
                       }`}
@@ -501,17 +505,17 @@ export function DateTimePickerModal({
                             isSelected
                               ? "bg-blue-600 text-white font-bold shadow-md shadow-blue-600/30 scale-105 z-10 ring-2 ring-blue-500/20"
                               : isPast
-                              ? "text-slate-300 cursor-not-allowed line-through"
-                              : isSunday
-                              ? "text-rose-300/80 cursor-not-allowed bg-rose-50/30"
-                              : "hover:bg-blue-100/70 hover:text-blue-700 text-slate-700 font-semibold bg-white border border-slate-200/50"
+                                ? "text-slate-300 cursor-not-allowed line-through"
+                                : isSunday
+                                  ? "text-rose-300/80 cursor-not-allowed bg-rose-50/30"
+                                  : "hover:bg-blue-100/70 hover:text-blue-700 text-slate-700 font-semibold bg-white border border-slate-200/50"
                           }`}
                           title={
                             isPast
                               ? "Fecha pasada"
                               : isSunday
-                              ? "Domingo cerrado"
-                              : `${dayNumber} de ${MONTH_NAMES[currentMonth]}`
+                                ? "Domingo cerrado"
+                                : `${dayNumber} de ${MONTH_NAMES[currentMonth]}`
                           }
                         >
                           <span>{dayNumber}</span>
@@ -552,7 +556,10 @@ export function DateTimePickerModal({
                     <p className="text-xs text-slate-500">
                       {selectedDate ? (
                         <>
-                          Para el <span className="font-semibold text-slate-700">{formatFullDate(selectedDate)}</span>
+                          Para el{" "}
+                          <span className="font-semibold text-slate-700">
+                            {formatFullDate(selectedDate)}
+                          </span>
                         </>
                       ) : (
                         "Primero selecciona un dÃ­a arriba"
@@ -567,7 +574,9 @@ export function DateTimePickerModal({
                         type="button"
                         onClick={() => setActivePeriod("all")}
                         className={`px-2 py-0.5 rounded-md transition ${
-                          activePeriod === "all" ? "bg-white text-slate-900 shadow-xs" : "hover:text-slate-900"
+                          activePeriod === "all"
+                            ? "bg-white text-slate-900 shadow-xs"
+                            : "hover:text-slate-900"
                         }`}
                       >
                         Todos
@@ -576,7 +585,9 @@ export function DateTimePickerModal({
                         type="button"
                         onClick={() => setActivePeriod("morning")}
                         className={`px-2 py-0.5 rounded-md transition ${
-                          activePeriod === "morning" ? "bg-white text-slate-900 shadow-xs" : "hover:text-slate-900"
+                          activePeriod === "morning"
+                            ? "bg-white text-slate-900 shadow-xs"
+                            : "hover:text-slate-900"
                         }`}
                       >
                         MaÃ±ana
@@ -585,7 +596,9 @@ export function DateTimePickerModal({
                         type="button"
                         onClick={() => setActivePeriod("afternoon")}
                         className={`px-2 py-0.5 rounded-md transition ${
-                          activePeriod === "afternoon" ? "bg-white text-slate-900 shadow-xs" : "hover:text-slate-900"
+                          activePeriod === "afternoon"
+                            ? "bg-white text-slate-900 shadow-xs"
+                            : "hover:text-slate-900"
                         }`}
                       >
                         Tarde
@@ -647,8 +660,8 @@ export function DateTimePickerModal({
                               isSelected
                                 ? "bg-blue-600 text-white shadow-md shadow-blue-600/25 ring-2 ring-blue-500/20 scale-[1.02]"
                                 : isAvailable
-                                ? "bg-white border border-slate-200 text-slate-800 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/40 shadow-xs"
-                                : "bg-slate-100/70 border border-slate-200/50 text-slate-300 cursor-not-allowed line-through"
+                                  ? "bg-white border border-slate-200 text-slate-800 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/40 shadow-xs"
+                                  : "bg-slate-100/70 border border-slate-200/50 text-slate-300 cursor-not-allowed line-through"
                             }`}
                             title={
                               isAvailable
@@ -656,7 +669,9 @@ export function DateTimePickerModal({
                                 : "Horario no disponible / ocupado"
                             }
                           >
-                            <ClockIcon className={`w-3 h-3 ${isSelected ? "text-white" : isAvailable ? "text-slate-400" : "text-slate-300"}`} />
+                            <ClockIcon
+                              className={`w-3 h-3 ${isSelected ? "text-white" : isAvailable ? "text-slate-400" : "text-slate-300"}`}
+                            />
                             <span>{slot.startTime}</span>
                           </button>
                         );
@@ -667,7 +682,6 @@ export function DateTimePickerModal({
               </section>
             </>
           )}
-
         </div>
 
         {/* Modal Footer / Barra de AcciÃ³n */}
@@ -676,20 +690,21 @@ export function DateTimePickerModal({
             {/* Resumen dinÃ¡mico de la selecciÃ³n */}
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
-                <span className={`w-2 h-2 rounded-full ${selectedDate && selectedSlot ? "bg-emerald-500" : "bg-slate-300"}`} />
+                <span
+                  className={`w-2 h-2 rounded-full ${selectedDate && selectedSlot ? "bg-emerald-500" : "bg-slate-300"}`}
+                />
                 <span className="font-semibold text-slate-600">
                   {selectedDate && selectedSlot ? (
                     <span className="text-slate-900 font-bold">
-                      {selectedDate.getDate()} {MONTH_NAMES[selectedDate.getMonth()].slice(0, 3)} â€¢ {selectedSlot.startTime} hs
+                      {selectedDate.getDate()} {MONTH_NAMES[selectedDate.getMonth()].slice(0, 3)}{" "}
+                      â€¢ {selectedSlot.startTime} hs
                     </span>
                   ) : (
                     "Elige fecha y horario para continuar"
                   )}
                 </span>
               </div>
-              <span className="text-[11px] font-semibold text-slate-400">
-                Paso 2 / 3
-              </span>
+              <span className="text-[11px] font-semibold text-slate-400">Paso 2 / 3</span>
             </div>
 
             <div className="flex gap-2">
@@ -716,7 +731,6 @@ export function DateTimePickerModal({
             </div>
           </div>
         )}
-
       </div>
     </div>
   );
@@ -777,7 +791,12 @@ function CloseIcon({ className = "w-4 h-4" }: { className?: string }) {
 function ArrowRightIcon({ className = "w-4 h-4" }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M14 5l7 7m0 0l-7 7m7-7H3"
+      />
     </svg>
   );
 }
@@ -811,14 +830,7 @@ function InfoIcon({ className = "w-4 h-4" }: { className?: string }) {
 function SpinnerIcon({ className = "w-4 h-4" }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24">
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      />
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
       <path
         className="opacity-75"
         fill="currentColor"
@@ -827,8 +839,3 @@ function SpinnerIcon({ className = "w-4 h-4" }: { className?: string }) {
     </svg>
   );
 }
-
-
-
-
-

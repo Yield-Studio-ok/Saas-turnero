@@ -7,7 +7,7 @@ export function useAvailability(
   localId: string,
   date: Date | null,
   openHours: string, // format: "09:00 - 20:00"
-  serviceDuration: number
+  serviceDuration: number,
 ) {
   const [availableSlots, setAvailableSlots] = useState<TimeSlotOption[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -36,7 +36,12 @@ export function useAvailability(
       (appointments) => {
         // Map Appointment[] to TimeSlot[]
         const bookedSlots: TimeSlot[] = appointments
-          .filter(app => app.status !== "Cancelado" && app.status !== "cancelado" && app.status !== "cancelled")
+          .filter(
+            (app) =>
+              app.status !== "Cancelado" &&
+              app.status !== "cancelado" &&
+              app.status !== "cancelled",
+          )
           .map((app) => ({
             startTime: app.startTime,
             endTime: app.endTime,
@@ -53,7 +58,7 @@ export function useAvailability(
         const timeSlotOptions: TimeSlotOption[] = slots.map((slot) => {
           const hour = parseInt(slot.startTime.split(":")[0], 10);
           const period = hour < 14 ? "morning" : "afternoon";
-          
+
           return {
             id: `${period.charAt(0)}-${slot.startTime}`,
             startTime: slot.startTime,
@@ -69,7 +74,7 @@ export function useAvailability(
       (error) => {
         console.error("Failed to fetch appointments:", error);
         setIsLoading(false);
-      }
+      },
     );
 
     return () => unsubscribe();

@@ -61,4 +61,3 @@ export class ProductsController {
     return this.productsService.remove(user.uid, id);
   }
 }
-

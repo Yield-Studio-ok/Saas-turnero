@@ -51,7 +51,8 @@ export default function AlertDialog({
     },
     warning: {
       iconBg: "bg-amber-100 text-amber-600",
-      buttonBg: "bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white focus:ring-amber-500",
+      buttonBg:
+        "bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white focus:ring-amber-500",
     },
     default: {
       iconBg: "bg-blue-100 text-blue-600",
@@ -80,12 +81,7 @@ export default function AlertDialog({
               className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${variantStyles.iconBg}`}
             >
               {icon || (
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -97,10 +93,7 @@ export default function AlertDialog({
             </div>
 
             <div className="flex-1 min-w-0">
-              <h3
-                id="alert-dialog-title"
-                className="text-lg font-bold text-gray-900 leading-6"
-              >
+              <h3 id="alert-dialog-title" className="text-lg font-bold text-gray-900 leading-6">
                 {title}
               </h3>
               {description && (
@@ -108,11 +101,7 @@ export default function AlertDialog({
                   id="alert-dialog-description"
                   className="mt-2 text-sm text-gray-600 space-y-2 leading-relaxed"
                 >
-                  {typeof description === "string" ? (
-                    <p>{description}</p>
-                  ) : (
-                    description
-                  )}
+                  {typeof description === "string" ? <p>{description}</p> : description}
                 </div>
               )}
             </div>

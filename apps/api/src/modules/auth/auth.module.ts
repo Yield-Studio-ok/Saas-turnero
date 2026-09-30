@@ -29,7 +29,13 @@ import { SuperadminGuard } from "./guards/superadmin.guard";
     }),
   ],
   controllers: [AuthController, MeController],
-  providers: [FirebaseService, AuthService, AuthGuard, SuperadminGuard, { provide: APP_GUARD, useClass: AuthGuard }],
+  providers: [
+    FirebaseService,
+    AuthService,
+    AuthGuard,
+    SuperadminGuard,
+    { provide: APP_GUARD, useClass: AuthGuard },
+  ],
   exports: [FirebaseService, AuthService, AuthGuard, SuperadminGuard],
 })
 export class AuthModule {}

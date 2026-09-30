@@ -8,25 +8,25 @@ Pensado para clonar y arrancar un proyecto nuevo en minutos. Dockerizado para de
 
 ## Stack completo
 
-| Capa             | Tecnología                                  | Versión    |
-| ---------------- | ------------------------------------------- | ---------- |
-| Frontend         | Next.js (App Router, standalone output)     | 16.2.x     |
-| React            | React + React DOM                           | 19.1.x     |
-| Backend          | NestJS (Express adapter)                    | 11.1.x     |
-| ORM              | Prisma Client + Prisma CLI                  | 6.19.x     |
-| Base de datos    | PostgreSQL (Alpine)                         | 16         |
-| Auth (prod)      | Firebase Admin SDK                          | 13.8.x     |
-| Auth (dev)       | JWT local (`@nestjs/jwt`) + bcrypt          | 11.x       |
-| Validación       | class-validator + class-transformer         | 0.14.x     |
-| Documentación    | Swagger (`@nestjs/swagger`)                 | 11.1.x     |
-| Rate limiting    | `@nestjs/throttler`                         | 6.4.x      |
-| Seguridad HTTP   | Helmet                                      | 8.1.x      |
-| Linter           | Oxlint                                      | 1.79.x     |
-| Formatter        | Oxfmt                                       | 0.64.x     |
-| Git hooks        | Lefthook                                    | 2.1.x      |
-| Package manager  | pnpm (workspaces)                           | 10.24.0    |
-| Runtime          | Node.js                                     | ≥ 20.9.0   |
-| Containerización | Docker Compose                              | v2         |
+| Capa             | Tecnología                              | Versión  |
+| ---------------- | --------------------------------------- | -------- |
+| Frontend         | Next.js (App Router, standalone output) | 16.2.x   |
+| React            | React + React DOM                       | 19.1.x   |
+| Backend          | NestJS (Express adapter)                | 11.1.x   |
+| ORM              | Prisma Client + Prisma CLI              | 6.19.x   |
+| Base de datos    | PostgreSQL (Alpine)                     | 16       |
+| Auth (prod)      | Firebase Admin SDK                      | 13.8.x   |
+| Auth (dev)       | JWT local (`@nestjs/jwt`) + bcrypt      | 11.x     |
+| Validación       | class-validator + class-transformer     | 0.14.x   |
+| Documentación    | Swagger (`@nestjs/swagger`)             | 11.1.x   |
+| Rate limiting    | `@nestjs/throttler`                     | 6.4.x    |
+| Seguridad HTTP   | Helmet                                  | 8.1.x    |
+| Linter           | Oxlint                                  | 1.79.x   |
+| Formatter        | Oxfmt                                   | 0.64.x   |
+| Git hooks        | Lefthook                                | 2.1.x    |
+| Package manager  | pnpm (workspaces)                       | 10.24.0  |
+| Runtime          | Node.js                                 | ≥ 20.9.0 |
+| Containerización | Docker Compose                          | v2       |
 
 ---
 
@@ -126,18 +126,19 @@ pnpm dev
 ```
 
 Esto ejecuta `docker compose up --build`, que:
+
 1. Levanta **PostgreSQL 16** con las credenciales del `.env`
 2. Levanta la **API** (NestJS) — ejecuta migraciones de Prisma automáticamente, seedea demo users
 3. Levanta el **frontend** (Next.js) — espera a que la API esté healthy
 
 ### URLs de desarrollo
 
-| Servicio    | URL                             |
-| ----------- | ------------------------------- |
-| Frontend    | `http://localhost:3000`         |
-| API         | `http://localhost:3001`         |
-| Swagger UI  | `http://localhost:3001/api/docs`|
-| Health check| `http://localhost:3001/health`  |
+| Servicio     | URL                              |
+| ------------ | -------------------------------- |
+| Frontend     | `http://localhost:3000`          |
+| API          | `http://localhost:3001`          |
+| Swagger UI   | `http://localhost:3001/api/docs` |
+| Health check | `http://localhost:3001/health`   |
 
 Los puertos son configurables via `.env` (`PUERTO_FRONTEND`, `PUERTO_BACKEND`, `PUERTO_POSTGRES`).
 
@@ -174,16 +175,17 @@ NEXT_PUBLIC_API_URL=http://localhost:3001   # URL del API (usada en el browser)
 
 ## API: endpoints
 
-| Método | Path          | Auth           | Descripción                                                               |
-| ------ | ------------- | -------------- | ------------------------------------------------------------------------- |
-| `POST` | `/auth/login` | No (público)   | Login con email/password → JWT. **Solo funciona en dev mode** (sin Firebase) |
-| `GET`  | `/me`         | Bearer token   | Devuelve el usuario autenticado: `{ uid, email, role }`                   |
-| `GET`  | `/health`     | No (público)   | Health check — hace `SELECT 1` a PostgreSQL                              |
-| `GET`  | `/api/docs`   | No (público)   | Swagger UI — **solo disponible en desarrollo** (`NODE_ENV !== production`) |
+| Método | Path          | Auth         | Descripción                                                                  |
+| ------ | ------------- | ------------ | ---------------------------------------------------------------------------- |
+| `POST` | `/auth/login` | No (público) | Login con email/password → JWT. **Solo funciona en dev mode** (sin Firebase) |
+| `GET`  | `/me`         | Bearer token | Devuelve el usuario autenticado: `{ uid, email, role }`                      |
+| `GET`  | `/health`     | No (público) | Health check — hace `SELECT 1` a PostgreSQL                                  |
+| `GET`  | `/api/docs`   | No (público) | Swagger UI — **solo disponible en desarrollo** (`NODE_ENV !== production`)   |
 
 ### Request/Response de ejemplo
 
 **Login (dev mode):**
+
 ```bash
 curl -X POST http://localhost:3001/auth/login \
   -H "Content-Type: application/json" \
@@ -202,6 +204,7 @@ curl -X POST http://localhost:3001/auth/login \
 ```
 
 **Obtener usuario actual:**
+
 ```bash
 curl http://localhost:3001/me \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
@@ -415,11 +418,11 @@ Se instala automáticamente con `pnpm install` (script `prepare`).
 
 ### Herramientas
 
-| Herramienta | Qué hace                           | Comando         |
-| ----------- | ---------------------------------- | --------------- |
-| Oxlint      | Linter ultra-rápido (Rust-based)   | `pnpm lint`     |
-| Oxfmt       | Formatter ultra-rápido (Rust-based)| `pnpm fmt`      |
-| TypeScript  | Type checking sin emitir           | `pnpm typecheck`|
+| Herramienta | Qué hace                            | Comando          |
+| ----------- | ----------------------------------- | ---------------- |
+| Oxlint      | Linter ultra-rápido (Rust-based)    | `pnpm lint`      |
+| Oxfmt       | Formatter ultra-rápido (Rust-based) | `pnpm fmt`       |
+| TypeScript  | Type checking sin emitir            | `pnpm typecheck` |
 
 ---
 
