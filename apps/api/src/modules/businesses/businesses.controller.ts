@@ -1,4 +1,4 @@
-﻿import {
+import {
   Controller,
   Post,
   Get,
@@ -94,6 +94,15 @@ export class BusinessesController {
   @ApiOperation({ summary: "Get Business Analytics" })
   getAnalytics(@Param("id") id: string) {
     return this.businessesService.getAnalytics(id);
+  }
+
+  @Patch("my-plan")
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Update my business subscription plan" })
+  updateMyPlan(@Req() req: Request, @Body() body: { plan?: string }) {
+    const user = req.user as AuthUser;
+    const targetId = user?.tenantId || user?.uid || "mock-owner-id";
+    return this.businessesService.updatePlan(targetId, body.plan || "PRO");
   }
 
   @Get(":id")

@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 import { FirebaseService } from "../auth/firebase.service";
+import { SubscriptionPlan } from "@prisma/client";
 import { CreateBusinessDto } from "./dto/create-business.dto";
 import { UpdateBusinessDto } from "./dto/update-business.dto";
 
@@ -371,17 +372,27 @@ export class BusinessesService {
         for (const doc of tenantsSnap.docs) {
           const tenantData = doc.data();
           const tenantId = doc.id;
-          
+
           let services: any[] = [];
           try {
-            const servicesSnap = await db.collection("tenants").doc(tenantId).collection("services").get();
-            servicesSnap.forEach(sDoc => {
+            const servicesSnap = await db
+              .collection("tenants")
+              .doc(tenantId)
+              .collection("services")
+              .get();
+            servicesSnap.forEach((sDoc) => {
               services.push({ id: sDoc.id, ...sDoc.data() });
             });
-          } catch (e) {}
-          
-          const resolvedSlug = tenantData.slug || (tenantData.name ? tenantData.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") : tenantId);
-          
+          } catch {
+            // ignore
+          }
+
+          const resolvedSlug =
+            tenantData.slug ||
+            (tenantData.name
+              ? tenantData.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")
+              : tenantId);
+
           results.push({
             ...tenantData,
             id: tenantId,
@@ -392,7 +403,7 @@ export class BusinessesService {
             rating: typeof tenantData.rating === "number" ? tenantData.rating : 5.0,
             reviewCount: typeof tenantData.reviewCount === "number" ? tenantData.reviewCount : 0,
             isOpen: typeof tenantData.isOpen === "boolean" ? tenantData.isOpen : true,
-            services
+            services,
           });
         }
         if (results.length > 0) return results;
@@ -432,6 +443,34 @@ export class BusinessesService {
           category: (s as any).category || "General",
         })),
       };
+    });
+  }
+
+  async updatePlan(identifier: string, plan: SubscriptionPlan | string) {
+    const validPlans = ["BASIC", "PRO", "PREMIUM"];
+    const upperPlan = (plan || "").toUpperCase() as SubscriptionPlan;
+    if (!validPlans.includes(upperPlan)) {
+      throw new BadRequestException(`Invalid plan: ${plan}. Allowed: ${validPlans.join(", ")}`);
+    }
+
+    const business = await this.prisma.business.findFirst({
+      where: {
+        OR: [{ id: identifier }, { ownerId: identifier }],
+      },
+    });
+
+    if (!business) {
+      const firstBiz = await this.prisma.business.findFirst();
+      if (!firstBiz) throw new NotFoundException("Business not found");
+      return this.prisma.business.update({
+        where: { id: firstBiz.id },
+        data: { plan: upperPlan },
+      });
+    }
+
+    return this.prisma.business.update({
+      where: { id: business.id },
+      data: { plan: upperPlan },
     });
   }
 }
