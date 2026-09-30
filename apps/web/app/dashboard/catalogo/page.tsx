@@ -41,7 +41,9 @@ export default function CatalogoPage() {
     e.preventDefault();
     if (editingId) {
       setServicios(
-        servicios.map((serv) => (serv.id === editingId ? { ...servicioFormData, id: editingId } : serv)),
+        servicios.map((serv) =>
+          serv.id === editingId ? { ...servicioFormData, id: editingId } : serv,
+        ),
       );
     } else {
       setServicios([...servicios, { ...servicioFormData, id: Date.now() }]);
@@ -69,7 +71,9 @@ export default function CatalogoPage() {
     e.preventDefault();
     if (editingId) {
       setProductos(
-        productos.map((prod) => (prod.id === editingId ? { ...productoFormData, id: editingId } : prod)),
+        productos.map((prod) =>
+          prod.id === editingId ? { ...productoFormData, id: editingId } : prod,
+        ),
       );
     } else {
       setProductos([...productos, { ...productoFormData, id: Date.now() }]);
@@ -86,7 +90,9 @@ export default function CatalogoPage() {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Catálogo y Stock</h2>
         <button
-          onClick={() => (activeTab === "servicios" ? handleOpenServicioModal() : handleOpenProductoModal())}
+          onClick={() =>
+            activeTab === "servicios" ? handleOpenServicioModal() : handleOpenProductoModal()
+          }
           className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
         >
           Agregar {activeTab === "servicios" ? "Servicio" : "Producto"}
@@ -210,21 +216,21 @@ export default function CatalogoPage() {
 
       {/* Modal Servicio */}
       {showServicioModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
             <h3 className="text-lg font-bold mb-4">
               {editingId ? "Editar Servicio" : "Nuevo Servicio"}
             </h3>
             <form onSubmit={handleSaveServicio} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Nombre
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Nombre</label>
                 <input
                   type="text"
                   required
                   value={servicioFormData.nombre}
-                  onChange={(e) => setServicioFormData({ ...servicioFormData, nombre: e.target.value })}
+                  onChange={(e) =>
+                    setServicioFormData({ ...servicioFormData, nombre: e.target.value })
+                  }
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
                 />
               </div>
@@ -238,7 +244,9 @@ export default function CatalogoPage() {
                   min="5"
                   step="5"
                   value={servicioFormData.duracion}
-                  onChange={(e) => setServicioFormData({ ...servicioFormData, duracion: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setServicioFormData({ ...servicioFormData, duracion: Number(e.target.value) })
+                  }
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
                 />
               </div>
@@ -250,7 +258,9 @@ export default function CatalogoPage() {
                   min="0"
                   step="0.01"
                   value={servicioFormData.precio}
-                  onChange={(e) => setServicioFormData({ ...servicioFormData, precio: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setServicioFormData({ ...servicioFormData, precio: Number(e.target.value) })
+                  }
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
                 />
               </div>
@@ -283,28 +293,28 @@ export default function CatalogoPage() {
             </h3>
             <form onSubmit={handleSaveProducto} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Nombre
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Nombre</label>
                 <input
                   type="text"
                   required
                   value={productoFormData.nombre}
-                  onChange={(e) => setProductoFormData({ ...productoFormData, nombre: e.target.value })}
+                  onChange={(e) =>
+                    setProductoFormData({ ...productoFormData, nombre: e.target.value })
+                  }
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Stock (unidades)
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Stock (unidades)</label>
                 <input
                   type="number"
                   required
                   min="0"
                   step="1"
                   value={productoFormData.stock}
-                  onChange={(e) => setProductoFormData({ ...productoFormData, stock: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setProductoFormData({ ...productoFormData, stock: Number(e.target.value) })
+                  }
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
                 />
               </div>
@@ -316,7 +326,9 @@ export default function CatalogoPage() {
                   min="0"
                   step="0.01"
                   value={productoFormData.precio}
-                  onChange={(e) => setProductoFormData({ ...productoFormData, precio: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setProductoFormData({ ...productoFormData, precio: Number(e.target.value) })
+                  }
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
                 />
               </div>
