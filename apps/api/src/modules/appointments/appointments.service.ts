@@ -8,37 +8,66 @@ export class AppointmentsService {
   constructor(private prisma: PrismaService) {}
 
   async createAppointment(dto: CreateAppointmentDto) {
-    const { businessId, employeeId, serviceId, date, startTime, endTime } = dto;
+    const businessId = dto.businessId || dto.localId;
+    if (!businessId) {
+      throw new BadRequestException("businessId or localId is required");
+    }
+
+    const { serviceId, date, startTime, endTime } = dto;
 
     const service = await this.prisma.service.findUnique({ where: { id: serviceId } });
-    if (!service || service.businessId !== businessId)
+    if (!service || (service.businessId !== businessId && service.businessId !== dto.localId))
       throw new NotFoundException("Service not found for this local");
 
-    const employee = await this.prisma.employee.findUnique({ where: { id: employeeId } });
-    if (!employee || employee.businessId !== businessId)
+    let targetEmployeeId = dto.employeeId;
+    if (!targetEmployeeId || targetEmployeeId === "general") {
+      const defaultEmp = await this.prisma.employee.findFirst({
+        where: { businessId: service.businessId },
+      });
+      if (defaultEmp) {
+        targetEmployeeId = defaultEmp.id;
+      }
+    }
+
+    if (!targetEmployeeId) {
+      throw new NotFoundException("Employee not found for this local");
+    }
+
+    const employee = await this.prisma.employee.findUnique({ where: { id: targetEmployeeId } });
+    if (!employee || employee.businessId !== service.businessId)
       throw new NotFoundException("Employee not found for this local");
 
     const dateObj = new Date(date + "T12:00:00Z");
     const dayOfWeek = dateObj.getDay();
 
     const schedules = await this.prisma.schedule.findMany({
-      where: { employeeId, dayOfWeek },
+      where: { employeeId: targetEmployeeId, dayOfWeek },
     });
 
-    if (schedules.length === 0) {
-      throw new BadRequestException("Employee does not work on this day");
-    }
-
-    const workingHours: TimeSlot[] = schedules.map((s) => ({
+    let workingHours: TimeSlot[] = schedules.map((s) => ({
       startTime: s.startTime,
       endTime: s.endTime,
     }));
+
+    if (workingHours.length === 0) {
+      const businessSchedules = await this.prisma.schedule.findMany({
+        where: { businessId: service.businessId, dayOfWeek },
+      });
+      if (businessSchedules.length > 0) {
+        workingHours = businessSchedules.map((s) => ({
+          startTime: s.startTime,
+          endTime: s.endTime,
+        }));
+      } else {
+        workingHours = [{ startTime: "09:00", endTime: "20:00" }];
+      }
+    }
 
     try {
       const result = await this.prisma.$transaction(async (tx) => {
         const existingAppointmentsDoc = await tx.appointment.findMany({
           where: {
-            employeeId,
+            employeeId: targetEmployeeId,
             date,
             status: { notIn: ["Cancelado", "cancelado"] },
           },
@@ -73,8 +102,8 @@ export class AppointmentsService {
             customerName: dto.customerName || "Guest",
             customerEmail: dto.customerEmail || "guest@example.com",
             customerPhone: dto.customerPhone || null,
-            businessId,
-            employeeId,
+            businessId: service.businessId,
+            employeeId: targetEmployeeId,
             serviceId,
           },
         });

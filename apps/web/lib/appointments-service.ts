@@ -220,7 +220,8 @@ export async function cancelAppointment(localId: string, appointmentId: string):
  * DTO para la creación transaccional de turnos en el backend (Ticket 28: POST /appointments).
  */
 export interface CreateAppointmentDto {
-  localId: string;
+  localId?: string;
+  businessId?: string;
   employeeId: string;
   serviceId: string;
   date: string; // YYYY-MM-DD
@@ -246,7 +247,8 @@ export class AppointmentsService {
   ): Promise<{ id: string; [key: string]: any }> {
     // Sanitizamos el payload asegurando los campos requeridos por el backend
     const payload = {
-      localId: dto.localId,
+      businessId: dto.businessId || dto.localId,
+      localId: dto.localId || dto.businessId,
       employeeId: dto.employeeId,
       serviceId: dto.serviceId,
       date: dto.date,
@@ -254,11 +256,12 @@ export class AppointmentsService {
       endTime: dto.endTime,
       customerName: dto.customerName,
       customerEmail: dto.customerEmail,
+      customerPhone: dto.customerPhone,
+      notes: dto.notes,
     };
 
     return apiFetch<{ id: string; [key: string]: any }>("/appointments", {
       method: "POST",
-
       body: JSON.stringify(payload),
       token,
     });
@@ -313,6 +316,7 @@ export async function createAppointment(
 
   const dto: CreateAppointmentDto = {
     localId: input.localId || localId,
+    businessId: (input as any).businessId || input.localId || localId,
     employeeId: input.employeeId || "general",
     serviceId: input.serviceId,
     date,

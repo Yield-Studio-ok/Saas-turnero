@@ -2,12 +2,16 @@ import { IsString, IsNotEmpty, IsOptional } from "class-validator";
 
 export class CreateAppointmentDto {
   @IsString()
-  @IsNotEmpty()
-  businessId: string;
+  @IsOptional()
+  businessId?: string;
 
   @IsString()
-  @IsNotEmpty()
-  employeeId: string;
+  @IsOptional()
+  localId?: string;
+
+  @IsString()
+  @IsOptional()
+  employeeId?: string;
 
   @IsString()
   @IsNotEmpty()
@@ -36,4 +40,8 @@ export class CreateAppointmentDto {
   @IsString()
   @IsOptional()
   customerPhone?: string;
+
+  @IsString()
+  @IsOptional()
+  notes?: string;
 }

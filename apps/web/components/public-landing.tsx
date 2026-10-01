@@ -161,7 +161,8 @@ export function PublicLanding({
     if (!selectedService || !selectedDateTime) return;
     const { createAppointment } = await import("../lib/appointments-service");
     const targetLocalId = (local as any).id || local.slug;
-    const targetEmployeeId = (selectedService as any).employeeId || "general";
+    const targetEmployeeId =
+      selectedEmployeeId || (selectedService as any).employeeId || employees[0]?.id || "general";
     const id = await createAppointment(
       targetLocalId,
       {
