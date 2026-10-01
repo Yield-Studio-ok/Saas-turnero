@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiParam, ApiQuery } from "@nestjs/swagger";
 import { AppointmentsService } from "./appointments.service";
 import { CreateAppointmentDto } from "./dto/create-appointment.dto";
 import { CancelAppointmentDto } from "./dto/cancel-appointment.dto";
+import { Public } from "../auth/public.decorator";
 
 export class CompleteAppointmentDto {
   status: string;
@@ -15,6 +16,7 @@ export class CompleteAppointmentDto {
 export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) {}
 
+  @Public()
   @Get("available-slots")
   @ApiOperation({ summary: "Get available slots for booking" })
   @ApiQuery({ name: "date", description: "Date in YYYY-MM-DD format" })
@@ -36,6 +38,7 @@ export class AppointmentsController {
     return this.appointmentsService.getAppointmentsByEmployeeAndDate(employeeId, date);
   }
 
+  @Public()
   @Post()
   @ApiOperation({ summary: "Create an appointment" })
   async create(@Body() createAppointmentDto: CreateAppointmentDto) {
@@ -49,6 +52,7 @@ export class AppointmentsController {
     return this.appointmentsService.completeAppointment(id, completeDto);
   }
 
+  @Public()
   @Patch(":id/cancel")
   @ApiOperation({ summary: "Cancel an appointment by ID" })
   @ApiParam({ name: "id", description: "Appointment ID" })
@@ -56,6 +60,7 @@ export class AppointmentsController {
     return this.appointmentsService.cancelAppointment(id, cancelDto?.reason);
   }
 
+  @Public()
   @Post(":id/cancel")
   @ApiOperation({ summary: "Cancel an appointment by ID (POST alternative)" })
   @ApiParam({ name: "id", description: "Appointment ID" })
