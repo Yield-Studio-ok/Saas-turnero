@@ -51,7 +51,30 @@ async function main() {
     },
   });
 
-  // 3. Crear Cliente Final
+  // 3. Crear Empleados / Barberos
+  await prisma.user.upsert({
+    where: { email: "juan@barberiapremium.com" },
+    update: { role: "employee" },
+    create: {
+      email: "juan@barberiapremium.com",
+      name: "Juan Barbero",
+      role: "employee",
+      password: await bcrypt.hash("123456", 10),
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: "empleado@ejemplo.com" },
+    update: { role: "employee" },
+    create: {
+      email: "empleado@ejemplo.com",
+      name: "Empleado Demo",
+      role: "employee",
+      password: await bcrypt.hash("123456", 10),
+    },
+  });
+
+  // 4. Crear Cliente Final
   const customer = await prisma.user.upsert({
     where: { email: "cliente@b2c.com" },
     update: { role: "user" },
