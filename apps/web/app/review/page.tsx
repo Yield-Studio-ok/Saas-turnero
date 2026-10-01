@@ -1,7 +1,8 @@
-﻿"use client";
+"use client";
 
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { apiFetch } from "@/lib/api";
 
 function ReviewForm() {
   const router = useRouter();
@@ -20,9 +21,8 @@ function ReviewForm() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:4000/reviews", {
+      await apiFetch("/reviews", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           rating,
           comment,
@@ -31,8 +31,6 @@ function ReviewForm() {
           userId: userId || undefined,
         }),
       });
-
-      if (!res.ok) throw new Error("Error al enviar reseña");
       setSuccess(true);
     } catch {
       alert("Ocurrió un error al enviar la reseña");

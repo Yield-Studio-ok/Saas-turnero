@@ -8,26 +8,33 @@ interface PageProps {
 }
 
 async function fetchLocalProfile(id: string) {
-  try {
-    // In Docker, SSR needs to talk to the 'api' container, not 'localhost'
-    const isDocker = process.env.NEXT_PUBLIC_API_URL?.includes("localhost");
-    const rootUrl =
-      typeof window === "undefined" && isDocker
-        ? "http://api:3001"
-        : process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+  const envUrl = process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL;
+  const urlsToTry = Array.from(
+    new Set(
+      [
+        envUrl,
+        envUrl?.replace("localhost", "127.0.0.1"),
+        "http://127.0.0.1:3001",
+        "http://localhost:3001",
+        "http://api:3001",
+      ].filter(Boolean) as string[],
+    ),
+  );
 
-    const res = await fetch(`${rootUrl}/business/public/${id}`, {
-      next: { revalidate: 60 }, // optional cache revalidation
-    });
-    if (!res.ok) {
-      return null;
+  for (const rootUrl of urlsToTry) {
+    try {
+      const res = await fetch(`${rootUrl}/business/public/${id}`, {
+        next: { revalidate: 60 },
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      // Intenta siguiente URL
     }
-    const data = await res.json();
-    return data;
-  } catch (err) {
-    console.error("Error fetching local profile:", err);
-    return null;
   }
+
+  return null;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

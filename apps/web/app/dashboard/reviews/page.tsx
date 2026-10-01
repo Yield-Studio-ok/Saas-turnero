@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { apiFetch } from "@/lib/api";
 import { PaywallModal } from "@/components/paywall-modal";
 import { useRouter } from "next/navigation";
 
@@ -21,8 +22,7 @@ export default function ReviewsDashboard() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // En un caso real se obtendría del contexto del negocio actual
-  const businessId = "YOUR_BUSINESS_ID";
+  const businessId = user?.tenantId || "local-basic";
 
   useEffect(() => {
     if (user && user.plan !== "PRO" && user.plan !== "PREMIUM") {
@@ -33,17 +33,14 @@ export default function ReviewsDashboard() {
       setShowPaywall(false);
     }
 
-    fetch(`http://localhost:4000/reviews/business/${businessId}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Error fetching");
-        return res.json();
-      })
+    apiFetch<Review[]>(`/reviews/business/${businessId}`)
       .then((data) => {
-        setReviews(data);
-        setLoading(false);
+        setReviews(data || []);
       })
       .catch((err) => {
-        console.error(err);
+        console.error("Error cargando reseñas:", err);
+      })
+      .finally(() => {
         setLoading(false);
       });
   }, [businessId, user]);
