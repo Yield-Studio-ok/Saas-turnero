@@ -11,6 +11,7 @@ export type ExtendedUser = {
   tenantId?: string;
   name?: string;
   displayName?: string;
+  businessName?: string;
 };
 
 interface AuthContextType {

@@ -164,7 +164,7 @@ export default function DisponibilidadPage() {
       reason: newBlockReason.trim() || "Bloqueo personal",
     };
 
-    const updated = [...blocks, newBlock].sort((a, b) => a.date.localeCompare(b.date));
+    const updated = [...blocks, newBlock].toSorted((a, b) => a.date.localeCompare(b.date));
     setBlocks(updated);
     setShowBlockModal(false);
     setNewBlockDate("");

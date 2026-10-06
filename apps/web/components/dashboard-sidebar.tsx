@@ -11,7 +11,6 @@ import {
   TrendingUp,
   LogOut,
   ChevronRight,
-  Sparkles,
   Clock,
   ShoppingBag,
   User,
@@ -34,8 +33,6 @@ const employeeNavItems = [
   { name: "Reseñas Mutuas", href: "/dashboard/reviews", icon: Star },
   { name: "Mi Perfil", href: "/dashboard/perfil", icon: User },
 ];
-
-const proItems = [{ name: "Analiticas", href: "/dashboard/analiticas", icon: TrendingUp }];
 
 const ownerItems = [
   { name: "Finanzas", href: "/dashboard/finanzas", icon: TrendingUp },
@@ -119,39 +116,6 @@ export function DashboardSidebar() {
                     <span>{item.name}</span>
                   </div>
                   {isActive && <ChevronRight className="w-4 h-4 text-blue-500" />}
-                </Link>
-              );
-            })}
-          </div>
-        )}
-
-        {/* PRO Section */}
-        {!isEmployee && (
-          <div className="pt-8 mb-2">
-            <div className="px-3 flex items-center gap-2 mb-4">
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              <p className="text-xs font-bold text-amber-400/90 uppercase tracking-wider">
-                Avanzado
-              </p>
-            </div>
-
-            {proItems.map((item) => {
-              const isActive = pathname === item.href;
-              const Icon = item.icon;
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`group flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 ${isActive ? "bg-blue-600/10 text-blue-400 font-medium" : "hover:bg-slate-800/50 hover:text-slate-100"}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Icon
-                      className={`w-5 h-5 transition-colors ${isActive ? "text-blue-500" : "text-slate-400 group-hover:text-slate-200"}`}
-                    />
-                    <span>{item.name}</span>
-                  </div>
-                  {isActive && <ChevronRight className="w-4 h-4 text-amber-500" />}
                 </Link>
               );
             })}
