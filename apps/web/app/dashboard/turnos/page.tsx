@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import TurnoDetalleModal, { Turno } from "@/components/turnos/TurnoDetalleModal";
+import { CustomSelect } from "@/components/ui/custom-select";
+import { UserCheck } from "lucide-react";
 
 import { useDailyAppointments } from "@/hooks/useDailyAppointments";
 import { cancelAppointment, AppointmentsService } from "@/lib/appointments-service";
@@ -59,10 +61,12 @@ export default function TurnosPage() {
   const [selectedTurno, setSelectedTurno] = useState<Turno | null>(null);
   const [selectedEmployeeFilter, setSelectedEmployeeFilter] = useState<string>("all");
 
+  const isEmployee = user?.role === "employee";
   const isOwner = user?.role === "owner" || user?.role === "superadmin";
+
   const filteredEmpleados = empleados.filter((e) => {
-    if (!isOwner) {
-      // Si es empleado, asume que emp1 es él (para mockup)
+    if (isEmployee || !isOwner) {
+      // Para el rol employee, restringir únicamente a su agenda personal, impidiendo conmutar a otros empleados
       return e.id === "emp1";
     }
     if (selectedEmployeeFilter !== "all") {
@@ -99,32 +103,48 @@ export default function TurnosPage() {
   };
   return (
     <div className="flex flex-col h-full bg-white rounded-lg shadow">
-      <div className="p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
+      <div className="p-4 border-b flex flex-wrap justify-between items-center gap-3 bg-gray-50 rounded-t-lg">
         <div>
-          <h2 className="text-xl font-bold text-gray-800">Grilla Diaria</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold text-gray-800">
+              {isEmployee ? "Mi Agenda Personal" : "Grilla Diaria"}
+            </h2>
+            {isEmployee && (
+              <span className="px-2.5 py-0.5 text-xs font-semibold bg-blue-100 text-blue-700 rounded-full border border-blue-200">
+                Empleado
+              </span>
+            )}
+          </div>
           <p className="text-xs text-gray-500 mt-0.5">
-            Haz clic en un turno para ver los detalles del cliente y la reserva
+            {isEmployee
+              ? "Visualiza y gestiona únicamente tus citas asignadas del día."
+              : "Haz clic en un turno para ver los detalles del cliente y la reserva"}
           </p>
         </div>
-        <div className="flex gap-2">
-          {isOwner && (
-            <select
-              value={selectedEmployeeFilter}
-              onChange={(e) => setSelectedEmployeeFilter(e.target.value)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">Todos los empleados</option>
-              {empleados.map((e) => (
-                <option key={e.id} value={e.id}>
-                  {e.nombre}
-                </option>
-              ))}
-            </select>
+        <div className="flex items-center gap-2">
+          {isEmployee ? (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg text-xs font-semibold">
+              <UserCheck className="w-4 h-4 text-blue-600" />
+              <span>Agenda: {filteredEmpleados[0]?.nombre || "Mi Usuario"}</span>
+            </div>
+          ) : (
+            isOwner && (
+              <div className="w-56">
+                <CustomSelect
+                  value={selectedEmployeeFilter}
+                  onChange={(val) => setSelectedEmployeeFilter(val as string)}
+                  options={[
+                    { value: "all", label: "Todos los empleados" },
+                    ...empleados.map((e) => ({ value: e.id, label: e.nombre })),
+                  ]}
+                />
+              </div>
+            )
           )}
-          <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 cursor-pointer">
+          <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer transition">
             Hoy
           </button>
-          <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 cursor-pointer">
+          <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 cursor-pointer transition">
             Nuevo Turno
           </button>
         </div>

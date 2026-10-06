@@ -3,6 +3,168 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../../lib/auth-context";
 import { apiFetch } from "../../../lib/api";
+import { Camera, Check, Shield } from "lucide-react";
+
+const avatarPresets = [
+  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&q=80",
+  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=256&q=80",
+  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=256&q=80",
+  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=256&q=80",
+];
+
+function EmpleadoPerfil({ user }: { user: any }) {
+  const [nombre, setNombre] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("employee_profile_name") || user?.name || "Juan Pérez";
+    }
+    return user?.name || "Juan Pérez";
+  });
+
+  const [avatarUrl, setAvatarUrl] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("employee_profile_avatar") || avatarPresets[1];
+    }
+    return avatarPresets[1];
+  });
+
+  const [saving, setSaving] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setTimeout(() => {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("employee_profile_name", nombre);
+        localStorage.setItem("employee_profile_avatar", avatarUrl);
+      }
+      setSaving(false);
+      setToastMessage("Perfil de empleado actualizado exitosamente.");
+      setTimeout(() => setToastMessage(null), 3000);
+    }, 400);
+  };
+
+  return (
+    <div className="max-w-2xl bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
+      <div className="flex items-center justify-between border-b pb-5 mb-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">Mi Perfil</h2>
+          <p className="text-gray-500 text-sm mt-1">
+            Administra tu nombre público y foto de perfil visibles para los clientes al agendar.
+          </p>
+        </div>
+        <div className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-200 text-xs font-semibold">
+          <Shield className="w-3.5 h-3.5" />
+          <span>Empleado</span>
+        </div>
+      </div>
+
+      {toastMessage && (
+        <div className="mb-6 p-4 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm font-medium flex items-center gap-2">
+          <Check className="w-5 h-5 text-green-500 shrink-0" />
+          {toastMessage}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Avatar Section */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-3">
+            Foto / Avatar de Perfil
+          </label>
+          <div className="flex items-center gap-5">
+            <div className="relative group">
+              <img
+                src={avatarUrl}
+                alt="Avatar"
+                className="w-20 h-20 rounded-full object-cover border-2 border-blue-500 shadow-sm"
+              />
+              <div className="absolute inset-0 bg-black/30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Camera className="w-5 h-5 text-white" />
+              </div>
+            </div>
+            <div className="flex-1 space-y-2">
+              <p className="text-xs text-gray-500">
+                Selecciona un avatar sugerido o ingresa una URL personalizada:
+              </p>
+              <div className="flex gap-2">
+                {avatarPresets.map((preset, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setAvatarUrl(preset)}
+                    className={`w-9 h-9 rounded-full overflow-hidden border-2 transition ${
+                      avatarUrl === preset
+                        ? "border-blue-600 scale-105"
+                        : "border-gray-200 opacity-70 hover:opacity-100"
+                    }`}
+                  >
+                    <img
+                      src={preset}
+                      alt={`Preset ${idx}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="mt-3">
+            <input
+              type="url"
+              placeholder="https://ejemplo.com/mi-foto.jpg"
+              value={avatarUrl}
+              onChange={(e) => setAvatarUrl(e.target.value)}
+              className="w-full border border-gray-300 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+            />
+          </div>
+        </div>
+
+        {/* Public Name */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Público</label>
+          <input
+            type="text"
+            required
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            className="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+            placeholder="Tu nombre completo"
+          />
+          <p className="text-xs text-gray-400 mt-1">
+            Este nombre aparecerá en la grilla y en la confirmación de turnos para los clientes.
+          </p>
+        </div>
+
+        {/* Read-only Email */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Correo Electrónico (Cuenta)
+          </label>
+          <input
+            type="email"
+            disabled
+            value={user?.email || "empleado@turnero.com"}
+            className="w-full border border-gray-200 bg-gray-50 rounded-xl px-3.5 py-2.5 text-sm text-gray-500 cursor-not-allowed"
+          />
+          <p className="text-xs text-gray-400 mt-1">
+            El correo de acceso es gestionado por la administración del negocio.
+          </p>
+        </div>
+
+        <div className="pt-4 border-t flex justify-end">
+          <button
+            type="submit"
+            disabled={saving}
+            className="px-6 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 shadow-md transition disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+          >
+            {saving ? "Guardando..." : "Guardar Perfil"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
 
 export default function PerfilLocalPage() {
   const { user, token } = useAuth();
@@ -18,11 +180,16 @@ export default function PerfilLocalPage() {
   const [saving, setSaving] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const isEmployee = user?.role === "employee";
   const businessId = user?.tenantId || "busi_123456";
   const directLink = "https://saas-turnero.com/book/" + businessId;
   const webhookUrl = "https://api.saas-turnero.com/webhooks/reserve";
 
   useEffect(() => {
+    if (isEmployee) {
+      setLoading(false);
+      return;
+    }
     if (token) {
       apiFetch("/businesses/my-profile", { token })
         .then((biz: any) => {
@@ -39,7 +206,11 @@ export default function PerfilLocalPage() {
     } else {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, isEmployee]);
+
+  if (isEmployee) {
+    return <EmpleadoPerfil user={user} />;
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;

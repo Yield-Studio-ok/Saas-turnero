@@ -15,16 +15,14 @@ function LoginForm() {
 
   useEffect(() => {
     if (user) {
-      if (callbackUrl) {
+      if (user.role === "superadmin") {
+        router.push(callbackUrl?.startsWith("/admin") ? callbackUrl : "/admin");
+      } else if (callbackUrl) {
         router.push(callbackUrl);
+      } else if (user.role === "user") {
+        router.push("/explorar");
       } else {
-        if (user.role === "superadmin") {
-          router.push("/admin");
-        } else if (user.role === "user") {
-          router.push("/explorar");
-        } else {
-          router.push("/dashboard");
-        }
+        router.push("/dashboard");
       }
     }
   }, [user, router, callbackUrl]);

@@ -90,6 +90,8 @@ export default async function PublicTenantLandingPage({ params }: PageProps) {
         rating: profile.rating || 5.0,
         reviewCount: profile.reviewCount || 0,
         isOpen: profile.isOpen ?? true,
+        imageUrls: profile.imageUrls || profile.images,
+        avatarUrl: profile.avatarUrl || profile.logoUrl,
         // Hack for localId
         ...({ id: profile.id } as any),
       }}

@@ -1,7 +1,52 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, CheckCircle, Check } from "lucide-react";
 
+interface LandingCmsConfig {
+  heroTitle: string;
+  heroSubtitle: string;
+  heroCta: string;
+  prices: {
+    basic: number;
+    pro: number;
+    premium: number;
+  };
+}
+
+const DEFAULT_CMS_CONFIG: LandingCmsConfig = {
+  heroTitle: "El software líder para salones y barberías",
+  heroSubtitle:
+    "Gestiona citas, personal y clientes desde un solo lugar. Haz crecer tu negocio con la plataforma de reservas más intuitiva del mercado.",
+  heroCta: "Prueba gratis",
+  prices: {
+    basic: 0,
+    pro: 29,
+    premium: 79,
+  },
+};
+
 export default function HomePage() {
+  const [cms, setCms] = useState<LandingCmsConfig>(DEFAULT_CMS_CONFIG);
+
+  useEffect(() => {
+    const loadCms = () => {
+      try {
+        const stored = localStorage.getItem("turnero_cms_landing_config");
+        if (stored) {
+          setCms(JSON.parse(stored));
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    loadCms();
+    window.addEventListener("storage", loadCms);
+    return () => window.removeEventListener("storage", loadCms);
+  }, []);
+
   return (
     <div className="min-h-screen bg-white">
       {/* Navbar */}
@@ -18,7 +63,7 @@ export default function HomePage() {
             href="/login"
             className="bg-slate-900 text-white px-5 py-2.5 rounded-full font-medium hover:bg-slate-800 transition-colors"
           >
-            Empezar gratis
+            {cms.heroCta || "Empezar gratis"}
           </Link>
         </div>
       </nav>
@@ -27,18 +72,24 @@ export default function HomePage() {
       <main className="max-w-7xl mx-auto px-6 py-20 lg:py-32 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
         <div className="space-y-8">
           <h1 className="text-5xl lg:text-7xl font-extrabold text-slate-900 leading-[1.1] tracking-tight">
-            El software líder para <span className="text-blue-600">salones y barberías</span>
+            {cms.heroTitle ? (
+              cms.heroTitle
+            ) : (
+              <>
+                El software líder para <span className="text-blue-600">salones y barberías</span>
+              </>
+            )}
           </h1>
           <p className="text-xl text-slate-600 leading-relaxed max-w-lg">
-            Gestiona citas, personal y clientes desde un solo lugar. Haz crecer tu negocio con la
-            plataforma de reservas más intuitiva del mercado.
+            {cms.heroSubtitle ||
+              "Gestiona citas, personal y clientes desde un solo lugar. Haz crecer tu negocio con la plataforma de reservas más intuitiva del mercado."}
           </p>
           <div className="flex items-center gap-4">
             <Link
               href="/login"
               className="bg-blue-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
             >
-              Prueba gratis <ArrowRight className="w-5 h-5" />
+              {cms.heroCta || "Prueba gratis"} <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
           <div className="flex items-center gap-6 text-sm font-medium text-slate-500 pt-4">
@@ -83,7 +134,7 @@ export default function HomePage() {
               <h3 className="text-xl font-bold text-slate-900 mb-2">Básico</h3>
               <p className="text-slate-500 mb-6">Para profesionales independientes</p>
               <div className="mb-6">
-                <span className="text-4xl font-extrabold text-slate-900"></span>
+                <span className="text-4xl font-extrabold text-slate-900">${cms.prices.basic}</span>
                 <span className="text-slate-500">/mes</span>
               </div>
               <ul className="space-y-4 mb-8">
@@ -113,7 +164,7 @@ export default function HomePage() {
               <h3 className="text-xl font-bold text-white mb-2">Pro</h3>
               <p className="text-slate-400 mb-6">Para salones en crecimiento</p>
               <div className="mb-6">
-                <span className="text-4xl font-extrabold text-white"></span>
+                <span className="text-4xl font-extrabold text-white">${cms.prices.pro}</span>
                 <span className="text-slate-400">/mes</span>
               </div>
               <ul className="space-y-4 mb-8">
@@ -140,10 +191,12 @@ export default function HomePage() {
 
             {/* Plan 3 */}
             <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-              <h3 className="text-xl font-bold text-slate-900 mb-2">Ilimitado</h3>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Premium</h3>
               <p className="text-slate-500 mb-6">Para franquicias y cadenas</p>
               <div className="mb-6">
-                <span className="text-4xl font-extrabold text-slate-900"></span>
+                <span className="text-4xl font-extrabold text-slate-900">
+                  ${cms.prices.premium}
+                </span>
                 <span className="text-slate-500">/mes</span>
               </div>
               <ul className="space-y-4 mb-8">

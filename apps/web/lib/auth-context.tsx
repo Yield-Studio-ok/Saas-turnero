@@ -9,6 +9,8 @@ export type ExtendedUser = {
   role: string;
   plan?: string;
   tenantId?: string;
+  name?: string;
+  displayName?: string;
 };
 
 interface AuthContextType {
