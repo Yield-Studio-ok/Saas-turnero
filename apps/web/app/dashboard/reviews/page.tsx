@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { apiFetch } from "@/lib/api";
 import { PaywallModal } from "@/components/paywall-modal";
 import { useRouter } from "next/navigation";
+import { hasPlanAccess } from "@/lib/plan-utils";
 
 type Review = {
   id: string;
@@ -25,7 +26,7 @@ export default function ReviewsDashboard() {
   const businessId = user?.tenantId || "local-basic";
 
   useEffect(() => {
-    if (user && user.plan !== "PRO" && user.plan !== "PREMIUM") {
+    if (user && !hasPlanAccess(user?.plan, "PRO")) {
       setShowPaywall(true);
       setLoading(false);
       return;

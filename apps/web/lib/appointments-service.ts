@@ -5,14 +5,13 @@ import {
   where,
   onSnapshot,
   updateDoc,
-  addDoc,
   serverTimestamp,
   type Unsubscribe,
   type QueryDocumentSnapshot,
   type DocumentData,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import { apiFetch, ApiError } from "./api";
+import { apiFetch } from "./api";
 import type {
   Appointment,
   AppointmentFilterOptions,
@@ -217,13 +216,12 @@ export async function cancelAppointment(localId: string, appointmentId: string):
 }
 
 /**
- * DTO para la creación transaccional de turnos en el backend (Ticket 28: POST /appointments).
+ * DTO para la creación transaccional de turnos en el backend (POST /appointments - Ticket 28 / Ticket 22).
  */
 export interface CreateAppointmentDto {
-  localId?: string;
   businessId?: string;
-  employeeId: string;
   serviceId: string;
+  employeeId?: string;
   date: string; // YYYY-MM-DD
   startTime: string; // HH:mm
   endTime: string; // HH:mm
@@ -231,6 +229,11 @@ export interface CreateAppointmentDto {
   customerEmail: string;
   customerPhone?: string;
   notes?: string;
+  status?: string;
+  duration?: number;
+  price?: number;
+  /** @deprecated Utilizar businessId. Nunca se envía al backend para evitar rechazos 400. */
+  localId?: string;
 }
 
 /**
@@ -238,27 +241,46 @@ export interface CreateAppointmentDto {
  */
 export class AppointmentsService {
   /**
-   * Invoca el endpoint transaccional del backend para crear un turno (POST /appointments - Ticket 28).
-   * Valida disponibilidad mediante el motor y asegura persistencia atómica en Firestore.
+   * Invoca el endpoint transaccional del backend para crear un turno (POST /appointments - Ticket 28 / Ticket 22).
+   * Valida disponibilidad mediante el motor y asegura persistencia atómica en la base de datos.
    */
   static async create(
     dto: CreateAppointmentDto,
     token?: string,
   ): Promise<{ id: string; [key: string]: any }> {
-    // Sanitizamos el payload asegurando los campos requeridos por el backend
-    const payload = {
-      businessId: dto.businessId || dto.localId,
-      localId: dto.localId || dto.businessId,
-      employeeId: dto.employeeId,
+    const businessId = dto.businessId || dto.localId;
+    if (!businessId) {
+      throw new Error("businessId es requerido para crear una reserva");
+    }
+
+    // Aseguramos que el payload contenga únicamente businessId y campos válidos aceptados por el backend.
+    // NUNCA incluir 'localId' para evitar rechazos 400 por validación estricta (forbidNonWhitelisted).
+    const payload: Record<string, any> = {
+      businessId,
       serviceId: dto.serviceId,
+      employeeId: dto.employeeId || "general",
       date: dto.date,
       startTime: dto.startTime,
       endTime: dto.endTime,
       customerName: dto.customerName,
       customerEmail: dto.customerEmail,
-      customerPhone: dto.customerPhone,
-      notes: dto.notes,
     };
+
+    if (dto.customerPhone !== undefined && dto.customerPhone !== null && dto.customerPhone !== "") {
+      payload.customerPhone = dto.customerPhone;
+    }
+    if (dto.notes !== undefined && dto.notes !== null && dto.notes !== "") {
+      payload.notes = dto.notes;
+    }
+    if (dto.status !== undefined && dto.status !== null) {
+      payload.status = dto.status;
+    }
+    if (dto.duration !== undefined && dto.duration !== null) {
+      payload.duration = Number(dto.duration);
+    }
+    if (dto.price !== undefined && dto.price !== null) {
+      payload.price = Number(dto.price);
+    }
 
     return apiFetch<{ id: string; [key: string]: any }>("/appointments", {
       method: "POST",
@@ -278,9 +300,6 @@ export class AppointmentsService {
   }
 
   /**
-   * Obtiene la información de un turno por ID (GET /appointments/:id).
-   */
-  /**
    * Completa un turno por ID (PATCH /appointments/:id/complete - Ticket 6 Epic 3).
    */
   static async complete(
@@ -293,14 +312,18 @@ export class AppointmentsService {
     });
   }
 
+  /**
+   * Obtiene la información de un turno por ID (GET /appointments/:id).
+   */
   static async getById(id: string): Promise<Appointment | any> {
     return apiFetch(`/appointments/${id}`);
   }
 }
 
 /**
- * Crea un nuevo turno conectando a la función transaccional del backend (POST /appointments - Ticket 28)
- * con fallback a Firestore directo en caso de modo offline o desarrollo local.
+ * Crea un nuevo turno conectando a la función transaccional del backend (POST /appointments - Ticket 22).
+ * Envía únicamente el DTO limpio al backend sin propiedades espurias ('localId') ni fallbacks bloqueantes
+ * a Firestore, evitando cuelgues por timeout de socket de 5 minutos.
  */
 export async function createAppointment(
   localId: string,
@@ -314,11 +337,12 @@ export async function createAppointment(
     input.customerEmail?.trim() ||
     `${input.customerPhone?.replace(/\D/g, "") || "cliente"}@notificaciones.local`;
 
+  const businessId = (input as any).businessId || input.localId || localId;
+
   const dto: CreateAppointmentDto = {
-    localId: input.localId || localId,
-    businessId: (input as any).businessId || input.localId || localId,
-    employeeId: input.employeeId || "general",
+    businessId,
     serviceId: input.serviceId,
+    employeeId: input.employeeId || "general",
     date,
     startTime: input.startTime,
     endTime,
@@ -326,71 +350,16 @@ export async function createAppointment(
     customerEmail: email,
     customerPhone: input.customerPhone,
     notes: input.notes,
+    status: input.status || "confirmed",
+    duration,
+    price: input.price,
   };
 
-  try {
-    // 1. Invocar endpoint transaccional del backend (POST /appointments - Ticket 28)
-    const result = await AppointmentsService.create(dto, token);
-    if (result && result.id) {
-      // Guardar en subcolección local si está disponible para sincronía en tiempo real
-      try {
-        const localDocRef = doc(db, "tenants", localId, "appointments", result.id);
-        await updateDoc(localDocRef, {
-          customerPhone: input.customerPhone || "",
-          notes: input.notes || "",
-        });
-      } catch {
-        // Silencioso si la subcolección directa no existe aún
-      }
-      return result.id;
-    }
-  } catch (apiError: any) {
-    console.warn(
-      "[createAppointment] API endpoint POST /appointments falló o servidor no disponible:",
-      apiError,
-    );
-
-    // Si la API devolvió un error de indisponibilidad de horario ("is no longer available" o 400/409),
-    // relanzar para que la UI muestre el aviso claro al usuario
-    if (
-      apiError instanceof ApiError &&
-      (apiError.status === 400 || apiError.status === 409) &&
-      (apiError.message?.toLowerCase().includes("available") ||
-        apiError.message?.toLowerCase().includes("no longer") ||
-        apiError.message?.toLowerCase().includes("disponible") ||
-        apiError.message?.toLowerCase().includes("booked"))
-    ) {
-      throw apiError;
-    }
-
-    // Fallback a Firestore directo (Ticket 17) para resiliencia offline/dev
-    try {
-      const appointmentsRef = collection(db, "tenants", localId, "appointments");
-      const docRef = await addDoc(appointmentsRef, {
-        tenantId: localId,
-        localId,
-        employeeId: input.employeeId,
-        serviceId: input.serviceId,
-        serviceName: input.serviceName || "",
-        employeeName: input.employeeName || "",
-        date,
-        startTime: input.startTime,
-        endTime,
-        duration,
-        status: input.status || "confirmed",
-        customerName: input.customerName,
-        customerPhone: input.customerPhone || "",
-        customerEmail: email,
-        price: input.price ?? 0,
-        notes: input.notes || "",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-      return docRef.id;
-    } catch (firestoreError) {
-      console.error("[createAppointment] Fallback Firestore también falló:", firestoreError);
-      throw apiError;
-    }
+  // 1. Invocar endpoint transaccional del backend (POST /appointments)
+  // Sin fallback bloqueante a Firestore para evitar timeouts de 5 minutos por sockets colgados
+  const result = await AppointmentsService.create(dto, token);
+  if (result && result.id) {
+    return result.id;
   }
 
   return `TRN-${Math.floor(100000 + Math.random() * 900000)}`;

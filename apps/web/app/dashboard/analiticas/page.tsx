@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { PaywallModal } from "@/components/paywall-modal";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { hasPlanAccess } from "@/lib/plan-utils";
 
 export default function AnaliticasPage() {
   const { user } = useAuth();
@@ -11,8 +12,8 @@ export default function AnaliticasPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Si el usuario no tiene plan PRO (o no está cargado y por defecto es BASIC), mostramos el paywall
-    if (user && user.plan !== "PRO") {
+    // Si el usuario no tiene plan PRO o superior, mostramos el paywall
+    if (user && !hasPlanAccess(user?.plan, "PRO")) {
       setShowPaywall(true);
     } else {
       setShowPaywall(false);

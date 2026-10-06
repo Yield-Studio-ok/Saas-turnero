@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import CustomSelect from "@/components/ui/custom-select";
 
 const mockEmpleados = [
   { id: 1, nombre: "Juan Pérez" },
@@ -48,17 +49,16 @@ export default function HorariosPage() {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Seleccionar Empleado
           </label>
-          <select
+          <CustomSelect
             value={selectedEmpleado}
-            onChange={(e) => setSelectedEmpleado(Number(e.target.value))}
-            className="mt-1 block w-full sm:w-1/2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 bg-white"
-          >
-            {mockEmpleados.map((emp) => (
-              <option key={emp.id} value={emp.id}>
-                {emp.nombre}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setSelectedEmpleado(Number(val))}
+            options={mockEmpleados.map((emp) => ({
+              value: emp.id,
+              label: emp.nombre,
+            }))}
+            placeholder="Seleccionar Empleado"
+            className="mt-1 w-full sm:w-1/2"
+          />
         </div>
 
         <div className="border-t border-gray-200 pt-6">

@@ -49,12 +49,13 @@ function formatApiErrorMessage(err: any): string {
     lower.includes("already booked") ||
     lower.includes("not available") ||
     lower.includes("is overlapping") ||
-    lower.includes("disponible")
+    lower.includes("disponible") ||
+    lower.includes("ocupado")
   ) {
     return "El horario seleccionado ya no se encuentra disponible. Por favor, selecciona otro horario.";
   }
 
-  if (lower.includes("does not work on this day")) {
+  if (lower.includes("does not work on this day") || lower.includes("no atiende")) {
     return "El profesional o local no atiende en la fecha seleccionada.";
   }
 
@@ -64,6 +65,24 @@ function formatApiErrorMessage(err: any): string {
 
   if (lower.includes("employee not found")) {
     return "El profesional asignado no está disponible.";
+  }
+
+  if (
+    lower.includes("failed to fetch") ||
+    lower.includes("network") ||
+    lower.includes("econnrefused") ||
+    lower.includes("conexión") ||
+    lower.includes("conexion")
+  ) {
+    return "No se pudo conectar con el servidor. Por favor, verifica tu conexión a internet e intenta nuevamente.";
+  }
+
+  if (lower.includes("timeout") || lower.includes("timed out") || lower.includes("demoró")) {
+    return "La solicitud demoró más de lo esperado. Por favor, intenta nuevamente en unos instantes.";
+  }
+
+  if (lower.includes("businessid") || lower.includes("localid") || lower.includes("required")) {
+    return "Faltan datos obligatorios del establecimiento para procesar la reserva.";
   }
 
   return message;
@@ -199,7 +218,7 @@ export function CustomerBookingModal({
 
         const res = await AppointmentsService.create(
           {
-            localId: targetLocalId,
+            businessId: targetLocalId,
             employeeId: targetEmployeeId,
             serviceId: service.id,
             date: dateStr,
@@ -209,6 +228,9 @@ export function CustomerBookingModal({
             customerEmail: email,
             customerPhone: formData.customerPhone,
             notes: formData.notes,
+            duration: service.duration,
+            price: service.price,
+            status: "confirmed",
           },
           token || undefined,
         );
@@ -234,10 +256,6 @@ export function CustomerBookingModal({
       console.error("[CustomerBookingModal] Error submitting booking:", err);
       const friendlyMsg = formatApiErrorMessage(err);
       setApiError(friendlyMsg);
-      setErrors((prev) => ({
-        ...prev,
-        customerName: friendlyMsg,
-      }));
     } finally {
       setIsSubmitting(false);
     }

@@ -3,49 +3,73 @@
 import { useEffect, useState, useMemo } from "react";
 import { apiFetch } from "@/lib/api";
 import Link from "next/link";
-import { Search, MapPin, Star, Scissors, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, MapPin, Star, Scissors, Store, ChevronLeft, ChevronRight } from "lucide-react";
 
-function Carousel({ images }: { images: string[] }) {
+function Carousel({ images, alt = "Local" }: { images?: string[]; alt?: string }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [failedIndices, setFailedIndices] = useState<Record<number, boolean>>({});
 
-  if (!images || images.length === 0) {
-    return <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-100" />;
-  }
+  const validImages = useMemo(() => {
+    return (images || []).filter((img) =>
+      Boolean(img && typeof img === "string" && img.trim().length > 0),
+    );
+  }, [images]);
+
+  const hasCurrentFailed = failedIndices[currentIndex] || !validImages[currentIndex];
+  const allFailed = validImages.every((_, idx) => failedIndices[idx]);
 
   const prev = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setCurrentIndex((c) => (c === 0 ? images.length - 1 : c - 1));
+    setCurrentIndex((c) => (c === 0 ? validImages.length - 1 : c - 1));
   };
 
   const next = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setCurrentIndex((c) => (c === images.length - 1 ? 0 : c + 1));
+    setCurrentIndex((c) => (c === validImages.length - 1 ? 0 : c + 1));
   };
 
   return (
-    <div className="relative w-full h-full overflow-hidden group/carousel">
-      <img src={images[currentIndex]} alt="Local" className="w-full h-full object-cover" />
-      {images.length > 1 && (
+    <div className="relative w-full h-full overflow-hidden group/carousel bg-gradient-to-br from-slate-800 via-slate-900 to-indigo-950">
+      {hasCurrentFailed ? (
+        <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 select-none">
+          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 shadow-inner">
+            <Store className="w-8 h-8 text-indigo-300/60" />
+          </div>
+        </div>
+      ) : (
+        <img
+          src={validImages[currentIndex]}
+          alt={alt}
+          className="w-full h-full object-cover transition-opacity duration-300"
+          onError={() => {
+            setFailedIndices((curr) => ({ ...curr, [currentIndex]: true }));
+          }}
+        />
+      )}
+
+      {!allFailed && validImages.length > 1 && (
         <>
           <button
             onClick={prev}
-            className="absolute left-1 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-1 opacity-0 group-hover/carousel:opacity-100 transition-opacity"
+            className="absolute left-1 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full p-1 opacity-0 group-hover/carousel:opacity-100 transition-opacity backdrop-blur-sm z-10"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
             onClick={next}
-            className="absolute right-1 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-1 opacity-0 group-hover/carousel:opacity-100 transition-opacity"
+            className="absolute right-1 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full p-1 opacity-0 group-hover/carousel:opacity-100 transition-opacity backdrop-blur-sm z-10"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-            {images.map((_, idx) => (
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10 pointer-events-none">
+            {validImages.map((_, idx) => (
               <div
                 key={idx}
-                className={`w-1.5 h-1.5 rounded-full ${idx === currentIndex ? "bg-white" : "bg-white/50"}`}
+                className={`w-1.5 h-1.5 rounded-full transition-all ${
+                  idx === currentIndex ? "bg-white scale-125" : "bg-white/50"
+                }`}
               />
             ))}
           </div>
@@ -151,7 +175,7 @@ export default function ExplorarPage() {
               >
                 {/* Card Image Area (Placeholder gradient) */}
                 <div className="h-40 relative">
-                  <Carousel images={business.imageUrls || []} />
+                  <Carousel images={business.imageUrls || []} alt={business.name} />
                   <div className="absolute top-3 left-3 flex gap-2">
                     {business.isOpen ? (
                       <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wider shadow-sm">

@@ -32,27 +32,35 @@ export interface LocalInfo {
   reviewCount: number;
   isOpen: boolean;
   imageUrls?: string[];
+  avatarUrl?: string;
 }
 
 const DEFAULT_LOCAL: LocalInfo = {
-  name: "Barber�a Vintage",
+  name: "Barbería Vintage",
   slug: "barberia-vintage",
   tagline:
-    "Especialistas en cortes cl�sicos, modernos y perfilado de barba. Atenci�n personalizada.",
+    "Especialistas en cortes clásicos, modernos y perfilado de barba. Atención personalizada.",
   address: "Av. Siempre Viva 123, CABA",
   phone: "+54 9 11 1234-5678",
   openHours: "09:00 - 20:00",
   rating: 4.9,
   reviewCount: 142,
   isOpen: true,
+  imageUrls: [
+    "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&w=1200&q=80",
+  ],
+  avatarUrl:
+    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&h=256&q=80",
 };
 
 const DEFAULT_SERVICES: ServiceItem[] = [
   {
     id: "srv-1",
-    name: "Corte Cl�sico & Peinado",
+    name: "Corte Clásico & Peinado",
     description:
-      "Corte tradicional a tijera o m�quina seg�n tu preferencia. Incluye lavado y peinado con cera mate premium.",
+      "Corte tradicional a tijera o máquina según tu preferencia. Incluye lavado y peinado con cera mate premium.",
     duration: 30,
     price: 1500,
     category: "Cortes",
@@ -62,7 +70,7 @@ const DEFAULT_SERVICES: ServiceItem[] = [
     id: "srv-2",
     name: "Corte + Perfilado de Barba",
     description:
-      "Servicio insignia: dise�o y corte completo, tratamiento de toalla caliente, perfilado con navaja y b�lsamo hidratante.",
+      "Servicio insignia: diseño y corte completo, tratamiento de toalla caliente, perfilado con navaja y bálsamo hidratante.",
     duration: 50,
     price: 2800,
     category: "Combos",
@@ -79,27 +87,27 @@ const DEFAULT_SERVICES: ServiceItem[] = [
   },
   {
     id: "srv-4",
-    name: "Fade / Degrad� Urbano",
+    name: "Fade / Degradé Urbano",
     description:
-      "T�cnica de degrad� milim�trico (Skin, Low, Mid o High Fade) finalizado con m�quina shaver y detalles a navaja.",
+      "Técnica de degradé milimétrico (Skin, Low, Mid o High Fade) finalizado con máquina shaver y detalles a navaja.",
     duration: 40,
     price: 1800,
     category: "Cortes",
   },
   {
     id: "srv-5",
-    name: "Coloraci�n & Matizado",
+    name: "Coloración & Matizado",
     description:
-      "Decoloraci�n global, mechas o platinado profesional. Incluye mascarilla nutritiva restauradora.",
+      "Decoloración global, mechas o platinado profesional. Incluye mascarilla nutritiva restauradora.",
     duration: 90,
     price: 5200,
     category: "Tratamientos",
   },
   {
     id: "srv-6",
-    name: "Tratamiento Antica�da & Lavado Spa",
+    name: "Tratamiento Anticaída & Lavado Spa",
     description:
-      "Exfoliaci�n suave de cuero cabelludo, ampolla fortalecedora y masaje descontracturante.",
+      "Exfoliación suave de cuero cabelludo, ampolla fortalecedora y masaje descontracturante.",
     duration: 35,
     price: 2100,
     category: "Tratamientos",

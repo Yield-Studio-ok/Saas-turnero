@@ -16,8 +16,18 @@ export class AppointmentsService {
     const { serviceId, date, startTime, endTime } = dto;
 
     const service = await this.prisma.service.findUnique({ where: { id: serviceId } });
-    if (!service || (service.businessId !== businessId && service.businessId !== dto.localId))
+    if (!service) {
       throw new NotFoundException("Service not found for this local");
+    }
+
+    if (service.businessId !== businessId && service.businessId !== dto.localId) {
+      const biz = await this.prisma.business.findFirst({
+        where: { OR: [{ id: businessId }, { name: businessId }] },
+      });
+      if (!biz || biz.id !== service.businessId) {
+        throw new NotFoundException("Service not found for this local");
+      }
+    }
 
     let targetEmployeeId = dto.employeeId;
     if (!targetEmployeeId || targetEmployeeId === "general") {
@@ -98,10 +108,11 @@ export class AppointmentsService {
             date,
             startTime,
             endTime,
-            status: "confirmed",
+            status: dto.status || "confirmed",
             customerName: dto.customerName || "Guest",
             customerEmail: dto.customerEmail || "guest@example.com",
             customerPhone: dto.customerPhone || null,
+            notes: dto.notes || null,
             businessId: service.businessId,
             employeeId: targetEmployeeId,
             serviceId,

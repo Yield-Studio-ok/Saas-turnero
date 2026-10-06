@@ -27,16 +27,50 @@ describe("Appointments Cancellation (Ticket 21)", () => {
           ...data,
         })),
         findMany: jest.fn().mockResolvedValue([]),
+        create: jest.fn().mockImplementation(({ data }) => ({
+          id: "appt-new-1",
+          ...data,
+        })),
       },
+      $transaction: jest.fn().mockImplementation(async (callback) => {
+        return callback(mockPrisma);
+      }),
       user: {
         findUnique: jest
           .fn()
           .mockResolvedValue({ id: "user-1", email: "cliente@test.com", credits: 0 }),
         update: jest.fn().mockResolvedValue({ id: "user-1", credits: 1500 }),
       },
-      service: { findUnique: jest.fn() },
-      employee: { findUnique: jest.fn() },
-      schedule: { findMany: jest.fn() },
+      service: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: "srv-1",
+          name: "Corte de Pelo",
+          price: 2500,
+          duration: 30,
+          businessId: "biz-1",
+        }),
+      },
+      employee: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: "emp-1",
+          name: "Lucas Barber",
+          businessId: "biz-1",
+        }),
+        findFirst: jest.fn().mockResolvedValue({
+          id: "emp-1",
+          name: "Lucas Barber",
+          businessId: "biz-1",
+        }),
+      },
+      schedule: {
+        findMany: jest.fn().mockResolvedValue([{ startTime: "09:00", endTime: "20:00" }]),
+      },
+      business: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: "biz-1",
+          name: "Barberia Central",
+        }),
+      },
     };
 
     service = new AppointmentsService(mockPrisma as any);
@@ -106,6 +140,64 @@ describe("Appointments Cancellation (Ticket 21)", () => {
     it("updateOrCancel PATCH should delegate to service", async () => {
       const result = await controller.updateOrCancel("appointment-123");
       expect(result.status).toBe("cancelled");
+    });
+  });
+
+  describe("AppointmentsService.createAppointment (Ticket 22)", () => {
+    it("should create an appointment with clean DTO and extended valid fields", async () => {
+      const dto = {
+        businessId: "biz-1",
+        serviceId: "srv-1",
+        employeeId: "emp-1",
+        date: "2026-10-10",
+        startTime: "10:00",
+        endTime: "10:30",
+        customerName: "Juan Perez",
+        customerEmail: "juan@example.com",
+        customerPhone: "+5491122334455",
+        notes: "Corte clasico",
+        status: "confirmed",
+        duration: 30,
+        price: 2500,
+      };
+
+      const result = await service.createAppointment(dto);
+
+      expect(mockPrisma.service.findUnique).toHaveBeenCalledWith({ where: { id: "srv-1" } });
+      expect(mockPrisma.appointment.create).toHaveBeenCalledWith({
+        data: {
+          date: "2026-10-10",
+          startTime: "10:00",
+          endTime: "10:30",
+          status: "confirmed",
+          customerName: "Juan Perez",
+          customerEmail: "juan@example.com",
+          customerPhone: "+5491122334455",
+          notes: "Corte clasico",
+          businessId: "biz-1",
+          employeeId: "emp-1",
+          serviceId: "srv-1",
+        },
+      });
+      expect(result.id).toBe("appt-new-1");
+      expect(result.status).toBe("confirmed");
+      expect(result.notes).toBe("Corte clasico");
+    });
+
+    it("controller.create should delegate cleanly to service.createAppointment", async () => {
+      const dto = {
+        businessId: "biz-1",
+        serviceId: "srv-1",
+        employeeId: "emp-1",
+        date: "2026-10-10",
+        startTime: "11:00",
+        endTime: "11:30",
+        customerName: "Maria Garcia",
+        customerEmail: "maria@example.com",
+      };
+
+      const result = await controller.create(dto);
+      expect(result.id).toBe("appt-new-1");
     });
   });
 });

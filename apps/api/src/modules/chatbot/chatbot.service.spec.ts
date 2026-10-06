@@ -33,6 +33,34 @@ describe("ChatbotService (Ticket 15)", () => {
     expect(res.reply).toContain("Hola, soy el Asistente de IA de tu dashboard.");
   });
 
+  it("should respond cordially to informal greetings (que onda, papu, buenas)", async () => {
+    const resQueOnda = await service.ask("que onda");
+    expect(resQueOnda.reply).toContain("¡Qué onda!");
+    expect(resQueOnda.reply).toContain("Hola, soy el Asistente de IA de tu dashboard.");
+
+    const resPapu = await service.ask("hola papu todo bien?");
+    expect(resPapu.reply).toContain("¡Buenas, crack!");
+    expect(resPapu.reply).toContain("Hola, soy el Asistente de IA de tu dashboard.");
+
+    const resBuenas = await service.ask("buenas tardes");
+    expect(resBuenas.reply).toContain("¡Buenas!");
+    expect(resBuenas.reply).toContain("Hola, soy el Asistente de IA de tu dashboard.");
+  });
+
+  it("should respond to common business questions (horarios, servicios, reseñas, equipo)", async () => {
+    const resHorarios = await service.ask("¿cuáles son los horarios de atención?");
+    expect(resHorarios.reply).toContain("horarios de atención");
+
+    const resServicios = await service.ask("¿dónde configuro los precios y servicios?");
+    expect(resServicios.reply).toContain("servicios");
+
+    const resResenas = await service.ask("¿cómo funcionan las reseñas y puntos?");
+    expect(resResenas.reply).toContain("calificaciones");
+
+    const resEquipo = await service.ask("¿dónde veo a los empleados del equipo?");
+    expect(resEquipo.reply).toContain("Empleados");
+  });
+
   it("should instantiate and call Gemini when GEMINI_API_KEY is present", async () => {
     process.env.GEMINI_API_KEY = "dummy-api-key";
     const geminiService = new ChatbotService(mockPrisma);
