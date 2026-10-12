@@ -341,10 +341,30 @@ export default function DashboardFinanzasPage() {
     return [...filteredMovements].toSorted((a, b) => b.monto - a.monto).slice(0, 7);
   }, [filteredMovements]);
 
-  // Cálculos de Totales Dinámicos
+  // Cálculos de Totales Dinámicos (inmutable y reactivo ante nuevos egresos)
   const chartData = useMemo(() => {
-    return PERIOD_CHARTS[selectedPeriod] || PERIOD_CHARTS["mes-actual"];
-  }, [selectedPeriod]);
+    const base = (PERIOD_CHARTS[selectedPeriod] || PERIOD_CHARTS["mes-actual"]).map((p) => ({
+      ...p,
+    }));
+
+    // Calcular egresos añadidos durante la sesión para reflejarlos en la gráfica
+    const nuevosEgresos = movements.filter(
+      (m) =>
+        m.tipo === "EGRESO" &&
+        !INITIAL_MOVEMENTS.some((init) => init.id === m.id) &&
+        (m.periodo === selectedPeriod || selectedPeriod === "anio"),
+    );
+
+    const extraGastos = nuevosEgresos.reduce((sum, m) => sum + m.monto, 0);
+
+    if (extraGastos > 0 && base.length > 0) {
+      const lastPoint = base[base.length - 1];
+      lastPoint.gastos += extraGastos;
+      lastPoint.beneficio = lastPoint.ingresos - lastPoint.gastos;
+    }
+
+    return base;
+  }, [selectedPeriod, movements]);
 
   // KPIs
   const totalIngresos = useMemo(() => {
@@ -376,13 +396,6 @@ export default function DashboardFinanzasPage() {
     };
 
     setMovements((prev) => [nuevoMovimiento, ...prev]);
-
-    // Actualizar dinámicamente el último punto del gráfico de forma inmediata
-    if (chartData.length > 0) {
-      const lastPoint = chartData[chartData.length - 1];
-      lastPoint.gastos += nuevo.monto;
-      lastPoint.beneficio = lastPoint.ingresos - lastPoint.gastos;
-    }
 
     showToast(
       `Egreso "$${nuevo.monto.toLocaleString()}" registrado correctamente en ${nuevo.categoria}.`,
