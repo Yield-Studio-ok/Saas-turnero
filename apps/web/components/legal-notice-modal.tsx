@@ -26,10 +26,12 @@ export default function LegalNoticeModal() {
         setIsChecked(false);
       }
     } catch (err: any) {
-      console.error("Error al obtener avisos legales no leídos:", err);
-      // No bloqueamos navegación si la API falla temporalmente por red al arrancar,
-      // pero registramos el estado
-    } finally {
+      if (err?.status === 401) {
+        // Sesión vencida o token inválido: el auth-context se encarga de limpiar el estado
+        setNotices([]);
+        return;
+      }
+      console.warn("Avisos legales no obtenidos:", err?.message || err);
     }
   }, []);
 

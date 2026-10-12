@@ -31,16 +31,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const handleUnauthorized = () => {
+      setToken(null);
+      setUser(null);
+    };
+
+    window.addEventListener("auth:unauthorized", handleUnauthorized);
+    return () => window.removeEventListener("auth:unauthorized", handleUnauthorized);
+  }, []);
+
+  useEffect(() => {
     const savedToken = localStorage.getItem("auth_token");
     const savedUser = localStorage.getItem("auth_user");
 
     if (savedToken && savedUser) {
-      setToken(savedToken);
       try {
-        setUser(JSON.parse(savedUser));
+        const parsed = JSON.parse(savedUser);
+        setToken(savedToken);
+        setUser(parsed);
+
+        // Validar token contra /me de manera no bloqueante
+        apiFetch("/me", { token: savedToken }).catch((err: any) => {
+          if (err?.status === 401) {
+            setToken(null);
+            setUser(null);
+            localStorage.removeItem("auth_token");
+            localStorage.removeItem("auth_user");
+          }
+        });
       } catch {
         setUser(null);
         setToken(null);
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("auth_user");
       }
     }
     setLoading(false);

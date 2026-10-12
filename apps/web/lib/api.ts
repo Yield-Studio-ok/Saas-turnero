@@ -32,6 +32,13 @@ export async function apiFetch<T>(
     } catch {
       // keep fallback message
     }
+
+    if (res.status === 401 && typeof window !== "undefined") {
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("auth_user");
+      window.dispatchEvent(new Event("auth:unauthorized"));
+    }
+
     throw new ApiError(message, res.status);
   }
 
