@@ -82,7 +82,7 @@ const feedbackTagsOptions = [
 ];
 
 export default function ReviewsDashboard() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [showPaywall, setShowPaywall] = useState(false);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -123,7 +123,9 @@ export default function ReviewsDashboard() {
       setShowPaywall(false);
     }
 
-    apiFetch<Review[]>(`/reviews/business/${businessId}`)
+    apiFetch<Review[]>(`/reviews/business/${businessId}`, {
+      token: token || undefined,
+    })
       .then((data) => {
         if (data && data.length > 0) {
           setReviews(data);
@@ -132,13 +134,13 @@ export default function ReviewsDashboard() {
         }
       })
       .catch((err) => {
-        console.error("Error cargando reseñas:", err);
+        console.warn("Aviso al cargar reseñas del negocio:", err?.message || err);
         setReviews(initialMockReviews);
       })
       .finally(() => {
         setLoading(false);
       });
-  }, [businessId, user, isEmployee]);
+  }, [businessId, user, isEmployee, token]);
 
   const handleToggleTag = (tag: string) => {
     setSelectedTags((prev) =>

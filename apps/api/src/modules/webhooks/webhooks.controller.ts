@@ -1,4 +1,4 @@
-﻿import {
+import {
   Controller,
   Post,
   Get,
@@ -10,12 +10,14 @@
 } from "@nestjs/common";
 import { ApiTags, ApiOperation } from "@nestjs/swagger";
 import { AppointmentsService } from "../appointments/appointments.service";
+import { Public } from "../auth/public.decorator";
 
 @ApiTags("Webhooks")
 @Controller("webhooks")
 export class WebhooksController {
   constructor(private readonly appointmentsService: AppointmentsService) {}
 
+  @Public()
   @Get("availability")
   @ApiOperation({ summary: "Check availability for external systems (e.g., Google Reserve)" })
   async getAvailability(
@@ -32,6 +34,7 @@ export class WebhooksController {
     };
   }
 
+  @Public()
   @Post("reserve")
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
