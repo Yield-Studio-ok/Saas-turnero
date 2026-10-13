@@ -4,24 +4,22 @@ Este documento sirve para contextualizar rápidamente a la IA sobre el estado de
 
 ## Estado Actual
 
-- **Épica 7 (Arquitectura B2B y Panel Superadmin)**: Completada y mergeada a develop. Se implementaron los endpoints protegidos para el superadmin y un DataGrid en el frontend para gestionar los planes de los negocios (BASIC, PRO, PREMIUM).
-- **Planificación de Refactor (15 Sep 2026)**:
-  - Se definieron 10 tickets granulares en Plane para refactorizar la arquitectura y funcionalidades base.
-  - El orquestador se encargará de delegar la ejecución de estos tickets en base a sus relaciones de bloqueo (`blocked_by`).
+- **Sprint 6 (Estabilidad Operativa, Persistencia Real y Landing Lovable)**: 21 tickets en progreso en Plane (`TURN-97` al `TURN-117`), divididos en Épicas 18 a 24.
+- **Política de Git para Épicas y Tickets**:
+  1. Por cada épica, crear rama desde `develop` (`feature/epica-XX-...`).
+  2. Commitear tras completar cada ticket individual (`feat(TURN-XX): ...`).
+  3. Al completar todos los tickets de la épica, mergear la rama a `develop`.
+  4. Al concluir todas las épicas del sprint, realizar `git push origin develop`.
+- **Enrutamiento del Orquestador (Gemini 3.8 Exclusivo)**:
+  - Dificultad 0: Usuario (Decisión de negocio / Credenciales).
+  - Dificultad 1 a 3: Gemini 3.8 (Low Effort).
+  - Dificultad 4 a 7: Gemini 3.8 (Medium Effort).
+  - Dificultad 8 a 10: Gemini 3.8 (High Effort / Thinking Extendido).
 
 ## Decisiones de Arquitectura Recientes
 
-- **Autenticación B2B y B2C**: Se eliminó el mock de roles (Devtool / Role Switcher) y el uso de localStorage para el dev env. A partir de ahora, todo funciona contra la base de datos (JWT) sin Firebase en entorno de desarrollo. Se añade `password` a los usuarios.
-- **Autorización y Rutas Protegidas**: El acceso al dashboard (`/dashboard`) implementa verificación real por rol (Dueño vs Empleado) renderizando vistas distintas.
-- **Imágenes (Pexels)**: Se descarta el diseño genérico azul de `/explorar`. En su lugar, el modelo `Business` tiene `imageUrls` que serán sembrados estáticamente usando imágenes de Pexels.
-- **Flujo de Reserva (Booking)**: El usuario explora locales, selecciona un servicio -> selecciona un empleado -> elige fecha y hora -> se le pide inicio de sesión (si es anónimo) guardando el estado -> confirma la cita en BD.
-
-## Base de Datos y Backend (NestJS + Prisma)
-
-- Modelos principales: User, Business, Employee, Schedule, Service, Shift, Product, Appointment, Review, LegalNotice.
-- El esquema cuenta con el enum SubscriptionPlan.
-
-## Frontend (Next.js App Router)
-
-- Frontend con componentes UI modernos (inspirados en shadcn/ui y skill impecable).
-- Comunicación con API mediante funciones fetch.
+- **Persistencia 100% en DB**: Supresión total de `localStorage` para ventas de mostrador (`ProductSale`), disponibilidad/ausencias (`EmployeeBlock`) y reseñas mutuas de empleados.
+- **Agenda del Empleado**: Canvas temporal nativo con Tailwind CSS v4 (`TurnoTimelineGrid`) en lugar de librerías externas pesadas, con modal rápido para walk-ins y sincronización con Inicio.
+- **Landing Page**: Migración 1:1 de los componentes de Lovable (`automa-turnos-pro`) a Next.js App Router conservando 100% de la estética, tipografía y tokens, conectando copies y tarifas al CMS de Superadmin y midiendo eventos con PostHog.
+- **Landing Pública (/local/[id])**: Consulta resiliente por ID o slug real contra PostgreSQL sin fallbacks mockeados en producción.
+- **Autenticación y Paywall**: Inclusión del plan en el JWT payload y bypass automático para `superadmin`. Impresión de finanzas con aislamiento `@media print / print:hidden`.
