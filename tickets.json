@@ -1,5 +1,136 @@
 [
   {
+    "id": "f33088ab-0dfb-4b91-a13e-685b4d59d4fc",
+    "seq": 51,
+    "name": "51. [Frontend] Integraci\u00f3n Global de PostHog Analytics (Landing y App) y M\u00e9tricas en Superadmin",
+    "plane_identifier": "TURN-117"
+  },
+  {
+    "id": "13cd3711-2b86-4371-81ca-6a48741509e6",
+    "seq": 50,
+    "name": "50. [Frontend] Enlazar Flujos y CTAs de la Landing Lovable a Rutas Reales de la Plataforma",
+    "plane_identifier": "TURN-116"
+  },
+  {
+    "id": "39a25446-69ba-430b-a1f1-8b46597a487a",
+    "seq": 49,
+    "name": "49. [Fullstack] Conectar Landing Lovable con CMS Superadmin (Hero, Textos y Precios Din\u00e1micos)",
+    "plane_identifier": "TURN-115"
+  },
+  {
+    "id": "955ebbd0-5f81-47bd-a70f-c9155968fc2a",
+    "seq": 48,
+    "name": "48. [Frontend] Portar Componentes de Landing Lovable a Next.js (Preservar Est\u00e9tica 100%)",
+    "plane_identifier": "TURN-114"
+  },
+  {
+    "id": "d6297575-bf01-4b9b-bda7-d5b3a2deaab1",
+    "seq": 47,
+    "name": "47. [Fullstack] Resoluci\u00f3n Robusta por ID/Slug y Resiliencia en Landing P\u00fablica (/local/[id])",
+    "plane_identifier": "TURN-113"
+  },
+  {
+    "id": "fac0141b-ca1d-43fe-8c63-c0791204a947",
+    "seq": 46,
+    "name": "46. [Frontend] Aislamiento de Impresi\u00f3n PDF en Reporte Financiero (print:hidden)",
+    "plane_identifier": "TURN-112"
+  },
+  {
+    "id": "ce04d631-46fc-4e18-861d-96e803879643",
+    "seq": 45,
+    "name": "45. [Frontend] Bypass Superadmin y Jerarqu\u00eda de Planes en Paywall",
+    "plane_identifier": "TURN-111"
+  },
+  {
+    "id": "47503a51-fe3c-451e-a1b1-d7f6863a298b",
+    "seq": 44,
+    "name": "44. [Backend] Inclusi\u00f3n de Plan de Negocio en Payload de Login y JWT",
+    "plane_identifier": "TURN-110"
+  },
+  {
+    "id": "03d2cc09-8680-44b2-8c5a-d013967a7f0d",
+    "seq": 43,
+    "name": "43. [Frontend] Unificaci\u00f3n de Navegaci\u00f3n en Superadmin (Eliminar Navbar Duplicado)",
+    "plane_identifier": "TURN-109"
+  },
+  {
+    "id": "695d8e46-ab1e-4c6d-b01b-72e87f1b7425",
+    "seq": 42,
+    "name": "42. [Backend] L\u00f3gica Contextual de Respuestas y Preparaci\u00f3n Gemini API",
+    "plane_identifier": "TURN-108"
+  },
+  {
+    "id": "3de52247-9d5f-4fac-8a5d-a0460531396f",
+    "seq": 41,
+    "name": "41. [Frontend] Redise\u00f1o Responsivo Mobile-Friendly del Widget Chatbot",
+    "plane_identifier": "TURN-107"
+  },
+  {
+    "id": "9fe054d3-6557-4e1f-b668-dd5cfc6bfc2f",
+    "seq": 40,
+    "name": "40. [Frontend] Sincronizaci\u00f3n del Avatar de Perfil en la Barra Superior (Header)",
+    "plane_identifier": "TURN-106"
+  },
+  {
+    "id": "8926fdab-b72c-4813-a69c-080a2595d961",
+    "seq": 39,
+    "name": "39. [Frontend] UI Selector de Clientes Atendidos y Prevenci\u00f3n de Calificaciones Duplicadas",
+    "plane_identifier": "TURN-105"
+  },
+  {
+    "id": "67c356e8-4cce-492a-b64e-124ffb28e703",
+    "seq": 38,
+    "name": "38. [Backend] Servicio y Endpoints de Calificaciones de Empleados a Clientes",
+    "plane_identifier": "TURN-104"
+  },
+  {
+    "id": "a88ce9ff-b8ff-4f44-a13d-6c138c167381",
+    "seq": 37,
+    "name": "37. [Frontend] Conexi\u00f3n Reactiva de Disponibilidad y D\u00edas Libres en DB",
+    "plane_identifier": "TURN-103"
+  },
+  {
+    "id": "85cec2c2-221a-4e26-b669-54d6d26cddca",
+    "seq": 36,
+    "name": "36. [Backend] Modelo Prisma y Endpoints CRUD de Bloqueos (EmployeeBlock)",
+    "plane_identifier": "TURN-102"
+  },
+  {
+    "id": "0197ac17-2027-4888-862e-7878b879c5fb",
+    "seq": 35,
+    "name": "35. [Frontend] Sincronizaci\u00f3n Real-Time de Citas del D\u00eda (Inicio vs Grilla)",
+    "plane_identifier": "TURN-101"
+  },
+  {
+    "id": "e521c40f-f544-4a96-a6fc-46a1ceb65f60",
+    "seq": 34,
+    "name": "34. [Frontend] UI Modal de \"Nuevo Turno\" R\u00e1pido (Walk-in) en Agenda",
+    "plane_identifier": "TURN-100"
+  },
+  {
+    "id": "cc7c4528-4e74-441e-bfba-fc042971f064",
+    "seq": 33,
+    "name": "33. [Frontend] Redise\u00f1o de Grilla Timeline Diaria con Tailwind CSS v4",
+    "plane_identifier": "TURN-99"
+  },
+  {
+    "id": "1eba1464-9e41-462e-921e-97efb9f03456",
+    "seq": 32,
+    "name": "32. [Frontend] UI Ventas de Mostrador: Integraci\u00f3n API y Paginaci\u00f3n a 10 Registros",
+    "plane_identifier": "TURN-98"
+  },
+  {
+    "id": "25731ae6-c2b9-4cc6-898e-5f0e41c5910d",
+    "seq": 31,
+    "name": "31. [Backend] Modelo Prisma y Endpoints de Ventas de Mostrador (ProductSale)",
+    "plane_identifier": "TURN-97"
+  },
+  {
+    "id": "9878716d-4641-45c5-9e69-092c0762d099",
+    "seq": 30,
+    "name": "30. [Frontend] Finanzas: Carga de Egresos y Exportaci\u00f3n de Reportes PDF/CSV"
+  },
+  {
     "id": "59fd8e48-e33c-496d-b85e-f9b59f367bc4",
     "seq": 29,
     "name": "29. [Frontend] Integrar Guardado de Turno"
@@ -17,12 +148,12 @@
   {
     "id": "0fbbf887-2ed3-4cfb-9642-50336c48d14f",
     "seq": 26,
-    "name": "26. [Frontend] Integración Motor vs Calendario"
+    "name": "26. [Frontend] Integraci\u00f3n Motor vs Calendario"
   },
   {
     "id": "5fa00172-935e-4435-913a-ea63cff3f5bd",
     "seq": 25,
-    "name": "25. [Frontend] UI Selección de Fecha y Hora"
+    "name": "25. [Frontend] UI Selecci\u00f3n de Fecha y Hora"
   },
   {
     "id": "2ac53078-445c-4dfb-b577-7a79be368e38",
@@ -32,22 +163,22 @@
   {
     "id": "29633b9f-b020-4a7e-8d17-99155689939c",
     "seq": 23,
-    "name": "23. [Backend] Query Público de Local y Servicios"
+    "name": "23. [Backend] Query P\u00fablico de Local y Servicios"
   },
   {
     "id": "2dbc39ef-ea69-4da7-965a-4e6432554151",
     "seq": 22,
-    "name": "22. [Frontend] Maquetado de Landing Page Pública"
+    "name": "22. [Frontend] Maquetado de Landing Page P\u00fablica"
   },
   {
     "id": "d97547ac-ae5d-4764-bff2-493c84829953",
     "seq": 21,
-    "name": "21. [Backend] Servicio de Cancelación"
+    "name": "21. [Backend] Servicio de Cancelaci\u00f3n"
   },
   {
     "id": "ad03184a-00aa-4e55-83f2-326e7da1b53c",
     "seq": 20,
-    "name": "20. [Frontend] UI Botón Cancelar Turno"
+    "name": "20. [Frontend] UI Bot\u00f3n Cancelar Turno"
   },
   {
     "id": "470011a9-0b90-46c7-a36a-1f76ace10380",
@@ -87,7 +218,7 @@
   {
     "id": "22fd7f49-c3a0-4ae9-93b4-ccf8d76e6593",
     "seq": 12,
-    "name": "12. [Frontend] UI Configuración de Horarios de Trabajo"
+    "name": "12. [Frontend] UI Configuraci\u00f3n de Horarios de Trabajo"
   },
   {
     "id": "857d1f3b-aac8-4958-b260-26140168919f",
@@ -117,12 +248,12 @@
   {
     "id": "4b7df032-df7c-42e7-a80c-12584a2024b3",
     "seq": 6,
-    "name": "6. [Frontend] UI Login de Dueño y Layout del Dashboard"
+    "name": "6. [Frontend] UI Login de Due\u00f1o y Layout del Dashboard"
   },
   {
     "id": "66bd5558-d7f1-4e24-89fa-b4002c003ecc",
     "seq": 5,
-    "name": "5. [Backend] Servicio de Creación de Tenant"
+    "name": "5. [Backend] Servicio de Creaci\u00f3n de Tenant"
   },
   {
     "id": "1cd5a43e-175f-47f5-8ddd-1fdb4695431b",
