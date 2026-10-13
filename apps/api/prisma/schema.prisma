@@ -47,6 +47,7 @@ model Business {
   schedules    Schedule[]
   services     Service[]
   products     Product[]
+  productSales ProductSale[]
   reviews      Review[]
   appointments Appointment[]
 
@@ -66,6 +67,7 @@ model Employee {
   schedules    Schedule[]
   shifts       Shift[]
   appointments Appointment[]
+  productSales ProductSale[]
 
   @@map("employees")
 }
@@ -140,17 +142,36 @@ model Shift {
 }
 
 model Product {
-  id          String   @id @default(uuid())
+  id          String        @id @default(uuid())
   name        String
   description String?
   price       Float
-  stock       Int      @default(0)
+  stock       Int           @default(0)
   businessId  String
-  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  business    Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  sales       ProductSale[]
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
 
   @@map("products")
+}
+
+model ProductSale {
+  id            String   @id @default(uuid())
+  productId     String   @map("product_id")
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  businessId    String   @map("business_id")
+  business      Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  employeeId    String   @map("employee_id")
+  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  quantity      Int      @default(1)
+  unitPrice     Float    @map("unit_price")
+  total         Float
+  paymentMethod String   @map("payment_method") // "cash", "card", "transfer"
+  clientName    String?  @map("client_name")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("product_sales")
 }
 
 model Appointment {
