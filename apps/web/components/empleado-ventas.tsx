@@ -13,6 +13,8 @@ import {
   Search,
 } from "lucide-react";
 import { CustomSelect } from "@/components/ui/custom-select";
+import { useAuth } from "@/lib/auth-context";
+import { apiFetch } from "@/lib/api";
 
 export interface CounterProduct {
   id: string;
@@ -63,7 +65,7 @@ const defaultProducts: CounterProduct[] = [
     price: 2100,
     available: false,
     category: "Peinado",
-  }, // Sin stock
+  },
   {
     id: "prod_5",
     name: "Loción After Shave Refrescante",
@@ -77,7 +79,7 @@ const defaultProducts: CounterProduct[] = [
     price: 1950,
     available: false,
     category: "Cuidado Facial",
-  }, // Sin stock
+  },
   {
     id: "prod_7",
     name: "Peine Profesional de Carbono",
@@ -88,64 +90,95 @@ const defaultProducts: CounterProduct[] = [
 ];
 
 export function EmpleadoVentas({ employeeName = "Juan Pérez" }: { employeeName?: string }) {
-  const [products] = useState<CounterProduct[]>(defaultProducts);
-  const [selectedProductId, setSelectedProductId] = useState<string>(products[0]?.id || "");
+  const { user, token } = useAuth();
+  const businessId = user?.tenantId || "";
+  const employeeId = user?.uid || "";
+
+  const [products, setProducts] = useState<CounterProduct[]>(defaultProducts);
+  const [selectedProductId, setSelectedProductId] = useState<string>(defaultProducts[0]?.id || "");
   const [quantity, setQuantity] = useState<number>(1);
   const [paymentMethod, setPaymentMethod] = useState<"efectivo" | "tarjeta" | "transferencia">(
     "efectivo",
   );
-  const [clientName, setClientName] = useState<string>("");
+  const [clientName, setClientName] = useState<string>(" ");
   const [searchTerm, setSearchTerm] = useState<string>("");
 
-  const [salesHistory, setSalesHistory] = useState<CounterSale[]>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("turnero_employee_sales");
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch {}
-      }
-    }
-    return [
-      {
-        id: "sale_101",
-        productId: "prod_2",
-        productName: "Cera Modeladora Efecto Mate",
-        quantity: 1,
-        unitPrice: 1800,
-        total: 1800,
-        paymentMethod: "efectivo",
-        clientName: "Lucas Romero",
-        timestamp: "15:45",
-        employeeName,
-      },
-      {
-        id: "sale_100",
-        productId: "prod_1",
-        productName: "Shampoo Profesional Anti-caída (300ml)",
-        quantity: 1,
-        unitPrice: 2500,
-        total: 2500,
-        paymentMethod: "transferencia",
-        clientName: "Facundo Díaz",
-        timestamp: "14:10",
-        employeeName,
-      },
-    ];
-  });
+  const [salesHistory, setSalesHistory] = useState<CounterSale[]>([]);
+  const [loadingSales, setLoadingSales] = useState<boolean>(true);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const ITEMS_PER_PAGE = 10;
 
   const [successToast, setSuccessToast] = useState<string | null>(null);
   const [lastSaleReceipt, setLastSaleReceipt] = useState<CounterSale | null>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("turnero_employee_sales", JSON.stringify(salesHistory));
+    let isMounted = true;
+
+    async function loadData() {
+      // 1. Fetch real products if businessId is available
+      try {
+        if (businessId) {
+          const apiProducts = await apiFetch<any[]>(`/products/public?businessId=${businessId}`);
+          if (isMounted && Array.isArray(apiProducts) && apiProducts.length > 0) {
+            const mapped = apiProducts.map((p) => ({
+              id: p.id,
+              name: p.name,
+              price: p.price,
+              available: (p.stock ?? 0) > 0,
+              category: p.description || "General",
+            }));
+            setProducts(mapped);
+            if (mapped[0]) setSelectedProductId(mapped[0].id);
+          }
+        }
+      } catch (err) {
+        console.warn("Using default products fallback", err);
+      }
+
+      // 2. Fetch shift sales from API
+      try {
+        if (employeeId && token) {
+          const query = businessId
+            ? `/products/sales/shift?employeeId=${employeeId}&businessId=${businessId}`
+            : `/products/sales/shift?employeeId=${employeeId}`;
+          const shiftSales = await apiFetch<any[]>(query, { token });
+          if (isMounted && Array.isArray(shiftSales)) {
+            setSalesHistory(
+              shiftSales.map((s) => ({
+                id: s.id,
+                productId: s.productId,
+                productName: s.product?.name || "Producto",
+                quantity: s.quantity,
+                unitPrice: s.unitPrice,
+                total: s.total,
+                paymentMethod: (s.paymentMethod as any) || "efectivo",
+                clientName: s.clientName || undefined,
+                timestamp: new Date(s.createdAt).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }),
+                employeeName: s.employee?.name || employeeName,
+              })),
+            );
+          }
+        }
+      } catch (err) {
+        console.warn("Could not load shift sales from API", err);
+      } finally {
+        if (isMounted) setLoadingSales(false);
+      }
     }
-  }, [salesHistory]);
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [businessId, employeeId, token, employeeName]);
 
   const selectedProduct = products.find((p) => p.id === selectedProductId) || products[0];
 
-  const handleRegisterSale = (e: React.FormEvent) => {
+  const handleRegisterSale = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedProduct) return;
     if (!selectedProduct.available) {
@@ -157,30 +190,58 @@ export function EmpleadoVentas({ employeeName = "Juan Pérez" }: { employeeName?
     const now = new Date();
     const timeStr = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
 
-    const newSale: CounterSale = {
-      id: "sale_" + Date.now(),
-      productId: selectedProduct.id,
-      productName: selectedProduct.name,
-      quantity,
-      unitPrice: selectedProduct.price,
-      total,
-      paymentMethod,
-      clientName: clientName.trim() || "Cliente de Mostrador",
-      timestamp: timeStr,
-      employeeName,
-    };
+    try {
+      let createdId = "sale_" + Date.now();
 
-    setSalesHistory((prev) => [newSale, ...prev]);
-    setLastSaleReceipt(newSale);
-    setSuccessToast(`¡Venta registrada con éxito! Total: $${total.toLocaleString("es-AR")}`);
+      if (token && businessId && employeeId) {
+        const payload = {
+          productId: selectedProduct.id,
+          businessId,
+          employeeId,
+          quantity,
+          unitPrice: selectedProduct.price,
+          total,
+          paymentMethod,
+          clientName: clientName.trim() || undefined,
+        };
 
-    // Reset fields
-    setClientName("");
-    setQuantity(1);
+        const response = await apiFetch<any>("/products/sales", {
+          method: "POST",
+          body: JSON.stringify(payload),
+          token,
+        });
+        if (response?.id) {
+          createdId = response.id;
+        }
+      }
 
-    setTimeout(() => {
-      setSuccessToast(null);
-    }, 4000);
+      const newSale: CounterSale = {
+        id: createdId,
+        productId: selectedProduct.id,
+        productName: selectedProduct.name,
+        quantity,
+        unitPrice: selectedProduct.price,
+        total,
+        paymentMethod,
+        clientName: clientName.trim() || "Cliente de Mostrador",
+        timestamp: timeStr,
+        employeeName,
+      };
+
+      setSalesHistory((prev) => [newSale, ...prev]);
+      setCurrentPage(1);
+      setLastSaleReceipt(newSale);
+      setSuccessToast(`¡Venta registrada con éxito! Total: $${total.toLocaleString("es-AR")}`);
+
+      setClientName("");
+      setQuantity(1);
+
+      setTimeout(() => {
+        setSuccessToast(null);
+      }, 4000);
+    } catch (err: any) {
+      alert(`Error al registrar la venta: ${err?.message || "Error de conexión"}`);
+    }
   };
 
   const filteredProducts = products.filter(
@@ -191,6 +252,12 @@ export function EmpleadoVentas({ employeeName = "Juan Pérez" }: { employeeName?
 
   const totalShiftSales = salesHistory.reduce((acc, s) => acc + s.total, 0);
   const totalShiftItems = salesHistory.reduce((acc, s) => acc + s.quantity, 0);
+
+  const totalPages = Math.max(1, Math.ceil(salesHistory.length / ITEMS_PER_PAGE));
+  const paginatedSales = salesHistory.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
+  );
 
   return (
     <div className="space-y-8">
@@ -500,51 +567,86 @@ export function EmpleadoVentas({ employeeName = "Juan Pérez" }: { employeeName?
 
           {/* Shift Sales History */}
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-            <h3 className="text-md font-bold text-slate-800 flex items-center gap-2">
-              <Receipt className="w-4 h-4 text-slate-500" />
-              <span>Ventas del Turno Registradas ({salesHistory.length})</span>
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-md font-bold text-slate-800 flex items-center gap-2">
+                <Receipt className="w-4 h-4 text-slate-500" />
+                <span>Ventas del Turno Registradas ({salesHistory.length})</span>
+              </h3>
+              {loadingSales && (
+                <span className="text-xs text-slate-400 animate-pulse">Cargando ventas...</span>
+              )}
+            </div>
 
             {salesHistory.length === 0 ? (
               <p className="text-xs text-slate-400 py-4 text-center">
                 Aún no has registrado ventas en este turno.
               </p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider border-b">
-                    <tr>
-                      <th className="py-2.5 px-3">Hora</th>
-                      <th className="py-2.5 px-3">Producto</th>
-                      <th className="py-2.5 px-3">Cant.</th>
-                      <th className="py-2.5 px-3">Total</th>
-                      <th className="py-2.5 px-3">Pago</th>
-                      <th className="py-2.5 px-3">Cliente</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-700">
-                    {salesHistory.map((s) => (
-                      <tr key={s.id} className="hover:bg-slate-50/80">
-                        <td className="py-2.5 px-3 font-medium text-slate-500">{s.timestamp}</td>
-                        <td className="py-2.5 px-3 font-semibold text-slate-800">
-                          {s.productName}
-                        </td>
-                        <td className="py-2.5 px-3 font-medium">{s.quantity}</td>
-                        <td className="py-2.5 px-3 font-bold text-blue-600">
-                          ${s.total.toLocaleString("es-AR")}
-                        </td>
-                        <td className="py-2.5 px-3">
-                          <span className="capitalize px-2 py-0.5 rounded bg-slate-100 text-slate-600">
-                            {s.paymentMethod}
-                          </span>
-                        </td>
-                        <td className="py-2.5 px-3 text-slate-500 truncate max-w-[120px]">
-                          {s.clientName || "-"}
-                        </td>
+              <div className="space-y-3">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider border-b">
+                      <tr>
+                        <th className="py-2.5 px-3">Hora</th>
+                        <th className="py-2.5 px-3">Producto</th>
+                        <th className="py-2.5 px-3">Cant.</th>
+                        <th className="py-2.5 px-3">Total</th>
+                        <th className="py-2.5 px-3">Pago</th>
+                        <th className="py-2.5 px-3">Cliente</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-slate-700">
+                      {paginatedSales.map((s) => (
+                        <tr key={s.id} className="hover:bg-slate-50/80">
+                          <td className="py-2.5 px-3 font-medium text-slate-500">{s.timestamp}</td>
+                          <td className="py-2.5 px-3 font-semibold text-slate-800">
+                            {s.productName}
+                          </td>
+                          <td className="py-2.5 px-3 font-medium">{s.quantity}</td>
+                          <td className="py-2.5 px-3 font-bold text-blue-600">
+                            ${s.total.toLocaleString("es-AR")}
+                          </td>
+                          <td className="py-2.5 px-3">
+                            <span className="capitalize px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                              {s.paymentMethod}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-3 text-slate-500 truncate max-w-[120px]">
+                            {s.clientName || "-"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination Controls (10 items per page) */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-100">
+                  <span className="text-xs text-slate-500">
+                    Página <span className="font-semibold text-slate-700">{currentPage}</span> de{" "}
+                    <span className="font-semibold text-slate-700">{totalPages}</span> (Total:{" "}
+                    <span className="font-semibold text-slate-700">{salesHistory.length}</span>{" "}
+                    ventas)
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage <= 1}
+                      className="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
+                    >
+                      Anterior
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={currentPage >= totalPages}
+                      className="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
+                    >
+                      Siguiente
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
