@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Req, Query } from "@
 import { ProductsService } from "./products.service";
 import { CreateProductDto } from "./dto/create-product.dto";
 import { UpdateProductDto } from "./dto/update-product.dto";
+import { CreateProductSaleDto } from "./dto/create-sale.dto";
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiQuery } from "@nestjs/swagger";
 import { Request } from "express";
 import { AuthUser } from "../auth/auth.types";
@@ -11,6 +12,22 @@ import { Public } from "../auth/public.decorator";
 @Controller("products")
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
+
+  @Post("sales")
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Register a counter product sale (POS)" })
+  registerSale(@Body() createSaleDto: CreateProductSaleDto) {
+    return this.productsService.registerSale(createSaleDto);
+  }
+
+  @Get("sales/shift")
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Get shift sales for an employee" })
+  @ApiQuery({ name: "employeeId", required: true, type: String })
+  @ApiQuery({ name: "businessId", required: false, type: String })
+  getShiftSales(@Query("employeeId") employeeId: string, @Query("businessId") businessId?: string) {
+    return this.productsService.getShiftSales(employeeId, businessId);
+  }
 
   @Post()
   @ApiBearerAuth()

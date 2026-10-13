@@ -1,6 +1,7 @@
 import { Injectable, ForbiddenException, NotFoundException } from "@nestjs/common";
 import { CreateProductDto } from "./dto/create-product.dto";
 import { UpdateProductDto } from "./dto/update-product.dto";
+import { CreateProductSaleDto } from "./dto/create-sale.dto";
 import { PrismaService } from "../../prisma/prisma.service";
 
 @Injectable()
@@ -50,5 +51,54 @@ export class ProductsService {
   async remove(userId: string, id: string) {
     await this.findOne(userId, id);
     return this.prisma.product.delete({ where: { id } });
+  }
+
+  async registerSale(createSaleDto: CreateProductSaleDto) {
+    const product = await this.prisma.product.findUnique({
+      where: { id: createSaleDto.productId },
+    });
+
+    if (!product) {
+      throw new NotFoundException("Product not found");
+    }
+
+    // Deduct stock if available
+    if (product.stock >= (createSaleDto.quantity ?? 1)) {
+      await this.prisma.product.update({
+        where: { id: product.id },
+        data: { stock: { decrement: createSaleDto.quantity ?? 1 } },
+      });
+    }
+
+    return this.prisma.productSale.create({
+      data: {
+        productId: createSaleDto.productId,
+        businessId: createSaleDto.businessId,
+        employeeId: createSaleDto.employeeId,
+        quantity: createSaleDto.quantity ?? 1,
+        unitPrice: createSaleDto.unitPrice,
+        total: createSaleDto.total,
+        paymentMethod: createSaleDto.paymentMethod,
+        clientName: createSaleDto.clientName,
+      },
+      include: {
+        product: true,
+      },
+    });
+  }
+
+  async getShiftSales(employeeId: string, businessId?: string) {
+    const where: any = { employeeId };
+    if (businessId) {
+      where.businessId = businessId;
+    }
+
+    return this.prisma.productSale.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      include: {
+        product: true,
+      },
+    });
   }
 }
