@@ -1,33 +1,35 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { ArrowRight, CheckCircle, Check } from "lucide-react";
-
-interface LandingCmsConfig {
-  heroTitle: string;
-  heroSubtitle: string;
-  heroCta: string;
-  prices: {
-    basic: number;
-    pro: number;
-    premium: number;
-  };
-}
+import React, { useEffect, useState } from "react";
+import {
+  AnnouncementBar,
+  Hero,
+  MetricsStrip,
+  Navbar,
+  TrustBand,
+  type LandingCmsConfig,
+} from "@/components/landing/top";
+import {
+  BentoFeatures,
+  ClientShowcase,
+  ModulesExplorer,
+  ProblemSolution,
+} from "@/components/landing/middle";
+import { FAQ, FinalCTA, Footer, Pricing, Testimonials } from "@/components/landing/bottom";
 
 const DEFAULT_CMS_CONFIG: LandingCmsConfig = {
-  heroTitle: "El software líder para salones y barberías",
+  heroTitle: "Dejá de perder clientes por no responder WhatsApp a tiempo.",
   heroSubtitle:
-    "Gestiona citas, personal y clientes desde un solo lugar. Haz crecer tu negocio con la plataforma de reservas más intuitiva del mercado.",
-  heroCta: "Prueba gratis",
+    "El software todo en uno que llena tu agenda, elimina el ausentismo y pone tus finanzas en piloto automático, mientras tus clientes reservan en menos de 30 segundos.",
+  heroCta: "Empezar gratis 14 días",
   prices: {
-    basic: 0,
-    pro: 29,
-    premium: 79,
+    basic: 14900,
+    pro: 29900,
+    premium: 54900,
   },
 };
 
-export default function HomePage() {
+export default function Index() {
   const [cms, setCms] = useState<LandingCmsConfig>(DEFAULT_CMS_CONFIG);
 
   useEffect(() => {
@@ -35,10 +37,18 @@ export default function HomePage() {
       try {
         const stored = localStorage.getItem("turnero_cms_landing_config");
         if (stored) {
-          setCms(JSON.parse(stored));
+          const parsed = JSON.parse(stored);
+          setCms((prev) => ({
+            ...prev,
+            ...parsed,
+            prices: {
+              ...prev.prices,
+              ...parsed.prices,
+            },
+          }));
         }
       } catch {
-        // ignore
+        // use default
       }
     };
 
@@ -48,181 +58,23 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Navbar */}
-      <nav className="flex items-center justify-between p-6 max-w-7xl mx-auto border-b border-gray-100">
-        <div className="text-2xl font-extrabold text-slate-900 tracking-tight">Turnero</div>
-        <div className="flex items-center gap-4">
-          <Link
-            href="/login"
-            className="text-slate-600 hover:text-slate-900 font-medium transition-colors"
-          >
-            Iniciar sesión
-          </Link>
-          <Link
-            href="/login"
-            className="bg-slate-900 text-white px-5 py-2.5 rounded-full font-medium hover:bg-slate-800 transition-colors"
-          >
-            {cms.heroCta || "Empezar gratis"}
-          </Link>
-        </div>
-      </nav>
-
-      {/* Hero Section - B2B Fresha Inspiration */}
-      <main className="max-w-7xl mx-auto px-6 py-20 lg:py-32 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-        <div className="space-y-8">
-          <h1 className="text-5xl lg:text-7xl font-extrabold text-slate-900 leading-[1.1] tracking-tight">
-            {cms.heroTitle ? (
-              cms.heroTitle
-            ) : (
-              <>
-                El software líder para <span className="text-blue-600">salones y barberías</span>
-              </>
-            )}
-          </h1>
-          <p className="text-xl text-slate-600 leading-relaxed max-w-lg">
-            {cms.heroSubtitle ||
-              "Gestiona citas, personal y clientes desde un solo lugar. Haz crecer tu negocio con la plataforma de reservas más intuitiva del mercado."}
-          </p>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/login"
-              className="bg-blue-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
-            >
-              {cms.heroCta || "Prueba gratis"} <ArrowRight className="w-5 h-5" />
-            </Link>
-          </div>
-          <div className="flex items-center gap-6 text-sm font-medium text-slate-500 pt-4">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-green-500" />
-              Sin tarjeta de crédito
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-green-500" />
-              Configuración en 5 min
-            </div>
-          </div>
-        </div>
-
-        {/* Placeholder for Hero Image */}
-        <div className="relative h-[500px] w-full rounded-3xl overflow-hidden bg-slate-100 shadow-2xl border border-slate-200">
-          <div className="absolute inset-0 flex items-center justify-center text-slate-400">
-            <img
-              src="https://images.pexels.com/photos/3993444/pexels-photo-3993444.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
-              alt="Salon de belleza y barbería"
-              className="w-full h-full object-cover"
-            />
-          </div>
-        </div>
+    <div id="top" className="turnero min-h-screen">
+      <AnnouncementBar />
+      <Navbar />
+      <main>
+        <Hero cmsConfig={cms} />
+        <MetricsStrip />
+        <TrustBand />
+        <ProblemSolution />
+        <ClientShowcase />
+        <ModulesExplorer />
+        <BentoFeatures />
+        <Testimonials />
+        <Pricing cmsConfig={cms} />
+        <FAQ />
+        <FinalCTA />
       </main>
-
-      {/* Pricing Section */}
-      <section className="bg-slate-50 py-24">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-4xl font-bold text-slate-900 mb-4">
-              Planes simples y transparentes
-            </h2>
-            <p className="text-lg text-slate-600">
-              Comienza gratis y mejora tu plan a medida que tu negocio crece.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {/* Plan 1 */}
-            <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-              <h3 className="text-xl font-bold text-slate-900 mb-2">Básico</h3>
-              <p className="text-slate-500 mb-6">Para profesionales independientes</p>
-              <div className="mb-6">
-                <span className="text-4xl font-extrabold text-slate-900">${cms.prices.basic}</span>
-                <span className="text-slate-500">/mes</span>
-              </div>
-              <ul className="space-y-4 mb-8">
-                <li className="flex items-center gap-3 text-slate-600">
-                  <Check className="w-5 h-5 text-blue-600" /> 1 Profesional
-                </li>
-                <li className="flex items-center gap-3 text-slate-600">
-                  <Check className="w-5 h-5 text-blue-600" /> Citas ilimitadas
-                </li>
-                <li className="flex items-center gap-3 text-slate-600">
-                  <Check className="w-5 h-5 text-blue-600" /> Recordatorios básicos
-                </li>
-              </ul>
-              <Link
-                href="/login"
-                className="block text-center w-full py-3 rounded-full border-2 border-slate-200 text-slate-900 font-semibold hover:border-slate-300 transition-colors"
-              >
-                Comenzar gratis
-              </Link>
-            </div>
-
-            {/* Plan 2 */}
-            <div className="bg-slate-900 rounded-3xl p-8 border border-slate-900 shadow-xl relative transform md:-translate-y-4">
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-bold">
-                Más popular
-              </div>
-              <h3 className="text-xl font-bold text-white mb-2">Pro</h3>
-              <p className="text-slate-400 mb-6">Para salones en crecimiento</p>
-              <div className="mb-6">
-                <span className="text-4xl font-extrabold text-white">${cms.prices.pro}</span>
-                <span className="text-slate-400">/mes</span>
-              </div>
-              <ul className="space-y-4 mb-8">
-                <li className="flex items-center gap-3 text-slate-300">
-                  <Check className="w-5 h-5 text-blue-400" /> Hasta 5 Profesionales
-                </li>
-                <li className="flex items-center gap-3 text-slate-300">
-                  <Check className="w-5 h-5 text-blue-400" /> Recordatorios por WhatsApp
-                </li>
-                <li className="flex items-center gap-3 text-slate-300">
-                  <Check className="w-5 h-5 text-blue-400" /> Reportes avanzados
-                </li>
-                <li className="flex items-center gap-3 text-slate-300">
-                  <Check className="w-5 h-5 text-blue-400" /> Control de inventario
-                </li>
-              </ul>
-              <Link
-                href="/login"
-                className="block text-center w-full py-3 rounded-full bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors"
-              >
-                Probar Pro
-              </Link>
-            </div>
-
-            {/* Plan 3 */}
-            <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-              <h3 className="text-xl font-bold text-slate-900 mb-2">Premium</h3>
-              <p className="text-slate-500 mb-6">Para franquicias y cadenas</p>
-              <div className="mb-6">
-                <span className="text-4xl font-extrabold text-slate-900">
-                  ${cms.prices.premium}
-                </span>
-                <span className="text-slate-500">/mes</span>
-              </div>
-              <ul className="space-y-4 mb-8">
-                <li className="flex items-center gap-3 text-slate-600">
-                  <Check className="w-5 h-5 text-blue-600" /> Profesionales ilimitados
-                </li>
-                <li className="flex items-center gap-3 text-slate-600">
-                  <Check className="w-5 h-5 text-blue-600" /> Múltiples sucursales
-                </li>
-                <li className="flex items-center gap-3 text-slate-600">
-                  <Check className="w-5 h-5 text-blue-600" /> API de integración
-                </li>
-                <li className="flex items-center gap-3 text-slate-600">
-                  <Check className="w-5 h-5 text-blue-600" /> Soporte prioritario 24/7
-                </li>
-              </ul>
-              <Link
-                href="/login"
-                className="block text-center w-full py-3 rounded-full border-2 border-slate-200 text-slate-900 font-semibold hover:border-slate-300 transition-colors"
-              >
-                Contactar ventas
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      <Footer />
     </div>
   );
 }
