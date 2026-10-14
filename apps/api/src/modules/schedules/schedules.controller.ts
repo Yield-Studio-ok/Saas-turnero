@@ -1,4 +1,4 @@
-﻿import {
+import {
   Controller,
   Get,
   Post,
@@ -13,6 +13,7 @@
 import { SchedulesService } from "./schedules.service";
 import { CreateScheduleDto } from "./dto/create-schedule.dto";
 import { UpdateScheduleDto } from "./dto/update-schedule.dto";
+import { CreateBlockDto } from "./dto/create-block.dto";
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiQuery, ApiBody } from "@nestjs/swagger";
 import { Request } from "express";
 import { AuthUser } from "../auth/auth.types";
@@ -47,6 +48,31 @@ export class SchedulesController {
   findAll(@Req() req: Request, @Query("businessId") businessId: string) {
     const user = req.user as AuthUser;
     return this.schedulesService.findAllByBusiness(user.uid, businessId);
+  }
+
+  @Post("blocks")
+  @ApiOperation({ summary: "Create an employee schedule block" })
+  createBlock(@Body() createBlockDto: CreateBlockDto) {
+    return this.schedulesService.createBlock(createBlockDto);
+  }
+
+  @Get("blocks")
+  @ApiOperation({ summary: "Get employee schedule blocks" })
+  @ApiQuery({ name: "employeeId", required: false, type: String })
+  @ApiQuery({ name: "businessId", required: false, type: String })
+  @ApiQuery({ name: "date", required: false, type: String })
+  getBlocks(
+    @Query("employeeId") employeeId?: string,
+    @Query("businessId") businessId?: string,
+    @Query("date") date?: string,
+  ) {
+    return this.schedulesService.getBlocks(employeeId, businessId, date);
+  }
+
+  @Delete("blocks/:id")
+  @ApiOperation({ summary: "Delete an employee schedule block" })
+  deleteBlock(@Param("id") id: string) {
+    return this.schedulesService.deleteBlock(id);
   }
 
   @Get(":id")

@@ -47,9 +47,10 @@ model Business {
   schedules    Schedule[]
   services     Service[]
   products     Product[]
-  productSales ProductSale[]
-  reviews      Review[]
-  appointments Appointment[]
+  productSales   ProductSale[]
+  reviews        Review[]
+  appointments   Appointment[]
+  employeeBlocks EmployeeBlock[]
 
   @@map("businesses")
 }
@@ -64,10 +65,11 @@ model Employee {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
-  schedules    Schedule[]
-  shifts       Shift[]
-  appointments Appointment[]
-  productSales ProductSale[]
+  schedules      Schedule[]
+  shifts         Shift[]
+  appointments   Appointment[]
+  productSales   ProductSale[]
+  employeeBlocks EmployeeBlock[]
 
   @@map("employees")
 }
@@ -218,4 +220,20 @@ model Review {
   updatedAt     DateTime     @updatedAt @map("updated_at")
 
   @@map("reviews")
+}
+
+model EmployeeBlock {
+  id         String   @id @default(uuid())
+  businessId String   @map("business_id")
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  employeeId String   @map("employee_id")
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  date       String   // YYYY-MM-DD
+  startTime  String   @map("start_time") // HH:mm
+  endTime    String   @map("end_time")   // HH:mm
+  reason     String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("employee_blocks")
 }

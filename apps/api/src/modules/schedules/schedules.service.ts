@@ -1,6 +1,7 @@
-﻿import { Injectable, ForbiddenException, NotFoundException } from "@nestjs/common";
+import { Injectable, ForbiddenException, NotFoundException } from "@nestjs/common";
 import { CreateScheduleDto } from "./dto/create-schedule.dto";
 import { UpdateScheduleDto } from "./dto/update-schedule.dto";
+import { CreateBlockDto } from "./dto/create-block.dto";
 import { PrismaService } from "../../prisma/prisma.service";
 
 @Injectable()
@@ -75,5 +76,36 @@ export class SchedulesService {
   async remove(userId: string, id: string) {
     await this.findOne(userId, id); // validates ownership
     return this.prisma.schedule.delete({ where: { id } });
+  }
+
+  async createBlock(dto: CreateBlockDto) {
+    return this.prisma.employeeBlock.create({
+      data: {
+        businessId: dto.businessId,
+        employeeId: dto.employeeId,
+        date: dto.date,
+        startTime: dto.startTime,
+        endTime: dto.endTime,
+        reason: dto.reason,
+      },
+    });
+  }
+
+  async getBlocks(employeeId?: string, businessId?: string, date?: string) {
+    const where: any = {};
+    if (employeeId) where.employeeId = employeeId;
+    if (businessId) where.businessId = businessId;
+    if (date) where.date = date;
+
+    return this.prisma.employeeBlock.findMany({
+      where,
+      orderBy: [{ date: "asc" }, { startTime: "asc" }],
+    });
+  }
+
+  async deleteBlock(id: string) {
+    const block = await this.prisma.employeeBlock.findUnique({ where: { id } });
+    if (!block) throw new NotFoundException("Block not found");
+    return this.prisma.employeeBlock.delete({ where: { id } });
   }
 }
