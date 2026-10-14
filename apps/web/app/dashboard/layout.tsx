@@ -119,12 +119,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen flex bg-slate-50">
-        <DashboardSidebar />
+      <div className="min-h-screen flex bg-slate-50 print:bg-white print:block">
+        <div className="print:hidden">
+          <DashboardSidebar />
+        </div>
 
         {/* Main content */}
-        <main className="flex-1 flex flex-col relative min-w-0">
-          <header className="bg-white border-b border-slate-200 h-16 flex items-center px-8 justify-between flex-shrink-0 z-10">
+        <main className="flex-1 flex flex-col relative min-w-0 print:block print:w-full">
+          <header className="bg-white border-b border-slate-200 h-16 flex items-center px-8 justify-between flex-shrink-0 z-10 print:hidden">
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold text-slate-800 tracking-tight">Dashboard</h1>
             </div>
@@ -256,10 +258,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </header>
 
-          <div className="p-8 flex-1 overflow-auto text-slate-900 bg-slate-50/50">{children}</div>
+          <div className="p-8 flex-1 overflow-auto text-slate-900 bg-slate-50/50 print:p-0 print:m-0 print:bg-white print:overflow-visible">
+            {children}
+          </div>
 
           {/* Floating Chatbot Component */}
-          <Chatbot />
+          <div className="print:hidden">
+            <Chatbot />
+          </div>
         </main>
       </div>
     </ProtectedRoute>

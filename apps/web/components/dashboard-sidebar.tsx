@@ -48,7 +48,7 @@ export function DashboardSidebar() {
   const currentNavItems = isEmployee ? employeeNavItems : navItems;
 
   return (
-    <aside className="w-72 bg-[#0F172A] text-slate-300 flex flex-col border-r border-slate-800 transition-all duration-300">
+    <aside className="w-72 bg-[#0F172A] text-slate-300 flex flex-col border-r border-slate-800 transition-all duration-300 print:hidden">
       {/* Brand Header */}
       <div className="h-16 flex items-center px-6 border-b border-slate-800/60 bg-[#0B1120]">
         <div className="flex items-center gap-3">

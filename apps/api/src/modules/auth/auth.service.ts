@@ -46,11 +46,14 @@ export class AuthService implements OnModuleInit {
       throw new UnauthorizedException("Invalid credentials");
     }
 
+    const userPlan = user.businesses?.[0]?.plan || undefined;
+
     const authUser: AuthUser = {
       uid: user.id,
       email: user.email,
       role: user.role,
       tenantId: user.businesses?.[0]?.id,
+      plan: userPlan,
     };
 
     return {
@@ -59,6 +62,7 @@ export class AuthService implements OnModuleInit {
         email: authUser.email,
         role: authUser.role,
         tenantId: authUser.tenantId,
+        plan: authUser.plan,
       }),
       user: authUser,
     };
@@ -74,6 +78,7 @@ export class AuthService implements OnModuleInit {
       email: string;
       role: string;
       tenantId?: string;
+      plan?: string;
     }>(token);
 
     return {
@@ -81,6 +86,7 @@ export class AuthService implements OnModuleInit {
       email: payload.email,
       role: payload.role,
       tenantId: payload.tenantId,
+      plan: payload.plan,
     };
   }
 }
