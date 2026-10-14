@@ -37,6 +37,12 @@ function EmpleadoPerfil({ user }: { user: any }) {
       if (typeof window !== "undefined") {
         localStorage.setItem("employee_profile_name", nombre);
         localStorage.setItem("employee_profile_avatar", avatarUrl);
+        localStorage.setItem("user_profile_avatar", avatarUrl);
+        window.dispatchEvent(
+          new CustomEvent("profile:updated", {
+            detail: { avatarUrl, name: nombre },
+          }),
+        );
       }
       setSaving(false);
       setToastMessage("Perfil de empleado actualizado exitosamente.");
