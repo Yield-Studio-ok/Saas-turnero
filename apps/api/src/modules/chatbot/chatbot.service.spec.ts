@@ -23,7 +23,9 @@ describe("ChatbotService (Ticket 15)", () => {
   });
 
   it("should answer cortes query for Juan in fallback mode", async () => {
-    mockPrisma.appointment.count.mockResolvedValueOnce(3);
+    mockPrisma.appointment.count
+      .mockResolvedValueOnce(10) // context summary turnosHoy
+      .mockResolvedValueOnce(3); // juan cortes count
     const res = await service.ask("¿cuántos cortes hizo Juan?");
     expect(res.reply).toContain("Juan ha realizado 3 cortes hoy.");
   });

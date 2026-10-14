@@ -199,10 +199,16 @@ describe("BusinessesService & BusinessesController - Public Query", () => {
 
       expect(mockPrisma.business.findFirst).toHaveBeenCalledWith({
         where: {
-          OR: [{ id: "business-prisma-1" }, { name: "business-prisma-1" }],
+          OR: [
+            { id: "business-prisma-1" },
+            { name: { equals: "business-prisma-1", mode: "insensitive" } },
+            { name: { equals: "business prisma 1", mode: "insensitive" } },
+            { name: { contains: "business prisma 1", mode: "insensitive" } },
+          ],
         },
         include: {
           services: true,
+          employees: true,
         },
       });
       expect(result.id).toBe("business-prisma-1");
