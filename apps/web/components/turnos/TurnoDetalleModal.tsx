@@ -2,6 +2,14 @@
 
 import React, { useEffect, useState } from "react";
 import AlertDialog from "@/components/ui/AlertDialog";
+import { Star } from "lucide-react";
+import { apiFetch } from "@/lib/api";
+
+export interface CustomerReputation {
+  averageRating: number;
+  totalRatings: number;
+  punctualityStats: { a_tiempo: number; tarde: number; no_asistio: number };
+}
 
 export interface ClienteInfo {
   nombre: string;
@@ -72,6 +80,11 @@ export default function TurnoDetalleModal({
   const [tip, setTip] = useState<string>("");
   const [isCancelling, setIsCancelling] = useState(false);
 
+  const [customerReputation, setCustomerReputation] = useState<CustomerReputation | null>(null);
+  const [customerRating, setCustomerRating] = useState<number>(5);
+  const [punctuality, setPunctuality] = useState<string>("a_tiempo");
+  const [ratingComment, setRatingComment] = useState<string>("");
+
   // Cerrar al presionar la tecla Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -88,11 +101,28 @@ export default function TurnoDetalleModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isConfirmOpen, onClose]);
 
-  // Resetear estados al cambiar de turno
+  // Resetear estados y cargar reputación al cambiar de turno
   useEffect(() => {
     setIsConfirmOpen(false);
     setIsCancelling(false);
-  }, [turno?.id]);
+    setCustomerRating(5);
+    setPunctuality("a_tiempo");
+    setRatingComment("");
+
+    if (!turno) return;
+    const clientData = getClienteDatos(turno.cliente);
+    const query = new URLSearchParams();
+    if (clientData.email) query.set("email", clientData.email);
+    if (clientData.telefono) query.set("phone", clientData.telefono);
+
+    if (query.toString()) {
+      apiFetch<CustomerReputation>(`/reviews/customer?${query.toString()}`)
+        .then((data) => setCustomerReputation(data))
+        .catch((err) => console.error("Error fetching reputation:", err));
+    } else {
+      setCustomerReputation(null);
+    }
+  }, [turno]);
 
   if (!turno) return null;
 
@@ -118,6 +148,28 @@ export default function TurnoDetalleModal({
     if (!onCompleteTurno || !turno) return;
     try {
       setIsCompleting(true);
+
+      // Enviar reseña/calificación del cliente a la base de datos
+      try {
+        const clientData = getClienteDatos(turno.cliente);
+        await apiFetch("/reviews/customer", {
+          method: "POST",
+          body: JSON.stringify({
+            businessId: "demo-tenant",
+            employeeId: turno.empleadoId?.toString(),
+            customerName: clientData.nombre,
+            customerEmail: clientData.email,
+            customerPhone: clientData.telefono,
+            rating: customerRating,
+            punctuality,
+            comment: ratingComment.trim() || undefined,
+            appointmentId: turno.id.toString(),
+          }),
+        });
+      } catch (rateErr) {
+        console.error("Error rating customer:", rateErr);
+      }
+
       await Promise.resolve(
         onCompleteTurno(turno.id, {
           paidAmount: Number(paidAmount) || undefined,
@@ -273,9 +325,26 @@ export default function TurnoDetalleModal({
                   {iniciales || "CL"}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-base font-semibold text-gray-900 truncate">
-                    {cliente.nombre}
-                  </h4>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="text-base font-semibold text-gray-900 truncate">
+                      {cliente.nombre}
+                    </h4>
+                    {customerReputation && customerReputation.totalRatings > 0 ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                        <span>{customerReputation.averageRating}</span>
+                        <span className="text-[10px] text-amber-600 font-normal">
+                          ({customerReputation.totalRatings}{" "}
+                          {customerReputation.totalRatings === 1 ? "reseña" : "reseñas"})
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                        <Star className="w-3 h-3 text-slate-400" />
+                        <span>Sin reseñas</span>
+                      </span>
+                    )}
+                  </div>
                   {cliente.telefono && (
                     <div className="flex items-center gap-1.5 text-sm text-gray-600 mt-0.5">
                       <svg
@@ -534,32 +603,104 @@ export default function TurnoDetalleModal({
         }}
         onConfirm={handleConfirmComplete}
         isLoading={isCompleting}
-        title="Completar Turno"
-        confirmText={isCompleting ? "Completando..." : "Completar"}
+        title="Completar Turno y Calificar Cliente"
+        confirmText={isCompleting ? "Completando..." : "Completar Turno"}
         cancelText="Cancelar"
       >
         <div className="space-y-4 py-2">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Monto Pagado</label>
-            <input
-              type="number"
-              className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2 border"
-              placeholder="Ej. 1500"
-              value={paidAmount}
-              onChange={(e) => setPaidAmount(e.target.value)}
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                Monto Cobrado
+              </label>
+              <input
+                type="number"
+                className="w-full border-gray-300 rounded-lg shadow-xs focus:ring-blue-500 focus:border-blue-500 text-sm p-2 border"
+                placeholder={turno?.precio ? `$${turno.precio}` : "Ej. 3500"}
+                value={paidAmount}
+                onChange={(e) => setPaidAmount(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                Propina (Opcional)
+              </label>
+              <input
+                type="number"
+                className="w-full border-gray-300 rounded-lg shadow-xs focus:ring-blue-500 focus:border-blue-500 text-sm p-2 border"
+                placeholder="Ej. 500"
+                value={tip}
+                onChange={(e) => setTip(e.target.value)}
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Propina (Opcional)
-            </label>
-            <input
-              type="number"
-              className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2 border"
-              placeholder="Ej. 200"
-              value={tip}
-              onChange={(e) => setTip(e.target.value)}
-            />
+
+          <div className="border-t border-gray-200 pt-3 space-y-3">
+            <span className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+              Calificación del Cliente
+            </span>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                Puntualidad y Comportamiento
+              </label>
+              <div className="flex items-center gap-1.5">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setCustomerRating(star)}
+                    className="p-1 hover:scale-110 transition-transform cursor-pointer"
+                  >
+                    <Star
+                      className={`w-6 h-6 ${
+                        star <= customerRating
+                          ? "fill-amber-400 text-amber-400"
+                          : "text-slate-300 hover:text-amber-200"
+                      }`}
+                    />
+                  </button>
+                ))}
+                <span className="ml-2 text-xs font-bold text-slate-700">{customerRating} de 5</span>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Asistencia</label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { value: "a_tiempo", label: "Puntual" },
+                  { value: "tarde", label: "Llegó tarde" },
+                  { value: "no_asistio", label: "No asistió" },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setPunctuality(opt.value)}
+                    className={`py-1.5 px-2 text-xs font-medium rounded-lg border text-center transition cursor-pointer ${
+                      punctuality === opt.value
+                        ? "bg-blue-50 border-blue-300 text-blue-700 font-semibold"
+                        : "bg-white border-gray-200 text-slate-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                Nota privada sobre el cliente (Opcional)
+              </label>
+              <input
+                type="text"
+                className="w-full border-gray-300 rounded-lg shadow-xs focus:ring-blue-500 focus:border-blue-500 text-xs p-2 border"
+                placeholder="Ej. Muy educado, dejó propina, prefiere pelo corto..."
+                value={ratingComment}
+                onChange={(e) => setRatingComment(e.target.value)}
+              />
+            </div>
           </div>
         </div>
       </AlertDialog>
