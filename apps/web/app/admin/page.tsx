@@ -13,9 +13,7 @@ import {
   User as UserIcon,
   Calendar,
   AlertCircle,
-  CreditCard,
   LayoutTemplate,
-  BarChart3,
   CheckCircle2,
   Lock,
   RefreshCw,
@@ -343,64 +341,6 @@ function AdminDashboardContent() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Tab Navigation Bar */}
-      <div className="bg-white p-1.5 rounded-xl border border-slate-200 shadow-xs flex flex-wrap items-center gap-1">
-        <button
-          onClick={() => handleTabSelect("locales")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-            activeTab === "locales"
-              ? "bg-blue-600 text-white shadow-xs"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-          }`}
-        >
-          <Building2 className="w-4 h-4" />
-          Locales &amp; Dueños
-          <span
-            className={`ml-1 px-2 py-0.5 text-xs rounded-full ${
-              activeTab === "locales" ? "bg-blue-700 text-white" : "bg-slate-200 text-slate-700"
-            }`}
-          >
-            {businesses.length}
-          </span>
-        </button>
-
-        <button
-          onClick={() => handleTabSelect("suscripciones")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-            activeTab === "suscripciones"
-              ? "bg-blue-600 text-white shadow-xs"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-          }`}
-        >
-          <CreditCard className="w-4 h-4" />
-          Suscripciones
-        </button>
-
-        <button
-          onClick={() => handleTabSelect("cms")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-            activeTab === "cms"
-              ? "bg-blue-600 text-white shadow-xs"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-          }`}
-        >
-          <LayoutTemplate className="w-4 h-4" />
-          CMS Landing
-        </button>
-
-        <button
-          onClick={() => handleTabSelect("metricas")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-            activeTab === "metricas"
-              ? "bg-blue-600 text-white shadow-xs"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-          }`}
-        >
-          <BarChart3 className="w-4 h-4" />
-          Métricas Globales
-        </button>
-      </div>
-
       {/* Success banner */}
       {successMessage && (
         <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 flex items-center justify-between text-emerald-800 animate-in fade-in">
