@@ -13,9 +13,7 @@ import {
   User as UserIcon,
   Calendar,
   AlertCircle,
-  CreditCard,
   LayoutTemplate,
-  BarChart3,
   CheckCircle2,
   Lock,
   RefreshCw,
@@ -343,64 +341,6 @@ function AdminDashboardContent() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Tab Navigation Bar */}
-      <div className="bg-white p-1.5 rounded-xl border border-slate-200 shadow-xs flex flex-wrap items-center gap-1">
-        <button
-          onClick={() => handleTabSelect("locales")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-            activeTab === "locales"
-              ? "bg-blue-600 text-white shadow-xs"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-          }`}
-        >
-          <Building2 className="w-4 h-4" />
-          Locales &amp; Dueños
-          <span
-            className={`ml-1 px-2 py-0.5 text-xs rounded-full ${
-              activeTab === "locales" ? "bg-blue-700 text-white" : "bg-slate-200 text-slate-700"
-            }`}
-          >
-            {businesses.length}
-          </span>
-        </button>
-
-        <button
-          onClick={() => handleTabSelect("suscripciones")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-            activeTab === "suscripciones"
-              ? "bg-blue-600 text-white shadow-xs"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-          }`}
-        >
-          <CreditCard className="w-4 h-4" />
-          Suscripciones
-        </button>
-
-        <button
-          onClick={() => handleTabSelect("cms")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-            activeTab === "cms"
-              ? "bg-blue-600 text-white shadow-xs"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-          }`}
-        >
-          <LayoutTemplate className="w-4 h-4" />
-          CMS Landing
-        </button>
-
-        <button
-          onClick={() => handleTabSelect("metricas")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-            activeTab === "metricas"
-              ? "bg-blue-600 text-white shadow-xs"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-          }`}
-        >
-          <BarChart3 className="w-4 h-4" />
-          Métricas Globales
-        </button>
-      </div>
-
       {/* Success banner */}
       {successMessage && (
         <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 flex items-center justify-between text-emerald-800 animate-in fade-in">
@@ -1341,6 +1281,67 @@ function AdminDashboardContent() {
                 {businesses.length === 0 && (
                   <p className="text-xs text-slate-400 py-4">No hay negocios registrados aún.</p>
                 )}
+              </div>
+            </div>
+          </div>
+
+          {/* Telemetría y Analíticas Globales (PostHog) */}
+          <div className="bg-gradient-to-br from-slate-900 via-slate-850 to-indigo-950 text-white p-6 rounded-2xl border border-slate-800 shadow-lg relative overflow-hidden">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse mr-1.5" />
+                    Telemetría en Vivo
+                  </span>
+                  <span className="text-xs text-slate-400">PostHog Analytics Engine</span>
+                </div>
+                <h3 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                  Analíticas de Tráfico &amp; Conversión Global
+                </h3>
+                <p className="text-sm text-slate-300 max-w-2xl">
+                  Seguimiento de visitas de la Landing Page, retención de usuarios, embudos de
+                  reserva de turnos e interacciones con el Asistente IA centralizados.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <a
+                  href="https://us.posthog.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-md shadow-blue-600/30 transition-all hover:scale-[1.02] cursor-pointer"
+                >
+                  <span>Abrir Dashboard de PostHog</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-800/80">
+              <div className="bg-slate-800/40 p-3.5 rounded-xl border border-slate-700/50">
+                <p className="text-xs text-slate-400 font-medium">Eventos Clave</p>
+                <p className="text-sm font-bold text-slate-100 mt-1 font-mono">
+                  landing_cta_clicked
+                </p>
+                <p className="text-[11px] text-emerald-400 mt-0.5">Captura activa</p>
+              </div>
+              <div className="bg-slate-800/40 p-3.5 rounded-xl border border-slate-700/50">
+                <p className="text-xs text-slate-400 font-medium">Sesiones Autenticadas</p>
+                <p className="text-sm font-bold text-slate-100 mt-1 font-mono">user_logged_in</p>
+                <p className="text-[11px] text-emerald-400 mt-0.5">Identificación por UUID</p>
+              </div>
+              <div className="bg-slate-800/40 p-3.5 rounded-xl border border-slate-700/50">
+                <p className="text-xs text-slate-400 font-medium">Conversión de Citas</p>
+                <p className="text-sm font-bold text-slate-100 mt-1 font-mono">
+                  appointment_created
+                </p>
+                <p className="text-[11px] text-emerald-400 mt-0.5">Funnel transaccional</p>
+              </div>
+              <div className="bg-slate-800/40 p-3.5 rounded-xl border border-slate-700/50">
+                <p className="text-xs text-slate-400 font-medium">Tracking SPA</p>
+                <p className="text-sm font-bold text-slate-100 mt-1 font-mono">PageViews / Rutas</p>
+                <p className="text-[11px] text-emerald-400 mt-0.5">Automático en Next.js</p>
               </div>
             </div>
           </div>

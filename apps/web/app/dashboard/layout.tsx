@@ -56,6 +56,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
+  const [currentAvatar, setCurrentAvatar] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved =
+        localStorage.getItem("user_profile_avatar") ||
+        localStorage.getItem("employee_profile_avatar");
+      if (saved) setCurrentAvatar(saved);
+    }
+
+    const handleProfileUpdated = (e: any) => {
+      if (e.detail?.avatarUrl) {
+        setCurrentAvatar(e.detail.avatarUrl);
+      }
+    };
+
+    window.addEventListener("profile:updated", handleProfileUpdated);
+    return () => window.removeEventListener("profile:updated", handleProfileUpdated);
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -193,9 +212,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </p>
                     <p className="text-xs text-slate-500 font-medium">{userRoleLabel}</p>
                   </div>
-                  <div className="h-9 w-9 bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 rounded-full flex items-center justify-center font-bold border border-blue-200/50 shadow-sm group-hover:shadow transition-all">
-                    {userInitial}
-                  </div>
+                  {currentAvatar ? (
+                    <img
+                      src={currentAvatar}
+                      alt="Avatar de perfil"
+                      className="h-9 w-9 rounded-full object-cover border border-blue-200/50 shadow-sm group-hover:shadow transition-all"
+                    />
+                  ) : (
+                    <div className="h-9 w-9 bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 rounded-full flex items-center justify-center font-bold border border-blue-200/50 shadow-sm group-hover:shadow transition-all">
+                      {userInitial}
+                    </div>
+                  )}
                 </div>
 
                 {showUserMenu && (

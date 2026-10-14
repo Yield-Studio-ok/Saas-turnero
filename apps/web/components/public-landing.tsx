@@ -9,6 +9,7 @@ import {
 } from "./booking/customer-booking-modal";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter, usePathname } from "next/navigation";
+import { captureEvent } from "@/lib/posthog";
 
 export interface ServiceItem {
   id: string;
@@ -234,6 +235,12 @@ export function PublicLanding({
   }, [user, local.id]);
 
   const handleProceedBooking = () => {
+    captureEvent("landing_cta_clicked", {
+      action: selectedDateTime ? "proceed_to_booking_form" : "select_date_time",
+      localId: (local as any).id || local.slug,
+      serviceId: selectedService?.id,
+      serviceName: selectedService?.name,
+    });
     if (selectedDateTime) {
       if (!user) {
         // Save state and redirect

@@ -9,6 +9,7 @@ import {
   calculateEndTime,
 } from "../../lib/appointments-service";
 import { useAuth } from "@/lib/auth-context";
+import { captureEvent } from "../../lib/posthog";
 
 export interface CustomerBookingFormData {
   customerName: string;
@@ -247,6 +248,14 @@ export function CustomerBookingModal({
         customer: formData,
         createdAt: new Date(),
       };
+
+      captureEvent("appointment_created", {
+        bookingId,
+        serviceId: service.id,
+        serviceName: service.name,
+        price: service.price,
+        duration: service.duration,
+      });
 
       setSuccessData(confirmedData);
       if (onSuccess) {

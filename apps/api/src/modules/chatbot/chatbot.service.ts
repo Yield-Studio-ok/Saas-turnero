@@ -18,27 +18,51 @@ export class ChatbotService {
     }
   }
 
-  async ask(message: string): Promise<{ reply: string }> {
+  async ask(message: string, businessId?: string): Promise<{ reply: string }> {
     const lowerMessage = (message || "").toLowerCase();
     const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
 
-    // 1. If Gemini is available, query Gemini API
-    if (this.genAI) {
-      let contextSummary = "";
-      try {
-        const turnosHoy = await this.prisma.appointment.count({
-          where: { date: today, status: "confirmed" },
-        });
-        contextSummary = `Fecha de hoy: ${today}. Total de turnos confirmados para hoy: ${turnosHoy}.`;
-      } catch {
-        // Continue without context if DB call fails
-      }
+    // 1. Gather dynamic business context
+    let contextSummary = `Fecha de hoy: ${today}. `;
+    try {
+      const apptWhere: any = { date: today, status: "confirmed" };
+      if (businessId) apptWhere.businessId = businessId;
+      const turnosHoy = await this.prisma.appointment.count({ where: apptWhere });
+      contextSummary += `Turnos confirmados para hoy: ${turnosHoy}. `;
 
+      if (businessId) {
+        const business = await this.prisma.business.findUnique({
+          where: { id: businessId },
+          include: {
+            services: { select: { name: true, price: true, duration: true } },
+            employees: { select: { name: true } },
+          },
+        });
+        if (business) {
+          contextSummary += `Negocio: ${business.name}. `;
+          if (business.services.length > 0) {
+            const servList = business.services
+              .map((s) => `${s.name} ($${s.price}, ${s.duration}min)`)
+              .join(", ");
+            contextSummary += `Servicios disponibles: ${servList}. `;
+          }
+          if (business.employees.length > 0) {
+            const empList = business.employees.map((e) => e.name).join(", ");
+            contextSummary += `Equipo de trabajo: ${empList}. `;
+          }
+        }
+      }
+    } catch {
+      // Continue without context if DB call fails
+    }
+
+    // 2. If Gemini is available, query Gemini API
+    if (this.genAI) {
       try {
         const model = this.genAI.getGenerativeModel({
           model: "gemini-1.5-flash",
           systemInstruction:
-            "Eres el asistente inteligente de Turnero para gestión de citas, servicios y negocios. Respondes de forma concisa, cordial y útil a los dueños de negocios y administradores sobre sus turnos, clientes y operaciones. Si el usuario pregunta por datos de hoy, usa el contexto proporcionado.",
+            "Eres el asistente inteligente de Turnero para gestión de citas, servicios y negocios. Respondes de forma concisa, cordial y útil a los dueños de negocios, clientes y administradores sobre sus turnos, servicios y operaciones. Si el usuario pregunta por datos del negocio o de hoy, usa el contexto proporcionado con exactitud.",
         });
 
         const prompt = `${contextSummary ? `[Contexto actual del negocio: ${contextSummary}]\n` : ""}Pregunta del usuario: ${message}`;
@@ -55,7 +79,7 @@ export class ChatbotService {
       }
     }
 
-    // 2. Fallback logic when Gemini is disabled or fails
+    // 3. Fallback logic when Gemini is disabled or fails
     try {
       // Preguntas específicas sobre empleados (ej. Juan y cortes)
       if (lowerMessage.includes("cortes") && lowerMessage.includes("juan")) {
