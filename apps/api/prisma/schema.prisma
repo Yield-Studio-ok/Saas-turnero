@@ -51,6 +51,7 @@ model Business {
   reviews        Review[]
   appointments   Appointment[]
   employeeBlocks EmployeeBlock[]
+  customerRatings CustomerRating[]
 
   @@map("businesses")
 }
@@ -65,11 +66,12 @@ model Employee {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
-  schedules      Schedule[]
-  shifts         Shift[]
-  appointments   Appointment[]
-  productSales   ProductSale[]
-  employeeBlocks EmployeeBlock[]
+  schedules       Schedule[]
+  shifts          Shift[]
+  appointments    Appointment[]
+  productSales    ProductSale[]
+  employeeBlocks  EmployeeBlock[]
+  customerRatings CustomerRating[]
 
   @@map("employees")
 }
@@ -236,4 +238,23 @@ model EmployeeBlock {
   updatedAt  DateTime @updatedAt @map("updated_at")
 
   @@map("employee_blocks")
+}
+
+model CustomerRating {
+  id            String    @id @default(uuid())
+  businessId    String    @map("business_id")
+  business      Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  employeeId    String?   @map("employee_id")
+  employee      Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  customerName  String    @map("customer_name")
+  customerEmail String?   @map("customer_email")
+  customerPhone String?   @map("customer_phone")
+  rating        Int       // 1 to 5
+  comment       String?
+  punctuality   String?   @default("a_tiempo") // "a_tiempo", "tarde", "no_asistio"
+  appointmentId String?   @map("appointment_id")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@map("customer_ratings")
 }
