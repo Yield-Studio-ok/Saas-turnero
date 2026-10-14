@@ -13,7 +13,7 @@ export default function AnaliticasPage() {
 
   useEffect(() => {
     // Si el usuario no tiene plan PRO o superior, mostramos el paywall
-    if (user && !hasPlanAccess(user?.plan, "PRO")) {
+    if (user && !hasPlanAccess(user?.plan, "PRO", user?.role)) {
       setShowPaywall(true);
     } else {
       setShowPaywall(false);

@@ -115,7 +115,7 @@ export default function ReviewsDashboard() {
 
   useEffect(() => {
     // If user is employee, do NOT block with owner paywall
-    if (!isEmployee && user && !hasPlanAccess(user?.plan, "PRO")) {
+    if (!isEmployee && user && !hasPlanAccess(user?.plan, "PRO", user?.role)) {
       setShowPaywall(true);
       setLoading(false);
       return;
