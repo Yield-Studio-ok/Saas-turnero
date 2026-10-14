@@ -10,6 +10,6 @@ export class ChatbotController {
   @Public()
   @Post("ask")
   async ask(@Body() dto: AskChatbotDto) {
-    return this.chatbotService.ask(dto.message);
+    return this.chatbotService.ask(dto.message, dto.businessId);
   }
 }
