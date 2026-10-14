@@ -17,63 +17,21 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-interface EmployeeTodayAppointment {
-  id: string;
-  time: string;
-  clientName: string;
-  service: string;
-  status: "confirmado" | "pendiente" | "completado";
-  price: number;
-}
-
-const mockEmployeeTodayAppointments: EmployeeTodayAppointment[] = [
-  {
-    id: "1",
-    time: "10:00 - 10:45",
-    clientName: "Martín Gómez",
-    service: "Corte y Barba",
-    status: "completado",
-    price: 2500,
-  },
-  {
-    id: "2",
-    time: "11:30 - 12:00",
-    clientName: "Santiago Benítez",
-    service: "Corte Clásico",
-    status: "completado",
-    price: 1800,
-  },
-  {
-    id: "3",
-    time: "14:00 - 14:30",
-    clientName: "Lucas Pereyra",
-    service: "Perfilado de Barba",
-    status: "completado",
-    price: 1500,
-  },
-  {
-    id: "4",
-    time: "16:30 - 17:15",
-    clientName: "Tomás Rossi",
-    service: "Corte Premium",
-    status: "confirmado",
-    price: 2200,
-  },
-  {
-    id: "5",
-    time: "18:00 - 18:45",
-    clientName: "Juan Ignacio Paz",
-    service: "Corte y Color",
-    status: "pendiente",
-    price: 4500,
-  },
-];
+import { useDailyAppointments } from "../../hooks/useDailyAppointments";
 
 function EmployeeDashboardHome({ user }: { user: any }) {
   const employeeName = user?.name || (user?.email ? user.email.split("@")[0] : "Empleado");
-  const appointments = mockEmployeeTodayAppointments;
-  const completedCount = appointments.filter((a) => a.status === "completado").length;
-  const pendingCount = appointments.filter((a) => a.status !== "completado").length;
+  const tenantId = user?.tenantId || "demo-tenant";
+  const employeeId = user?.employeeId || "emp1";
+
+  const { appointments, loading } = useDailyAppointments(tenantId, new Date(), {
+    employeeId,
+  });
+
+  const completedCount = appointments.filter((a) => a.status === "completed").length;
+  const pendingCount = appointments.filter(
+    (a) => a.status !== "completed" && a.status !== "cancelled",
+  ).length;
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-300">
@@ -117,7 +75,9 @@ function EmployeeDashboardHome({ user }: { user: any }) {
               <CalendarDays className="w-5 h-5" />
             </div>
           </div>
-          <p className="text-3xl font-extrabold text-slate-800">{appointments.length}</p>
+          <p className="text-3xl font-extrabold text-slate-800">
+            {loading ? "..." : appointments.length}
+          </p>
           <p className="text-xs text-slate-500 mt-1">Asignadas a tu agenda personal</p>
         </div>
 
@@ -128,7 +88,9 @@ function EmployeeDashboardHome({ user }: { user: any }) {
               <CheckCircle2 className="w-5 h-5" />
             </div>
           </div>
-          <p className="text-3xl font-extrabold text-emerald-600">{completedCount}</p>
+          <p className="text-3xl font-extrabold text-emerald-600">
+            {loading ? "..." : completedCount}
+          </p>
           <p className="text-xs text-slate-500 mt-1">Citas completadas con éxito</p>
         </div>
 
@@ -139,7 +101,7 @@ function EmployeeDashboardHome({ user }: { user: any }) {
               <Clock className="w-5 h-5" />
             </div>
           </div>
-          <p className="text-3xl font-extrabold text-amber-600">{pendingCount}</p>
+          <p className="text-3xl font-extrabold text-amber-600">{loading ? "..." : pendingCount}</p>
           <p className="text-xs text-slate-500 mt-1">Pendientes de atención en tu turno</p>
         </div>
       </div>
@@ -162,46 +124,69 @@ function EmployeeDashboardHome({ user }: { user: any }) {
           </Link>
         </div>
 
-        <div className="divide-y divide-slate-100">
-          {appointments.map((appt) => (
-            <div
-              key={appt.id}
-              className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/80 transition"
-            >
-              <div className="flex items-start gap-4">
-                <div className="w-12 text-center shrink-0">
-                  <div className="px-2 py-1 bg-slate-100 rounded-lg text-slate-700 font-bold text-xs">
-                    {appt.time.split(" - ")[0]}
+        {loading ? (
+          <div className="p-8 text-center text-slate-400 text-sm">Cargando citas de hoy...</div>
+        ) : appointments.length === 0 ? (
+          <div className="p-10 text-center">
+            <CalendarCheck className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+            <p className="text-sm font-medium text-slate-600">
+              No tienes turnos programados para hoy
+            </p>
+            <p className="text-xs text-slate-400 mt-1">
+              Las citas agendadas por clientes o creadas manualmente se sincronizarán aquí
+              automáticamente.
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {appointments.map((appt) => (
+              <div
+                key={appt.id}
+                className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/80 transition"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-14 text-center shrink-0">
+                    <div className="px-2 py-1 bg-slate-100 rounded-lg text-slate-700 font-bold text-xs">
+                      {appt.startTime}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-slate-800 text-sm">{appt.customerName}</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {appt.serviceName || "Servicio"}
+                    </p>
+                    <span className="text-[11px] text-slate-400">
+                      Horario: {appt.startTime} - {appt.endTime}
+                    </span>
                   </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-slate-800 text-sm">{appt.clientName}</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">{appt.service}</p>
-                  <span className="text-[11px] text-slate-400">Horario: {appt.time}</span>
+
+                <div className="flex items-center gap-4 self-end sm:self-auto">
+                  <span className="text-sm font-bold text-slate-700">
+                    ${(appt.price ?? 0).toLocaleString("es-AR")}
+                  </span>
+                  {appt.status === "completed" ? (
+                    <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      Completado
+                    </span>
+                  ) : appt.status === "confirmed" ? (
+                    <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                      Confirmado
+                    </span>
+                  ) : appt.status === "cancelled" ? (
+                    <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                      Cancelado
+                    </span>
+                  ) : (
+                    <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                      Pendiente
+                    </span>
+                  )}
                 </div>
               </div>
-
-              <div className="flex items-center gap-4 self-end sm:self-auto">
-                <span className="text-sm font-bold text-slate-700">
-                  ${appt.price.toLocaleString("es-AR")}
-                </span>
-                {appt.status === "completado" ? (
-                  <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    Completado
-                  </span>
-                ) : appt.status === "confirmado" ? (
-                  <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                    Confirmado
-                  </span>
-                ) : (
-                  <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                    Pendiente
-                  </span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

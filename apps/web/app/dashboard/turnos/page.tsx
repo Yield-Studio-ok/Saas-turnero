@@ -2,8 +2,10 @@
 
 import React, { useState } from "react";
 import TurnoDetalleModal, { Turno } from "@/components/turnos/TurnoDetalleModal";
+import { TurnoTimelineGrid } from "@/components/turnos/TurnoTimelineGrid";
+import { NuevoTurnoModal } from "@/components/turnos/NuevoTurnoModal";
 import { CustomSelect } from "@/components/ui/custom-select";
-import { UserCheck } from "lucide-react";
+import { UserCheck, Plus } from "lucide-react";
 
 import { useDailyAppointments } from "@/hooks/useDailyAppointments";
 import { cancelAppointment, AppointmentsService } from "@/lib/appointments-service";
@@ -16,8 +18,6 @@ const empleados = [
   { id: "emp2", nombre: "Maria Gomez" },
   { id: "emp3", nombre: "Carlos Ruiz" },
 ];
-
-const horas = Array.from({ length: 12 }, (_, i) => i + 9); // 9 to 20 (9am to 8pm)
 
 const mapAppointmentToTurno = (appt: Appointment): Turno => {
   const [hours, minutes] = appt.startTime.split(":").map(Number);
@@ -52,21 +52,25 @@ const mapAppointmentToTurno = (appt: Appointment): Turno => {
 };
 
 export default function TurnosPage() {
-  // Asumimos un tenantId de demostración por ahora
-  const tenantId = "demo-tenant";
   const { user } = useAuth();
+  const tenantId = user?.tenantId || "demo-tenant";
 
   const { appointments } = useDailyAppointments(tenantId, new Date());
 
   const [selectedTurno, setSelectedTurno] = useState<Turno | null>(null);
   const [selectedEmployeeFilter, setSelectedEmployeeFilter] = useState<string>("all");
+  const [isNewTurnoModalOpen, setIsNewTurnoModalOpen] = useState(false);
+  const [selectedSlotHour, setSelectedSlotHour] = useState<number | undefined>(undefined);
+  const [selectedSlotEmployeeId, setSelectedSlotEmployeeId] = useState<string | undefined>(
+    undefined,
+  );
 
   const isEmployee = user?.role === "employee";
   const isOwner = user?.role === "owner" || user?.role === "superadmin";
 
   const filteredEmpleados = empleados.filter((e) => {
     if (isEmployee || !isOwner) {
-      // Para el rol employee, restringir únicamente a su agenda personal, impidiendo conmutar a otros empleados
+      // Para el rol employee, restringir únicamente a su agenda personal
       return e.id === "emp1";
     }
     if (selectedEmployeeFilter !== "all") {
@@ -101,6 +105,13 @@ export default function TurnosPage() {
       console.error("Error completando turno:", error);
     }
   };
+
+  const handleOpenNewTurno = (hora?: number, empleadoId?: string) => {
+    setSelectedSlotHour(hora);
+    setSelectedSlotEmployeeId(empleadoId || (isEmployee ? "emp1" : filteredEmpleados[0]?.id));
+    setIsNewTurnoModalOpen(true);
+  };
+
   return (
     <div className="flex flex-col h-full bg-white rounded-lg shadow">
       <div className="p-4 border-b flex flex-wrap justify-between items-center gap-3 bg-gray-50 rounded-t-lg">
@@ -118,7 +129,7 @@ export default function TurnosPage() {
           <p className="text-xs text-gray-500 mt-0.5">
             {isEmployee
               ? "Visualiza y gestiona únicamente tus citas asignadas del día."
-              : "Haz clic en un turno para ver los detalles del cliente y la reserva"}
+              : "Haz clic en un turno para ver los detalles del cliente o en un espacio libre para agendar"}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -141,115 +152,24 @@ export default function TurnosPage() {
               </div>
             )
           )}
-          <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer transition">
-            Hoy
-          </button>
-          <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 cursor-pointer transition">
-            Nuevo Turno
+          <button
+            onClick={() => handleOpenNewTurno()}
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-all active:scale-[0.98] cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Nuevo Turno</span>
           </button>
         </div>
       </div>
 
       <div className="flex-1 overflow-auto p-4">
-        <div className="min-w-[800px] border border-gray-200 rounded-lg overflow-hidden">
-          {/* Header Row: Employees */}
-          <div className="flex border-b border-gray-200 bg-gray-50">
-            <div className="w-24 shrink-0 border-r border-gray-200 flex items-center justify-center py-3">
-              <span className="text-sm font-medium text-gray-500">Hora</span>
-            </div>
-            {filteredEmpleados.map((empleado) => (
-              <div
-                key={empleado.id}
-                className="flex-1 shrink-0 border-r last:border-r-0 border-gray-200 text-center py-3"
-              >
-                <span className="text-sm font-semibold text-gray-700">{empleado.nombre}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Grid Body */}
-          <div className="relative bg-white">
-            {horas.map((hora) => (
-              <div key={hora} className="flex border-b last:border-b-0 border-gray-100 h-16">
-                {/* Time Column */}
-                <div className="w-24 shrink-0 border-r border-gray-200 flex flex-col justify-start items-center py-2 relative">
-                  <span className="text-xs font-medium text-gray-500 -mt-3 bg-white px-1">
-                    {hora.toString().padStart(2, "0")}:00
-                  </span>
-                </div>
-
-                {/* Employee Columns for this Hour */}
-                {filteredEmpleados.map((empleado) => (
-                  <div
-                    key={empleado.id}
-                    className="flex-1 shrink-0 border-r last:border-r-0 border-gray-200 relative"
-                  >
-                    {/* Render turnos for this employee at this hour */}
-                    {turnos
-                      .filter(
-                        (t) => t.empleadoId === empleado.id && Math.floor(t.horaInicio) === hora,
-                      )
-                      .map((turno) => {
-                        const topOffset = (turno.horaInicio - hora) * 64; // 64px per hour (h-16)
-                        const height = turno.duracion * 64; // 64px per hour
-                        const clienteNombre =
-                          typeof turno.cliente === "string" ? turno.cliente : turno.cliente.nombre;
-                        const esCancelado = turno.estado === "cancelado";
-
-                        return (
-                          <div
-                            key={turno.id}
-                            onClick={() => setSelectedTurno(turno)}
-                            className={`absolute left-1 right-1 rounded-md p-2 shadow-sm text-xs border cursor-pointer overflow-hidden z-10 transition-all hover:shadow-md ${
-                              esCancelado
-                                ? "bg-red-50 border-red-200 opacity-60 hover:opacity-100"
-                                : "bg-blue-50 border-blue-200 hover:bg-blue-100 hover:border-blue-300"
-                            }`}
-                            style={{ top: `${topOffset}px`, height: `${height - 2}px` }}
-                            title="Haz clic para ver detalles del turno"
-                          >
-                            <div className="flex items-center justify-between gap-1">
-                              <span
-                                className={`font-semibold truncate ${
-                                  esCancelado ? "text-red-800 line-through" : "text-blue-800"
-                                }`}
-                              >
-                                {clienteNombre}
-                              </span>
-                              {esCancelado && (
-                                <span className="text-[9px] bg-red-100 text-red-700 px-1 py-0.2 rounded font-semibold uppercase shrink-0">
-                                  Cancelado
-                                </span>
-                              )}
-                            </div>
-                            <div
-                              className={`truncate ${
-                                esCancelado ? "text-red-600" : "text-blue-600"
-                              }`}
-                            >
-                              {turno.servicio}
-                            </div>
-                            <div
-                              className={`text-[10px] mt-1 ${
-                                esCancelado ? "text-red-500" : "text-blue-500"
-                              }`}
-                            >
-                              {Math.floor(turno.horaInicio)}:
-                              {((turno.horaInicio % 1) * 60).toString().padStart(2, "0")} -{" "}
-                              {Math.floor(turno.horaInicio + turno.duracion)}:
-                              {(((turno.horaInicio + turno.duracion) % 1) * 60)
-                                .toString()
-                                .padStart(2, "0")}
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
+        <TurnoTimelineGrid
+          turnos={turnos}
+          empleados={filteredEmpleados}
+          onSelectTurno={(turno) => setSelectedTurno(turno)}
+          onSlotClick={(hora, empId) => handleOpenNewTurno(hora, empId)}
+          isEmployeeView={isEmployee}
+        />
       </div>
 
       {/* Modal de Detalles del Turno */}
@@ -258,6 +178,17 @@ export default function TurnosPage() {
         onClose={() => setSelectedTurno(null)}
         onCancelTurno={handleCancelTurno}
         onCompleteTurno={handleCompleteTurno}
+      />
+
+      {/* Modal de Nuevo Turno Rápido (Walk-in) */}
+      <NuevoTurnoModal
+        isOpen={isNewTurnoModalOpen}
+        onClose={() => setIsNewTurnoModalOpen(false)}
+        onCreated={() => setIsNewTurnoModalOpen(false)}
+        initialHour={selectedSlotHour}
+        initialEmployeeId={selectedSlotEmployeeId}
+        employees={filteredEmpleados}
+        businessId={tenantId}
       />
     </div>
   );
