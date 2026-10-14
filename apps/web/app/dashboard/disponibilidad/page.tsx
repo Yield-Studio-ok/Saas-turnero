@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Clock, Plus, Trash2, CheckCircle2, CalendarDays, Coffee, CalendarX } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
+import { apiFetch } from "@/lib/api";
 
 interface DaySchedule {
   dayOfWeek: number; // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
@@ -90,24 +92,11 @@ const initialDays: DaySchedule[] = [
   },
 ];
 
-const initialBlocks: BlockedSlot[] = [
-  {
-    id: "block_1",
-    date: "2026-10-16",
-    allDay: false,
-    startTime: "14:00",
-    endTime: "16:00",
-    reason: "Turno médico",
-  },
-  {
-    id: "block_2",
-    date: "2026-10-24",
-    allDay: true,
-    reason: "Día libre compensatorio",
-  },
-];
-
 export default function DisponibilidadPage() {
+  const { user, token } = useAuth();
+  const businessId = user?.tenantId || "demo-tenant";
+  const employeeId = (user as any)?.employeeId || "emp1";
+
   const [schedule, setSchedule] = useState<DaySchedule[]>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("turnero_employee_schedule");
@@ -120,17 +109,8 @@ export default function DisponibilidadPage() {
     return initialDays;
   });
 
-  const [blocks, setBlocks] = useState<BlockedSlot[]>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("turnero_employee_blocks");
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch {}
-      }
-    }
-    return initialBlocks;
-  });
+  const [blocks, setBlocks] = useState<BlockedSlot[]>([]);
+  const [loadingBlocks, setLoadingBlocks] = useState(true);
 
   const [saving, setSaving] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -143,6 +123,38 @@ export default function DisponibilidadPage() {
   const [newBlockEnd, setNewBlockEnd] = useState("14:00");
   const [newBlockReason, setNewBlockReason] = useState("");
 
+  useEffect(() => {
+    let isMounted = true;
+    async function loadBlocks() {
+      try {
+        setLoadingBlocks(true);
+        const data = await apiFetch<any[]>(
+          `/schedules/blocks?businessId=${encodeURIComponent(businessId)}&employeeId=${encodeURIComponent(employeeId)}`,
+          { token: token || undefined },
+        );
+        if (isMounted && Array.isArray(data)) {
+          const mapped: BlockedSlot[] = data.map((b) => ({
+            id: b.id,
+            date: b.date,
+            allDay: b.startTime === "00:00" && (b.endTime === "23:59" || b.endTime === "24:00"),
+            startTime: b.startTime,
+            endTime: b.endTime,
+            reason: b.reason || "Bloqueo personal",
+          }));
+          setBlocks(mapped);
+        }
+      } catch (err) {
+        console.error("Error cargando bloqueos:", err);
+      } finally {
+        if (isMounted) setLoadingBlocks(false);
+      }
+    }
+    loadBlocks();
+    return () => {
+      isMounted = false;
+    };
+  }, [businessId, employeeId, token]);
+
   const handleToggleDay = (dayIndex: number) => {
     setSchedule((prev) => prev.map((d, i) => (i === dayIndex ? { ...d, active: !d.active } : d)));
   };
@@ -151,30 +163,64 @@ export default function DisponibilidadPage() {
     setSchedule((prev) => prev.map((d, i) => (i === dayIndex ? { ...d, [field]: value } : d)));
   };
 
-  const handleAddBlock = (e: React.FormEvent) => {
+  const handleAddBlock = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBlockDate) return;
 
-    const newBlock: BlockedSlot = {
-      id: "block_" + Date.now(),
-      date: newBlockDate,
-      allDay: newBlockAllDay,
-      startTime: newBlockAllDay ? undefined : newBlockStart,
-      endTime: newBlockAllDay ? undefined : newBlockEnd,
-      reason: newBlockReason.trim() || "Bloqueo personal",
-    };
+    const start = newBlockAllDay ? "00:00" : newBlockStart;
+    const end = newBlockAllDay ? "23:59" : newBlockEnd;
+    const reason = newBlockReason.trim() || "Bloqueo personal";
 
-    const updated = [...blocks, newBlock].toSorted((a, b) => a.date.localeCompare(b.date));
-    setBlocks(updated);
-    setShowBlockModal(false);
-    setNewBlockDate("");
-    setNewBlockReason("");
-    setToastMessage("Bloqueo de horario añadido con éxito.");
-    setTimeout(() => setToastMessage(null), 3000);
+    try {
+      const created = await apiFetch<any>("/schedules/blocks", {
+        method: "POST",
+        token: token || undefined,
+        body: JSON.stringify({
+          businessId,
+          employeeId,
+          date: newBlockDate,
+          startTime: start,
+          endTime: end,
+          reason,
+        }),
+      });
+
+      const newBlock: BlockedSlot = {
+        id: created.id,
+        date: created.date,
+        allDay: newBlockAllDay,
+        startTime: newBlockAllDay ? undefined : newBlockStart,
+        endTime: newBlockAllDay ? undefined : newBlockEnd,
+        reason,
+      };
+
+      setBlocks((prev) => [...prev, newBlock].toSorted((a, b) => a.date.localeCompare(b.date)));
+      setShowBlockModal(false);
+      setNewBlockDate("");
+      setNewBlockReason("");
+      setToastMessage("Bloqueo de horario guardado en base de datos.");
+      setTimeout(() => setToastMessage(null), 3000);
+    } catch (err: any) {
+      console.error("Error creando bloqueo:", err);
+      setToastMessage(err?.message || "Error al crear bloqueo");
+      setTimeout(() => setToastMessage(null), 4000);
+    }
   };
 
-  const handleDeleteBlock = (id: string) => {
-    setBlocks((prev) => prev.filter((b) => b.id !== id));
+  const handleDeleteBlock = async (id: string) => {
+    try {
+      await apiFetch(`/schedules/blocks/${id}`, {
+        method: "DELETE",
+        token: token || undefined,
+      });
+      setBlocks((prev) => prev.filter((b) => b.id !== id));
+      setToastMessage("Bloqueo eliminado correctamente.");
+      setTimeout(() => setToastMessage(null), 2500);
+    } catch (err: any) {
+      console.error("Error eliminando bloqueo:", err);
+      setToastMessage("Error al eliminar el bloqueo de la base de datos.");
+      setTimeout(() => setToastMessage(null), 3000);
+    }
   };
 
   const handleSaveAll = () => {
@@ -182,12 +228,12 @@ export default function DisponibilidadPage() {
     setTimeout(() => {
       if (typeof window !== "undefined") {
         localStorage.setItem("turnero_employee_schedule", JSON.stringify(schedule));
-        localStorage.setItem("turnero_employee_blocks", JSON.stringify(blocks));
+        localStorage.removeItem("turnero_employee_blocks");
       }
       setSaving(false);
-      setToastMessage("¡Disponibilidad y bloqueos guardados correctamente!");
+      setToastMessage("¡Disponibilidad guardada correctamente!");
       setTimeout(() => setToastMessage(null), 3500);
-    }, 500);
+    }, 400);
   };
 
   const activeDaysCount = schedule.filter((d) => d.active).length;
@@ -398,7 +444,11 @@ export default function DisponibilidadPage() {
           </button>
         </div>
 
-        {blocks.length === 0 ? (
+        {loadingBlocks ? (
+          <div className="py-8 text-center text-slate-400 text-sm">
+            Cargando bloqueos guardados en base de datos...
+          </div>
+        ) : blocks.length === 0 ? (
           <div className="py-8 text-center text-slate-400 text-sm">
             No tienes bloqueos programados. Todos tus días activos funcionarán según tu horario
             habitual.
