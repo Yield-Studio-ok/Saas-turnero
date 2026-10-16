@@ -79,22 +79,92 @@ export class SchedulesService {
   }
 
   async createBlock(dto: CreateBlockDto) {
+    // 1. Resolve business
+    let biz = await this.prisma.business.findFirst({
+      where: { OR: [{ id: dto.businessId }, { name: dto.businessId }] },
+    });
+    if (!biz) {
+      biz = await this.prisma.business.findFirst();
+    }
+    if (!biz) {
+      throw new NotFoundException("Business not found");
+    }
+    const resolvedBusinessId = biz.id;
+
+    // 2. Resolve employee
+    let employee: any = null;
+    if (
+      dto.employeeId &&
+      dto.employeeId !== "emp1" &&
+      dto.employeeId !== "general" &&
+      !dto.employeeId.startsWith("emp_mock")
+    ) {
+      employee = await this.prisma.employee.findUnique({
+        where: { id: dto.employeeId },
+      });
+      if (employee && employee.businessId !== resolvedBusinessId) {
+        employee = null;
+      }
+    }
+
+    if (!employee) {
+      employee = await this.prisma.employee.findFirst({
+        where: { businessId: resolvedBusinessId },
+      });
+    }
+
+    if (!employee) {
+      employee = await this.prisma.employee.create({
+        data: {
+          name: "Personal General",
+          businessId: resolvedBusinessId,
+        },
+      });
+    }
+
+    const resolvedEmployeeId: string = employee.id;
+
     return this.prisma.employeeBlock.create({
       data: {
-        businessId: dto.businessId,
-        employeeId: dto.employeeId,
+        businessId: resolvedBusinessId,
+        employeeId: resolvedEmployeeId,
         date: dto.date,
         startTime: dto.startTime,
         endTime: dto.endTime,
-        reason: dto.reason,
+        reason: dto.reason || "Bloqueo personal",
       },
     });
   }
 
   async getBlocks(employeeId?: string, businessId?: string, date?: string) {
+    let resolvedBizId = businessId;
+    if (businessId) {
+      const biz = await this.prisma.business.findFirst({
+        where: { OR: [{ id: businessId }, { name: businessId }] },
+      });
+      if (biz) {
+        resolvedBizId = biz.id;
+      }
+    }
+
+    let resolvedEmpId = employeeId;
+    if (employeeId) {
+      if (employeeId === "emp1" || employeeId === "general" || employeeId.startsWith("emp_mock")) {
+        const fallbackEmp = await this.prisma.employee.findFirst({
+          where: resolvedBizId ? { businessId: resolvedBizId } : undefined,
+        });
+        resolvedEmpId = fallbackEmp ? fallbackEmp.id : undefined;
+      } else {
+        const emp = await this.prisma.employee.findUnique({ where: { id: employeeId } });
+        if (!emp) {
+          resolvedEmpId = undefined;
+        }
+      }
+    }
+
     const where: any = {};
-    if (employeeId) where.employeeId = employeeId;
-    if (businessId) where.businessId = businessId;
+    if (resolvedEmpId) where.employeeId = resolvedEmpId;
+    if (resolvedBizId) where.businessId = resolvedBizId;
     if (date) where.date = date;
 
     return this.prisma.employeeBlock.findMany({

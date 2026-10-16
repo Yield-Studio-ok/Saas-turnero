@@ -95,7 +95,30 @@ const initialDays: DaySchedule[] = [
 export default function DisponibilidadPage() {
   const { user, token } = useAuth();
   const businessId = user?.tenantId || "demo-tenant";
-  const employeeId = (user as any)?.employeeId || "emp1";
+  const [employees, setEmployees] = useState<{ id: string; name: string }[]>([]);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>("");
+
+  useEffect(() => {
+    if (!businessId || businessId === "demo-tenant") return;
+    let isMounted = true;
+    apiFetch<any[]>(`/employees?businessId=${encodeURIComponent(businessId)}`, {
+      token: token || undefined,
+    })
+      .then((data) => {
+        if (!isMounted || !Array.isArray(data) || data.length === 0) return;
+        const list = data.map((e) => ({ id: e.id, name: e.name || "Empleado" }));
+        setEmployees(list);
+        setSelectedEmployeeId((prev) => prev || list[0].id);
+      })
+      .catch((err) => console.warn("No se pudieron cargar los empleados:", err));
+
+    return () => {
+      isMounted = false;
+    };
+  }, [businessId, token]);
+
+  const effectiveEmployeeId =
+    selectedEmployeeId || (user as any)?.employeeId || employees[0]?.id || "emp1";
 
   const [schedule, setSchedule] = useState<DaySchedule[]>(() => {
     if (typeof window !== "undefined") {
@@ -129,7 +152,7 @@ export default function DisponibilidadPage() {
       try {
         setLoadingBlocks(true);
         const data = await apiFetch<any[]>(
-          `/schedules/blocks?businessId=${encodeURIComponent(businessId)}&employeeId=${encodeURIComponent(employeeId)}`,
+          `/schedules/blocks?businessId=${encodeURIComponent(businessId)}&employeeId=${encodeURIComponent(effectiveEmployeeId)}`,
           { token: token || undefined },
         );
         if (isMounted && Array.isArray(data)) {
@@ -153,7 +176,7 @@ export default function DisponibilidadPage() {
     return () => {
       isMounted = false;
     };
-  }, [businessId, employeeId, token]);
+  }, [businessId, effectiveEmployeeId, token]);
 
   const handleToggleDay = (dayIndex: number) => {
     setSchedule((prev) => prev.map((d, i) => (i === dayIndex ? { ...d, active: !d.active } : d)));
@@ -177,7 +200,7 @@ export default function DisponibilidadPage() {
         token: token || undefined,
         body: JSON.stringify({
           businessId,
-          employeeId,
+          employeeId: effectiveEmployeeId,
           date: newBlockDate,
           startTime: start,
           endTime: end,
@@ -249,6 +272,22 @@ export default function DisponibilidadPage() {
               Agenda Empleado
             </span>
           </div>
+          {employees.length > 1 && (
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-xs text-slate-500 font-medium">Profesional:</span>
+              <select
+                value={effectiveEmployeeId}
+                onChange={(e) => setSelectedEmployeeId(e.target.value)}
+                className="text-xs border border-slate-200 rounded-lg px-2.5 py-1 bg-slate-50 font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+              >
+                {employees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <p className="text-slate-500 text-sm mt-1">
             Configura tus días y franjas habituales de atención, o bloquea horarios puntuales para
             las próximas semanas.
@@ -500,6 +539,24 @@ export default function DisponibilidadPage() {
             </div>
 
             <form onSubmit={handleAddBlock} className="space-y-4">
+              {employees.length > 1 && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Profesional
+                  </label>
+                  <select
+                    value={effectiveEmployeeId}
+                    onChange={(e) => setSelectedEmployeeId(e.target.value)}
+                    className="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white cursor-pointer"
+                  >
+                    {employees.map((emp) => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
                   Fecha a Bloquear
