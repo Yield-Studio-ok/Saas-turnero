@@ -221,7 +221,9 @@ export async function cancelAppointment(localId: string, appointmentId: string):
 export interface CreateAppointmentDto {
   businessId?: string;
   serviceId: string;
+  serviceName?: string;
   employeeId?: string;
+  employeeName?: string;
   date: string; // YYYY-MM-DD
   startTime: string; // HH:mm
   endTime: string; // HH:mm
@@ -266,6 +268,12 @@ export class AppointmentsService {
       customerEmail: dto.customerEmail,
     };
 
+    if (dto.serviceName) {
+      payload.serviceName = dto.serviceName;
+    }
+    if (dto.employeeName) {
+      payload.employeeName = dto.employeeName;
+    }
     if (dto.customerPhone !== undefined && dto.customerPhone !== null && dto.customerPhone !== "") {
       payload.customerPhone = dto.customerPhone;
     }
@@ -342,7 +350,9 @@ export async function createAppointment(
   const dto: CreateAppointmentDto = {
     businessId,
     serviceId: input.serviceId,
+    serviceName: (input as any).serviceName,
     employeeId: input.employeeId || "general",
+    employeeName: (input as any).employeeName,
     date,
     startTime: input.startTime,
     endTime,

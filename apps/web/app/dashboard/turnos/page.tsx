@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import TurnoDetalleModal, { Turno } from "@/components/turnos/TurnoDetalleModal";
 import { TurnoTimelineGrid } from "@/components/turnos/TurnoTimelineGrid";
 import { NuevoTurnoModal } from "@/components/turnos/NuevoTurnoModal";
@@ -11,13 +11,7 @@ import { useDailyAppointments } from "@/hooks/useDailyAppointments";
 import { cancelAppointment, AppointmentsService } from "@/lib/appointments-service";
 import { Appointment } from "@/types/appointment";
 import { useAuth } from "@/lib/auth-context";
-
-// Mocks para empleados (hasta que se integre el servicio de empleados)
-const empleados = [
-  { id: "emp1", nombre: "Juan Perez" },
-  { id: "emp2", nombre: "Maria Gomez" },
-  { id: "emp3", nombre: "Carlos Ruiz" },
-];
+import { apiFetch } from "@/lib/api";
 
 const mapAppointmentToTurno = (appt: Appointment): Turno => {
   const [hours, minutes] = appt.startTime.split(":").map(Number);
@@ -55,6 +49,34 @@ export default function TurnosPage() {
   const { user } = useAuth();
   const tenantId = user?.tenantId || "demo-tenant";
 
+  const [empleados, setEmpleados] = useState<{ id: string; nombre: string }[]>([
+    { id: "emp1", nombre: "General" },
+  ]);
+
+  useEffect(() => {
+    if (!tenantId || tenantId === "demo-tenant") return;
+    let isMounted = true;
+    apiFetch<any[]>(`/employees?businessId=${tenantId}`)
+      .then((data) => {
+        if (!isMounted) return;
+        if (Array.isArray(data) && data.length > 0) {
+          setEmpleados(
+            data.map((e) => ({
+              id: e.id,
+              nombre: e.name || "Empleado",
+            })),
+          );
+        }
+      })
+      .catch((err) => {
+        console.warn("No se pudieron cargar los empleados dinámicos:", err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [tenantId]);
+
   const { appointments } = useDailyAppointments(tenantId, new Date());
 
   const [selectedTurno, setSelectedTurno] = useState<Turno | null>(null);
@@ -68,10 +90,10 @@ export default function TurnosPage() {
   const isEmployee = user?.role === "employee";
   const isOwner = user?.role === "owner" || user?.role === "superadmin";
 
-  const filteredEmpleados = empleados.filter((e) => {
+  const filteredEmpleados = empleados.filter((e, idx) => {
     if (isEmployee || !isOwner) {
-      // Para el rol employee, restringir únicamente a su agenda personal
-      return e.id === "emp1";
+      // Para el rol employee, restringir únicamente a su agenda personal o primer empleado
+      return e.id === user?.uid || idx === 0;
     }
     if (selectedEmployeeFilter !== "all") {
       return e.id === selectedEmployeeFilter;

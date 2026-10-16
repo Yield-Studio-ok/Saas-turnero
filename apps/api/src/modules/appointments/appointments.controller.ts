@@ -30,6 +30,15 @@ export class AppointmentsController {
     return this.appointmentsService.getAvailableSlots(date, employeeId, serviceId);
   }
 
+  @Public()
+  @Get()
+  @ApiOperation({ summary: "Get appointments by business and optional date" })
+  @ApiQuery({ name: "businessId", required: true, type: String })
+  @ApiQuery({ name: "date", required: false, type: String })
+  async getAppointments(@Query("businessId") businessId: string, @Query("date") date?: string) {
+    return this.appointmentsService.getAppointmentsByBusiness(businessId, date);
+  }
+
   @Get("by-employee")
   @ApiOperation({ summary: "Get appointments by employee and date" })
   @ApiQuery({ name: "date", description: "Date in YYYY-MM-DD format" })

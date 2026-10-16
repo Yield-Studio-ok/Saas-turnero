@@ -8,99 +8,157 @@ export class AppointmentsService {
   constructor(private prisma: PrismaService) {}
 
   async createAppointment(dto: CreateAppointmentDto) {
-    const businessId = dto.businessId || dto.localId;
-    if (!businessId) {
+    const rawBusinessId = dto.businessId || dto.localId;
+    if (!rawBusinessId) {
       throw new BadRequestException("businessId or localId is required");
     }
 
-    const { serviceId, date, startTime, endTime } = dto;
-
-    const service = await this.prisma.service.findUnique({ where: { id: serviceId } });
-    if (!service) {
-      throw new NotFoundException("Service not found for this local");
-    }
-
-    if (service.businessId !== businessId && service.businessId !== dto.localId) {
-      const biz = await this.prisma.business.findFirst({
-        where: { OR: [{ id: businessId }, { name: businessId }] },
-      });
-      if (!biz || biz.id !== service.businessId) {
-        throw new NotFoundException("Service not found for this local");
-      }
-    }
-
-    let targetEmployeeId = dto.employeeId;
-    if (!targetEmployeeId || targetEmployeeId === "general") {
-      const defaultEmp = await this.prisma.employee.findFirst({
-        where: { businessId: service.businessId },
-      });
-      if (defaultEmp) {
-        targetEmployeeId = defaultEmp.id;
-      }
-    }
-
-    if (!targetEmployeeId) {
-      throw new NotFoundException("Employee not found for this local");
-    }
-
-    const employee = await this.prisma.employee.findUnique({ where: { id: targetEmployeeId } });
-    if (!employee || employee.businessId !== service.businessId)
-      throw new NotFoundException("Employee not found for this local");
-
-    const dateObj = new Date(date + "T12:00:00Z");
-    const dayOfWeek = dateObj.getDay();
-
-    const schedules = await this.prisma.schedule.findMany({
-      where: { employeeId: targetEmployeeId, dayOfWeek },
+    // 1. Resolve business
+    let biz = await this.prisma.business.findFirst({
+      where: {
+        OR: [{ id: rawBusinessId }, { name: rawBusinessId }],
+      },
     });
 
-    let workingHours: TimeSlot[] = schedules.map((s) => ({
-      startTime: s.startTime,
-      endTime: s.endTime,
-    }));
+    if (!biz) {
+      // Fallback for demo-tenant or unknown businessId
+      biz = await this.prisma.business.findFirst();
+    }
 
-    if (workingHours.length === 0) {
-      const businessSchedules = await this.prisma.schedule.findMany({
-        where: { businessId: service.businessId, dayOfWeek },
-      });
-      if (businessSchedules.length > 0) {
-        workingHours = businessSchedules.map((s) => ({
-          startTime: s.startTime,
-          endTime: s.endTime,
-        }));
-      } else {
-        workingHours = [{ startTime: "09:00", endTime: "20:00" }];
+    if (!biz) {
+      throw new NotFoundException("Business not found");
+    }
+
+    const businessId = biz.id;
+
+    // 2. Resolve service
+    const { serviceId, date, startTime, endTime } = dto;
+    let service: any = null;
+
+    if (serviceId) {
+      service = await this.prisma.service.findUnique({ where: { id: serviceId } });
+      if (service && service.businessId !== businessId) {
+        service = null;
       }
     }
+
+    // If not found by ID, search by name for this business
+    if (!service && (dto.serviceName || serviceId)) {
+      const searchName = dto.serviceName || serviceId;
+      service = await this.prisma.service.findFirst({
+        where: {
+          businessId,
+          name: { equals: searchName, mode: "insensitive" },
+        },
+      });
+    }
+
+    // If still not found, auto-create the service or pick the first existing service
+    if (!service) {
+      if (dto.serviceName || (serviceId && serviceId.startsWith("srv_"))) {
+        const name = dto.serviceName || "Servicio Walk-in";
+        const price = dto.price ?? 3500;
+        const duration = dto.duration ?? 30;
+        service = await this.prisma.service.create({
+          data: {
+            name,
+            price,
+            duration,
+            businessId,
+          },
+        });
+      } else {
+        service = await this.prisma.service.findFirst({
+          where: { businessId },
+        });
+        if (!service) {
+          service = await this.prisma.service.create({
+            data: {
+              name: dto.serviceName || "Servicio General",
+              price: dto.price ?? 3500,
+              duration: dto.duration ?? 30,
+              businessId,
+            },
+          });
+        }
+      }
+    }
+
+    // 3. Resolve employee
+    let targetEmployeeId = dto.employeeId;
+    let employee: any = null;
+
+    if (
+      targetEmployeeId &&
+      targetEmployeeId !== "general" &&
+      !targetEmployeeId.startsWith("emp_mock") &&
+      targetEmployeeId !== "emp1" &&
+      targetEmployeeId !== "emp2" &&
+      targetEmployeeId !== "emp3"
+    ) {
+      employee = await this.prisma.employee.findUnique({ where: { id: targetEmployeeId } });
+      if (employee && employee.businessId !== businessId) {
+        employee = null;
+      }
+    }
+
+    // If employee not resolved yet, pick first employee of the business or match by name
+    if (!employee) {
+      if (dto.employeeName) {
+        employee = await this.prisma.employee.findFirst({
+          where: {
+            businessId,
+            name: { equals: dto.employeeName, mode: "insensitive" },
+          },
+        });
+      }
+      if (!employee) {
+        employee = await this.prisma.employee.findFirst({
+          where: { businessId },
+        });
+      }
+    }
+
+    // If business has no employees yet, auto-create a default employee
+    if (!employee) {
+      employee = await this.prisma.employee.create({
+        data: {
+          name: "Personal General",
+          businessId,
+        },
+      });
+    }
+
+    const resolvedEmployeeId: string = employee.id;
+
+    // 4. Overlap conflict checking
+    const [reqStartH, reqStartM] = startTime.split(":").map(Number);
+    const [reqEndH, reqEndM] = endTime.split(":").map(Number);
+    const reqStartMin = reqStartH * 60 + reqStartM;
+    const reqEndMin = reqEndH * 60 + reqEndM;
 
     try {
       const result = await this.prisma.$transaction(async (tx) => {
         const existingAppointmentsDoc = await tx.appointment.findMany({
           where: {
-            employeeId: targetEmployeeId,
+            employeeId: resolvedEmployeeId,
             date,
-            status: { notIn: ["Cancelado", "cancelado"] },
+            status: { notIn: ["Cancelado", "cancelado", "cancelled"] },
           },
         });
 
-        const existingAppointments: TimeSlot[] = existingAppointmentsDoc.map((data) => ({
-          startTime: data.startTime,
-          endTime: data.endTime,
-        }));
-
-        const availableSlots = calculateAvailableSlots({
-          workingHours,
-          appointments: existingAppointments,
-          serviceDuration: service.duration,
-          slotInterval: service.duration,
+        const hasOverlap = existingAppointmentsDoc.some((app) => {
+          const [appStartH, appStartM] = app.startTime.split(":").map(Number);
+          const [appEndH, appEndM] = app.endTime.split(":").map(Number);
+          const appStartMin = appStartH * 60 + appStartM;
+          const appEndMin = appEndH * 60 + appEndM;
+          return Math.max(reqStartMin, appStartMin) < Math.min(reqEndMin, appEndMin);
         });
 
-        const isAvailable = availableSlots.some(
-          (slot) => slot.startTime === startTime && slot.endTime === endTime,
-        );
-
-        if (!isAvailable) {
-          throw new BadRequestException("The selected time slot is no longer available");
+        if (hasOverlap) {
+          throw new BadRequestException(
+            "The selected time slot overlaps with an existing appointment",
+          );
         }
 
         return await tx.appointment.create({
@@ -113,9 +171,13 @@ export class AppointmentsService {
             customerEmail: dto.customerEmail || "guest@example.com",
             customerPhone: dto.customerPhone || null,
             notes: dto.notes || null,
-            businessId: service.businessId,
-            employeeId: targetEmployeeId,
-            serviceId,
+            businessId,
+            employeeId: resolvedEmployeeId,
+            serviceId: service.id,
+          },
+          include: {
+            service: true,
+            employee: true,
           },
         });
       });
@@ -178,10 +240,33 @@ export class AppointmentsService {
   async getAppointmentsByEmployeeAndDate(employeeId: string, date: string) {
     const appointments = await this.prisma.appointment.findMany({
       where: { employeeId, date },
-      include: { service: true },
+      include: { service: true, employee: true },
       orderBy: { startTime: "asc" },
     });
     return appointments;
+  }
+
+  async getAppointmentsByBusiness(businessId: string, date?: string) {
+    let biz = await this.prisma.business.findFirst({
+      where: { OR: [{ id: businessId }, { name: businessId }] },
+    });
+    if (!biz) {
+      biz = await this.prisma.business.findFirst();
+    }
+    const resolvedBizId = biz ? biz.id : businessId;
+
+    const where: any = { businessId: resolvedBizId };
+    if (date) {
+      where.date = date;
+    }
+    return this.prisma.appointment.findMany({
+      where,
+      include: {
+        service: true,
+        employee: true,
+      },
+      orderBy: { startTime: "asc" },
+    });
   }
 
   async completeAppointment(

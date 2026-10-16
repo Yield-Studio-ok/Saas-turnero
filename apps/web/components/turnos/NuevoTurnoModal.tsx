@@ -13,6 +13,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { apiFetch } from "@/lib/api";
 import { createAppointment, calculateEndTime } from "@/lib/appointments-service";
 import { CustomSelect } from "@/components/ui/custom-select";
 
@@ -51,6 +52,7 @@ export function NuevoTurnoModal({
   businessId = "demo-tenant",
 }: NuevoTurnoModalProps) {
   const { user, token } = useAuth();
+  const [services, setServices] = useState<ServiceOption[]>(defaultServices);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
@@ -74,6 +76,34 @@ export function NuevoTurnoModal({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
+    const effectiveBiz = user?.tenantId || businessId;
+    if (!effectiveBiz || effectiveBiz === "demo-tenant") return;
+
+    let isMounted = true;
+    apiFetch<any[]>(`/services/public?businessId=${effectiveBiz}`)
+      .then((data) => {
+        if (!isMounted) return;
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped: ServiceOption[] = data.map((s) => ({
+            id: s.id,
+            name: s.name,
+            price: Number(s.price),
+            duration: Number(s.duration) || 30,
+          }));
+          setServices(mapped);
+          setSelectedServiceId(mapped[0].id);
+        }
+      })
+      .catch((err) => {
+        console.warn("No se pudieron cargar los servicios dinámicos:", err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.tenantId, businessId, isOpen]);
+
+  useEffect(() => {
     if (initialHour) {
       const hStr = `${Math.floor(initialHour).toString().padStart(2, "0")}:${Math.round(
         (initialHour % 1) * 60,
@@ -84,13 +114,15 @@ export function NuevoTurnoModal({
     }
     if (initialEmployeeId) {
       setSelectedEmployeeId(initialEmployeeId);
+    } else if (employees.length > 0 && (!selectedEmployeeId || selectedEmployeeId === "emp1")) {
+      setSelectedEmployeeId(employees[0].id);
     }
-  }, [initialHour, initialEmployeeId]);
+  }, [initialHour, initialEmployeeId, employees]);
 
   if (!isOpen) return null;
 
   const currentService =
-    defaultServices.find((s) => s.id === selectedServiceId) || defaultServices[0];
+    services.find((s) => s.id === selectedServiceId) || services[0] || defaultServices[0];
   const calculatedEnd = calculateEndTime(startTime, currentService.duration);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -105,12 +137,15 @@ export function NuevoTurnoModal({
 
     try {
       const effectiveBusinessId = user?.tenantId || businessId || "demo-tenant";
+      const selectedEmp = employees.find((e) => e.id === selectedEmployeeId);
+
       await createAppointment(
         effectiveBusinessId,
         {
           serviceId: currentService.id,
           serviceName: currentService.name,
           employeeId: selectedEmployeeId,
+          employeeName: selectedEmp?.nombre,
           date,
           startTime,
           endTime: calculatedEnd,
@@ -224,7 +259,7 @@ export function NuevoTurnoModal({
             <CustomSelect
               value={selectedServiceId}
               onChange={(val) => setSelectedServiceId(val as string)}
-              options={defaultServices.map((s) => ({
+              options={services.map((s) => ({
                 value: s.id,
                 label: `${s.name} - $${s.price.toLocaleString("es-AR")} (${s.duration} min)`,
               }))}
