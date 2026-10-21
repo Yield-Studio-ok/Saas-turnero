@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
 import {
   RotateCcw,
@@ -14,24 +14,26 @@ import {
   Tag,
   Clock,
 } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
+import { apiFetch } from "@/lib/api";
 
 interface ServicioItem {
-  id: number;
+  id: string;
   nombre: string;
   duracion: number;
   precio: number;
 }
 
 interface ProductoItem {
-  id: number;
+  id: string;
   nombre: string;
   stock: number;
   precio: number;
 }
 
 interface PapeleraItem {
-  id: number;
-  originalId: number;
+  id: string;
+  originalId: string;
   nombre: string;
   tipo: "servicio" | "producto";
   precio: number;
@@ -40,47 +42,27 @@ interface PapeleraItem {
   deletedAt: string;
 }
 
-const initialServicios: ServicioItem[] = [
-  { id: 1, nombre: "Corte Clásico", duracion: 30, precio: 1500 },
-  { id: 2, nombre: "Coloración", duracion: 120, precio: 5000 },
-  { id: 3, nombre: "Barba & Perfilado", duracion: 25, precio: 1200 },
-];
-
-const initialProductos: ProductoItem[] = [
-  { id: 1, nombre: "Shampoo Profesional", stock: 10, precio: 2500 },
-  { id: 2, nombre: "Cera Modeladora", stock: 5, precio: 1800 },
-  { id: 3, nombre: "Aceite para Barba 30ml", stock: 8, precio: 2200 },
-];
-
-const initialPapelera: PapeleraItem[] = [
-  {
-    id: 991,
-    originalId: 91,
-    nombre: "Peinado de Fiesta",
-    tipo: "servicio",
-    duracion: 45,
-    precio: 3500,
-    deletedAt: "2026-10-04 14:20",
-  },
-];
-
 export default function CatalogoPage() {
-  const [activeTab, setActiveTab] = useState<"servicios" | "productos" | "papelera">("servicios");
+  const { user, token } = useAuth();
+  const businessId = user?.tenantId;
 
-  const [servicios, setServicios] = useState<ServicioItem[]>(initialServicios);
-  const [productos, setProductos] = useState<ProductoItem[]>(initialProductos);
-  const [papelera, setPapelera] = useState<PapeleraItem[]>(initialPapelera);
+  const [activeTab, setActiveTab] = useState<"servicios" | "productos" | "papelera">("servicios");
+  const [loading, setLoading] = useState(false);
+
+  const [servicios, setServicios] = useState<ServicioItem[]>([]);
+  const [productos, setProductos] = useState<ProductoItem[]>([]);
+  const [papelera, setPapelera] = useState<PapeleraItem[]>([]);
 
   // Modales de creación/edición
   const [showServicioModal, setShowServicioModal] = useState(false);
   const [showProductoModal, setShowProductoModal] = useState(false);
   const [servicioFormData, setServicioFormData] = useState({ nombre: "", duracion: 30, precio: 0 });
   const [productoFormData, setProductoFormData] = useState({ nombre: "", stock: 0, precio: 0 });
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   // Modales de Confirmación de Borrado
   const [itemToDelete, setItemToDelete] = useState<{
-    id: number;
+    id: string;
     tipo: "servicio" | "producto";
     nombre: string;
   } | null>(null);
@@ -94,6 +76,51 @@ export default function CatalogoPage() {
     setTimeout(() => setNotification(null), 3000);
   };
 
+  const loadData = useCallback(async () => {
+    if (!businessId) return;
+    setLoading(true);
+    try {
+      const [servRes, prodRes] = await Promise.allSettled([
+        apiFetch<any[]>(`/services?businessId=${businessId}`, {
+          token: token || undefined,
+        }).catch(() => apiFetch<any[]>(`/services/public?businessId=${businessId}`)),
+        apiFetch<any[]>(`/products?businessId=${businessId}`, {
+          token: token || undefined,
+        }).catch(() => apiFetch<any[]>(`/products/public?businessId=${businessId}`)),
+      ]);
+
+      if (servRes.status === "fulfilled" && Array.isArray(servRes.value)) {
+        setServicios(
+          servRes.value.map((s) => ({
+            id: String(s.id),
+            nombre: s.name,
+            duracion: Number(s.duration) || 30,
+            precio: Number(s.price) || 0,
+          })),
+        );
+      }
+
+      if (prodRes.status === "fulfilled" && Array.isArray(prodRes.value)) {
+        setProductos(
+          prodRes.value.map((p) => ({
+            id: String(p.id),
+            nombre: p.name,
+            stock: Number(p.stock) || 0,
+            precio: Number(p.price) || 0,
+          })),
+        );
+      }
+    } catch (err) {
+      console.error("Error loading catalogo data:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [businessId, token]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
   // --- SERVICIOS ---
   const handleOpenServicioModal = (servicio?: ServicioItem) => {
     if (servicio) {
@@ -106,20 +133,43 @@ export default function CatalogoPage() {
     setShowServicioModal(true);
   };
 
-  const handleSaveServicio = (e: React.FormEvent) => {
+  const handleSaveServicio = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingId) {
-      setServicios(
-        servicios.map((serv) =>
-          serv.id === editingId ? { ...servicioFormData, id: editingId } : serv,
-        ),
-      );
-      triggerNotification("Servicio actualizado con éxito.");
-    } else {
-      setServicios([...servicios, { ...servicioFormData, id: Date.now() }]);
-      triggerNotification("Nuevo servicio añadido al catálogo.");
+    if (!businessId) {
+      triggerNotification("Error: No se encontró identificador de negocio.");
+      return;
     }
-    setShowServicioModal(false);
+    try {
+      if (editingId) {
+        await apiFetch(`/services/${editingId}`, {
+          method: "PATCH",
+          token: token || undefined,
+          body: JSON.stringify({
+            name: servicioFormData.nombre,
+            duration: Number(servicioFormData.duracion),
+            price: Number(servicioFormData.precio),
+          }),
+        });
+        triggerNotification("Servicio actualizado con éxito.");
+      } else {
+        await apiFetch("/services", {
+          method: "POST",
+          token: token || undefined,
+          body: JSON.stringify({
+            name: servicioFormData.nombre,
+            duration: Number(servicioFormData.duracion),
+            price: Number(servicioFormData.precio),
+            businessId,
+          }),
+        });
+        triggerNotification("Nuevo servicio añadido al catálogo.");
+      }
+      setShowServicioModal(false);
+      await loadData();
+    } catch (err: any) {
+      console.error("Error saving servicio:", err);
+      triggerNotification(err.message || "Error al guardar el servicio.");
+    }
   };
 
   // --- PRODUCTOS ---
@@ -134,24 +184,47 @@ export default function CatalogoPage() {
     setShowProductoModal(true);
   };
 
-  const handleSaveProducto = (e: React.FormEvent) => {
+  const handleSaveProducto = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingId) {
-      setProductos(
-        productos.map((prod) =>
-          prod.id === editingId ? { ...productoFormData, id: editingId } : prod,
-        ),
-      );
-      triggerNotification("Producto actualizado con éxito.");
-    } else {
-      setProductos([...productos, { ...productoFormData, id: Date.now() }]);
-      triggerNotification("Nuevo producto añadido al inventario.");
+    if (!businessId) {
+      triggerNotification("Error: No se encontró identificador de negocio.");
+      return;
     }
-    setShowProductoModal(false);
+    try {
+      if (editingId) {
+        await apiFetch(`/products/${editingId}`, {
+          method: "PATCH",
+          token: token || undefined,
+          body: JSON.stringify({
+            name: productoFormData.nombre,
+            stock: Number(productoFormData.stock),
+            price: Number(productoFormData.precio),
+          }),
+        });
+        triggerNotification("Producto actualizado con éxito.");
+      } else {
+        await apiFetch("/products", {
+          method: "POST",
+          token: token || undefined,
+          body: JSON.stringify({
+            name: productoFormData.nombre,
+            stock: Number(productoFormData.stock),
+            price: Number(productoFormData.precio),
+            businessId,
+          }),
+        });
+        triggerNotification("Nuevo producto añadido al inventario.");
+      }
+      setShowProductoModal(false);
+      await loadData();
+    } catch (err: any) {
+      console.error("Error saving producto:", err);
+      triggerNotification(err.message || "Error al guardar el producto.");
+    }
   };
 
   // --- SOFT DELETE INTERCEPTION ---
-  const handleRequestSoftDelete = (id: number, tipo: "servicio" | "producto", nombre: string) => {
+  const handleRequestSoftDelete = (id: string, tipo: "servicio" | "producto", nombre: string) => {
     setItemToDelete({ id, tipo, nombre });
   };
 
@@ -166,11 +239,11 @@ export default function CatalogoPage() {
     if (itemToDelete.tipo === "servicio") {
       const serv = servicios.find((s) => s.id === itemToDelete.id);
       if (serv) {
-        setServicios(servicios.filter((s) => s.id !== itemToDelete.id));
-        setPapelera([
-          ...papelera,
+        setServicios((prev) => prev.filter((s) => s.id !== itemToDelete.id));
+        setPapelera((prev) => [
+          ...prev,
           {
-            id: Date.now(),
+            id: `del-${Date.now()}`,
             originalId: serv.id,
             nombre: serv.nombre,
             tipo: "servicio",
@@ -183,11 +256,11 @@ export default function CatalogoPage() {
     } else {
       const prod = productos.find((p) => p.id === itemToDelete.id);
       if (prod) {
-        setProductos(productos.filter((p) => p.id !== itemToDelete.id));
-        setPapelera([
-          ...papelera,
+        setProductos((prev) => prev.filter((p) => p.id !== itemToDelete.id));
+        setPapelera((prev) => [
+          ...prev,
           {
-            id: Date.now(),
+            id: `del-${Date.now()}`,
             originalId: prod.id,
             nombre: prod.nombre,
             tipo: "producto",
@@ -205,13 +278,13 @@ export default function CatalogoPage() {
 
   // --- PAPELERA ACTIONS ---
   const handleRestoreFromPapelera = (item: PapeleraItem) => {
-    setPapelera(papelera.filter((p) => p.id !== item.id));
+    setPapelera((prev) => prev.filter((p) => p.id !== item.id));
 
     if (item.tipo === "servicio") {
-      setServicios([
-        ...servicios,
+      setServicios((prev) => [
+        ...prev,
         {
-          id: item.originalId || Date.now(),
+          id: item.originalId,
           nombre: item.nombre,
           duracion: item.duracion || 30,
           precio: item.precio,
@@ -219,10 +292,10 @@ export default function CatalogoPage() {
       ]);
       triggerNotification(`Servicio "${item.nombre}" restaurado al catálogo.`);
     } else {
-      setProductos([
-        ...productos,
+      setProductos((prev) => [
+        ...prev,
         {
-          id: item.originalId || Date.now(),
+          id: item.originalId,
           nombre: item.nombre,
           stock: item.stock || 0,
           precio: item.precio,
@@ -232,11 +305,29 @@ export default function CatalogoPage() {
     }
   };
 
-  const handleConfirmPermanentDelete = () => {
+  const handleConfirmPermanentDelete = async () => {
     if (!itemToPermanentDelete) return;
-    setPapelera(papelera.filter((p) => p.id !== itemToPermanentDelete.id));
-    triggerNotification(`"${itemToPermanentDelete.nombre}" eliminado definitivamente.`);
-    setItemToPermanentDelete(null);
+    try {
+      if (itemToPermanentDelete.tipo === "servicio") {
+        await apiFetch(`/services/${itemToPermanentDelete.originalId}`, {
+          method: "DELETE",
+          token: token || undefined,
+        });
+      } else {
+        await apiFetch(`/products/${itemToPermanentDelete.originalId}`, {
+          method: "DELETE",
+          token: token || undefined,
+        });
+      }
+      setPapelera((prev) => prev.filter((p) => p.id !== itemToPermanentDelete.id));
+      triggerNotification(`"${itemToPermanentDelete.nombre}" eliminado definitivamente.`);
+      await loadData();
+    } catch (err: any) {
+      console.error("Error deleting item:", err);
+      triggerNotification(err.message || "Error al eliminar definitivamente.");
+    } finally {
+      setItemToPermanentDelete(null);
+    }
   };
 
   return (
@@ -325,7 +416,12 @@ export default function CatalogoPage() {
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         {activeTab === "servicios" && (
           <div>
-            {servicios.length === 0 ? (
+            {loading ? (
+              <div className="p-12 text-center text-slate-400">
+                <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                <p className="text-sm">Cargando servicios...</p>
+              </div>
+            ) : servicios.length === 0 ? (
               <div className="p-12 text-center text-slate-400">
                 <Scissors className="w-12 h-12 mx-auto stroke-1 text-slate-300 mb-3" />
                 <p className="font-medium text-slate-600">No hay servicios registrados</p>
@@ -399,7 +495,12 @@ export default function CatalogoPage() {
 
         {activeTab === "productos" && (
           <div>
-            {productos.length === 0 ? (
+            {loading ? (
+              <div className="p-12 text-center text-slate-400">
+                <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                <p className="text-sm">Cargando productos...</p>
+              </div>
+            ) : productos.length === 0 ? (
               <div className="p-12 text-center text-slate-400">
                 <Package className="w-12 h-12 mx-auto stroke-1 text-slate-300 mb-3" />
                 <p className="font-medium text-slate-600">No hay productos en inventario</p>
