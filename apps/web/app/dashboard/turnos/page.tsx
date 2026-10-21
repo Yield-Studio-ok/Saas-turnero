@@ -209,7 +209,7 @@ export default function TurnosPage() {
         onCreated={() => setIsNewTurnoModalOpen(false)}
         initialHour={selectedSlotHour}
         initialEmployeeId={selectedSlotEmployeeId}
-        employees={filteredEmpleados}
+        employees={isEmployee ? filteredEmpleados : empleados}
         businessId={tenantId}
       />
     </div>

@@ -53,6 +53,7 @@ export function NuevoTurnoModal({
 }: NuevoTurnoModalProps) {
   const { user, token } = useAuth();
   const [services, setServices] = useState<ServiceOption[]>(defaultServices);
+  const [employeeList, setEmployeeList] = useState<{ id: string; nombre: string }[]>(employees);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
@@ -104,6 +105,38 @@ export function NuevoTurnoModal({
   }, [user?.tenantId, businessId, isOpen]);
 
   useEffect(() => {
+    if (employees && employees.length > 0) {
+      setEmployeeList(employees);
+      return;
+    }
+    const effectiveBiz = user?.tenantId || businessId;
+    if (!effectiveBiz || effectiveBiz === "demo-tenant") return;
+
+    let isMounted = true;
+    apiFetch<any[]>(`/employees?businessId=${effectiveBiz}`)
+      .then((data) => {
+        if (!isMounted) return;
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped = data.map((e) => ({
+            id: e.id,
+            nombre: e.name || "Profesional",
+          }));
+          setEmployeeList(mapped);
+          if (!selectedEmployeeId || selectedEmployeeId === "emp1") {
+            setSelectedEmployeeId(mapped[0].id);
+          }
+        }
+      })
+      .catch((err) => {
+        console.warn("No se pudieron cargar empleados en modal:", err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [employees, user?.tenantId, businessId, isOpen]);
+
+  useEffect(() => {
     if (initialHour) {
       const hStr = `${Math.floor(initialHour).toString().padStart(2, "0")}:${Math.round(
         (initialHour % 1) * 60,
@@ -114,10 +147,10 @@ export function NuevoTurnoModal({
     }
     if (initialEmployeeId) {
       setSelectedEmployeeId(initialEmployeeId);
-    } else if (employees.length > 0 && (!selectedEmployeeId || selectedEmployeeId === "emp1")) {
-      setSelectedEmployeeId(employees[0].id);
+    } else if (employeeList.length > 0 && (!selectedEmployeeId || selectedEmployeeId === "emp1")) {
+      setSelectedEmployeeId(employeeList[0].id);
     }
-  }, [initialHour, initialEmployeeId, employees]);
+  }, [initialHour, initialEmployeeId, employeeList]);
 
   if (!isOpen) return null;
 
@@ -137,7 +170,7 @@ export function NuevoTurnoModal({
 
     try {
       const effectiveBusinessId = user?.tenantId || businessId || "demo-tenant";
-      const selectedEmp = employees.find((e) => e.id === selectedEmployeeId);
+      const selectedEmp = employeeList.find((e) => e.id === selectedEmployeeId);
 
       await createAppointment(
         effectiveBusinessId,
@@ -267,22 +300,24 @@ export function NuevoTurnoModal({
           </div>
 
           {/* Professional Selector */}
-          {employees.length > 1 && (
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-slate-500" />
-                Profesional Asignado
-              </label>
-              <CustomSelect
-                value={selectedEmployeeId}
-                onChange={(val) => setSelectedEmployeeId(val as string)}
-                options={employees.map((e) => ({
-                  value: e.id,
-                  label: e.nombre,
-                }))}
-              />
-            </div>
-          )}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+              <User className="w-3.5 h-3.5 text-slate-500" />
+              Profesional Asignado
+            </label>
+            <CustomSelect
+              value={selectedEmployeeId}
+              onChange={(val) => setSelectedEmployeeId(val as string)}
+              options={
+                employeeList.length > 0
+                  ? employeeList.map((e) => ({
+                      value: e.id,
+                      label: e.nombre,
+                    }))
+                  : [{ value: "emp1", label: "General" }]
+              }
+            />
+          </div>
 
           {/* Date and Times */}
           <div className="grid grid-cols-3 gap-3">
