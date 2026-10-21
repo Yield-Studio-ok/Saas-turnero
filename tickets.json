@@ -1,5 +1,77 @@
 [
   {
+    "id": "9b1a9435-3b4e-48c9-a283-bc339f83a59b",
+    "seq": 63,
+    "name": "63. [Docs] Especificación Técnica y Arquitectura Multi-Sucursal (Sprint 8)",
+    "plane_identifier": "TURN-129"
+  },
+  {
+    "id": "cca0f3a5-b721-4c4c-be4a-8e604f4918ff",
+    "seq": 62,
+    "name": "62. [Frontend] Fix Bugs Visuales en Dashboard (Saludo y Gráfico Recharts)",
+    "plane_identifier": "TURN-128"
+  },
+  {
+    "id": "faf9308f-604b-4832-9e67-9fa5a60d6d01",
+    "seq": 61,
+    "name": "61. [Fullstack] Alta y Vinculación de Empleados por Cuenta Gmail en Neon",
+    "plane_identifier": "TURN-127"
+  },
+  {
+    "id": "ccb6b8a6-f7d2-4907-86b1-dc84e321fa25",
+    "seq": 60,
+    "name": "60. [Fullstack] Personalización Estética de Reservas por Jerarquía de Plan",
+    "plane_identifier": "TURN-126"
+  },
+  {
+    "id": "39729f95-48be-4f19-ba8b-4c17bdf721eb",
+    "seq": 59,
+    "name": "59. [Frontend] Sincronización de Avatar de Dueño en Header desde Perfil",
+    "plane_identifier": "TURN-125"
+  },
+  {
+    "id": "a258cc46-a8af-4303-9101-0af067db9519",
+    "seq": 58,
+    "name": "58. [Frontend] Restricción de Reseñas Mutuas a Clientes Atendidos",
+    "plane_identifier": "TURN-124"
+  },
+  {
+    "id": "e3025078-4339-4458-9c60-a23bf98bcefa",
+    "seq": 57,
+    "name": "57. [Frontend] Rediseño UI de Mi Agenda Personal (Apple Calendar Dark / Cron)",
+    "plane_identifier": "TURN-123"
+  },
+  {
+    "id": "de46c22d-c413-4ea8-829d-74229abf2a0c",
+    "seq": 56,
+    "name": "56. [Frontend] Programa de Fidelidad Configurable por el Dueño",
+    "plane_identifier": "TURN-122"
+  },
+  {
+    "id": "898a20a1-ab07-477d-a968-4ce359494386",
+    "seq": 55,
+    "name": "55. [Frontend] Selector Explícito de Profesional en Turno Rápido (Walk-in)",
+    "plane_identifier": "TURN-121"
+  },
+  {
+    "id": "79c97f7e-5c7c-46d5-b710-7b886e248b11",
+    "seq": 54,
+    "name": "54. [Fullstack] Persistencia Real de Catálogo en Neon PostgreSQL",
+    "plane_identifier": "TURN-120"
+  },
+  {
+    "id": "0fff1af1-a50d-429c-9cd7-2e8d29752838",
+    "seq": 53,
+    "name": "53. [Backend] Activación de Gemini AI en Chatbot con Contexto Dinámico",
+    "plane_identifier": "TURN-119"
+  },
+  {
+    "id": "f9dd92c2-4268-43d7-942f-28fb1baabc32",
+    "seq": 52,
+    "name": "52. [Frontend] Latencia y UTF-8 en Disponibilidad de Reservas",
+    "plane_identifier": "TURN-118"
+  },
+  {
     "id": "f33088ab-0dfb-4b91-a13e-685b4d59d4fc",
     "seq": 51,
     "name": "51. [Frontend] Integraci\u00f3n Global de PostHog Analytics (Landing y App) y M\u00e9tricas en Superadmin",
