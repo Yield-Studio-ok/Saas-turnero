@@ -77,7 +77,10 @@ export default function TurnosPage() {
     };
   }, [tenantId]);
 
-  const { appointments } = useDailyAppointments(tenantId, new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [viewMode, setViewMode] = useState<"day" | "week">("day");
+
+  const { appointments } = useDailyAppointments(tenantId, selectedDate);
 
   const [selectedTurno, setSelectedTurno] = useState<Turno | null>(null);
   const [selectedEmployeeFilter, setSelectedEmployeeFilter] = useState<string>("all");
@@ -134,29 +137,55 @@ export default function TurnosPage() {
     setIsNewTurnoModalOpen(true);
   };
 
+  // Atajos de teclado estilo Notion Calendar / Cron: [N] Nuevo turno, [W] Semana, [D] Día
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      const activeTag = (document.activeElement?.tagName || "").toLowerCase();
+      if (activeTag === "input" || activeTag === "textarea" || activeTag === "select") {
+        return;
+      }
+      if (e.key === "n" || e.key === "N") {
+        e.preventDefault();
+        handleOpenNewTurno();
+      } else if (e.key === "w" || e.key === "W") {
+        e.preventDefault();
+        setViewMode("week");
+      } else if (e.key === "d" || e.key === "D") {
+        e.preventDefault();
+        setViewMode("day");
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [filteredEmpleados, isEmployee]);
+
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg shadow">
-      <div className="p-4 border-b flex flex-wrap justify-between items-center gap-3 bg-gray-50 rounded-t-lg">
+    <div className="flex flex-col h-full bg-transparent">
+      <div className="p-4 border-b flex flex-wrap justify-between items-center gap-3 bg-white rounded-t-2xl shadow-xs border-slate-200">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-gray-800">
-              {isEmployee ? "Mi Agenda Personal" : "Grilla Diaria"}
+            <h2 className="text-xl font-black text-slate-800 tracking-tight">
+              {isEmployee ? "Mi Agenda Personal" : "Agenda General"}
             </h2>
-            {isEmployee && (
+            {isEmployee ? (
               <span className="px-2.5 py-0.5 text-xs font-semibold bg-blue-100 text-blue-700 rounded-full border border-blue-200">
                 Empleado
               </span>
+            ) : (
+              <span className="px-2.5 py-0.5 text-xs font-semibold bg-slate-100 text-slate-600 rounded-full border border-slate-200">
+                Apple Calendar / Cron
+              </span>
             )}
           </div>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-xs text-slate-500 mt-0.5">
             {isEmployee
-              ? "Visualiza y gestiona únicamente tus citas asignadas del día."
-              : "Haz clic en un turno para ver los detalles del cliente o en un espacio libre para agendar"}
+              ? "Visualiza tus citas asignadas en línea de tiempo continua. Presiona [N] para agendar rápido."
+              : "Línea de tiempo diaria y semanal. Presiona [N] para nuevo turno, [W] semana o [D] día."}
           </p>
         </div>
         <div className="flex items-center gap-2">
           {isEmployee ? (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg text-xs font-semibold">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-xl text-xs font-semibold">
               <UserCheck className="w-4 h-4 text-blue-600" />
               <span>Agenda: {filteredEmpleados[0]?.nombre || "Mi Usuario"}</span>
             </div>
@@ -176,20 +205,30 @@ export default function TurnosPage() {
           )}
           <button
             onClick={() => handleOpenNewTurno()}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-all active:scale-[0.98] cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 shadow-sm transition-all active:scale-[0.98] cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Nuevo Turno</span>
+            <kbd className="hidden sm:inline px-1.5 py-0.5 text-[10px] font-mono bg-blue-700/80 rounded border border-blue-500 text-white">
+              N
+            </kbd>
           </button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto p-4">
+      <div className="flex-1 overflow-auto pt-4">
         <TurnoTimelineGrid
           turnos={turnos}
           empleados={filteredEmpleados}
+          selectedDate={selectedDate}
+          onDateChange={setSelectedDate}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
           onSelectTurno={(turno) => setSelectedTurno(turno)}
-          onSlotClick={(hora, empId) => handleOpenNewTurno(hora, empId)}
+          onSlotClick={(hora, empId, date) => {
+            if (date) setSelectedDate(date);
+            handleOpenNewTurno(hora, empId);
+          }}
           isEmployeeView={isEmployee}
         />
       </div>
