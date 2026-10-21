@@ -1,5 +1,6 @@
-﻿import { useState, useEffect } from "react";
-import { subscribeToDailyAppointments } from "../lib/appointments-service";
+import { useState, useEffect } from "react";
+import { apiFetch } from "../lib/api";
+import { formatDateToYYYYMMDD } from "../lib/appointments-service";
 import { calculateAvailableSlots, TimeSlot } from "../lib/availability.engine";
 import { TimeSlotOption } from "../components/booking/date-time-picker-modal";
 
@@ -18,6 +19,7 @@ export function useAvailability(
       return;
     }
 
+    let isMounted = true;
     setIsLoading(true);
 
     // Parse working hours from local.openHours
@@ -26,16 +28,16 @@ export function useAvailability(
     if (start && end) {
       workingHours.push({ startTime: start.trim(), endTime: end.trim() });
     } else {
-      // Fallback default
       workingHours.push({ startTime: "09:00", endTime: "20:00" });
     }
 
-    const unsubscribe = subscribeToDailyAppointments(
-      localId,
-      date,
-      (appointments) => {
-        // Map Appointment[] to TimeSlot[]
-        const bookedSlots: TimeSlot[] = appointments
+    const dateStr = formatDateToYYYYMMDD(date);
+
+    // Consultar directamente la API de NestJS en PostgreSQL en lugar de abrir WebChannels a Firestore
+    apiFetch<any[]>(`/appointments?businessId=${encodeURIComponent(localId)}&date=${dateStr}`)
+      .then((appointments) => {
+        if (!isMounted) return;
+        const bookedSlots: TimeSlot[] = (Array.isArray(appointments) ? appointments : [])
           .filter(
             (app) =>
               app.status !== "Cancelado" &&
@@ -50,11 +52,10 @@ export function useAvailability(
         const slots = calculateAvailableSlots({
           workingHours,
           appointments: bookedSlots,
-          serviceDuration,
-          slotInterval: serviceDuration, // usually the same as service duration or custom interval
+          serviceDuration: serviceDuration || 30,
+          slotInterval: serviceDuration || 30,
         });
 
-        // Map to TimeSlotOption
         const timeSlotOptions: TimeSlotOption[] = slots.map((slot) => {
           const hour = parseInt(slot.startTime.split(":")[0], 10);
           const period = hour < 14 ? "morning" : "afternoon";
@@ -69,15 +70,41 @@ export function useAvailability(
         });
 
         setAvailableSlots(timeSlotOptions);
-        setIsLoading(false);
-      },
-      (error) => {
-        console.error("Failed to fetch appointments:", error);
-        setIsLoading(false);
-      },
-    );
+      })
+      .catch((err) => {
+        console.warn(
+          "[useAvailability] Error al consultar appointments, generando slots base:",
+          err,
+        );
+        const slots = calculateAvailableSlots({
+          workingHours,
+          appointments: [],
+          serviceDuration: serviceDuration || 30,
+          slotInterval: serviceDuration || 30,
+        });
+        if (isMounted) {
+          setAvailableSlots(
+            slots.map((slot) => {
+              const hour = parseInt(slot.startTime.split(":")[0], 10);
+              const period = hour < 14 ? "morning" : "afternoon";
+              return {
+                id: `${period.charAt(0)}-${slot.startTime}`,
+                startTime: slot.startTime,
+                endTime: slot.endTime,
+                available: true,
+                period: period as "morning" | "afternoon",
+              };
+            }),
+          );
+        }
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
 
-    return () => unsubscribe();
+    return () => {
+      isMounted = false;
+    };
   }, [localId, date, openHours, serviceDuration]);
 
   return { availableSlots, isLoading };

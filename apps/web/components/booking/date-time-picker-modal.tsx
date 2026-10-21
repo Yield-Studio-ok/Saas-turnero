@@ -45,14 +45,14 @@ const MONTH_NAMES = [
   "Diciembre",
 ];
 
-const WEEKDAY_NAMES = ["Lun", "Mar", "MiÃ©", "Jue", "Vie", "SÃ¡b", "Dom"];
+const WEEKDAY_NAMES = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
-// Generador de slots predeterminados para maquetaciÃ³n y fallback
+// Generador de slots predeterminados para maquetación y fallback
 function generateDefaultSlots(durationMinutes = 30, selectedDate: Date): TimeSlotOption[] {
   const slots: TimeSlotOption[] = [];
   const day = selectedDate.getDate();
 
-  // Horarios de maÃ±ana: 09:00 a 13:00
+  // Horarios de mañana: 09:00 a 13:00
   for (let hour = 9; hour < 13; hour++) {
     for (let min = 0; min < 60; min += durationMinutes) {
       if (min + durationMinutes > 60 && hour === 12) break;
@@ -146,7 +146,7 @@ export function DateTimePickerModal({
     }
   }, [isOpen, today]);
 
-  // Manejo de navegaciÃ³n de mes
+  // Manejo de navegación de mes
   const currentYear = currentMonthDate.getFullYear();
   const currentMonth = currentMonthDate.getMonth();
 
@@ -163,12 +163,12 @@ export function DateTimePickerModal({
     setCurrentMonthDate(new Date(currentYear, currentMonth + 1, 1));
   };
 
-  // CÃ³mputo de la grilla del mes
+  // Cómputo de la grilla del mes
   const daysInMonth = useMemo(() => {
     return new Date(currentYear, currentMonth + 1, 0).getDate();
   }, [currentYear, currentMonth]);
 
-  // DÃ­a de la semana del 1er dÃ­a (Lunes = 0, ..., Domingo = 6)
+  // Día de la semana del 1er día (Lunes = 0, ..., Domingo = 6)
   const firstDayOfWeek = useMemo(() => {
     const day = new Date(currentYear, currentMonth, 1).getDay();
     return day === 0 ? 6 : day - 1;
@@ -219,7 +219,7 @@ export function DateTimePickerModal({
     if (isDatePast(day)) return;
     const newDate = new Date(currentYear, currentMonth, day);
     setSelectedDate(newDate);
-    setSelectedSlot(null); // Reset horario al cambiar de dÃ­a
+    setSelectedSlot(null); // Reset horario al cambiar de día
   };
 
   const handleQuickSelectToday = () => {
@@ -238,7 +238,7 @@ export function DateTimePickerModal({
 
   const formatFullDate = (date: Date | null) => {
     if (!date) return "";
-    const weekday = ["Domingo", "Lunes", "Martes", "MiÃ©rcoles", "Jueves", "Viernes", "SÃ¡bado"][
+    const weekday = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"][
       date.getDay()
     ];
     const month = MONTH_NAMES[date.getMonth()];
@@ -321,14 +321,14 @@ export function DateTimePickerModal({
         {/* Contenido scrolleable del modal */}
         <div className="px-5 py-4 overflow-y-auto space-y-6 flex-1 text-slate-900">
           {stepConfirmed ? (
-            /* Vista de confirmaciÃ³n de fecha/hora (TransiciÃ³n para Ticket 27) */
+            /* Vista de confirmación de fecha/hora (Transición para Ticket 27) */
             <div className="py-6 text-center space-y-4 animate-in fade-in zoom-in-95 duration-200">
               <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-sm">
                 <CheckCircleIcon className="w-8 h-8" />
               </div>
               <div className="space-y-1">
                 <h3 className="text-lg font-bold text-slate-900">
-                  Â¡Horario seleccionado con Ã©xito!
+                  ¡Horario seleccionado con éxito!
                 </h3>
                 <p className="text-xs text-slate-500">
                   Tu turno ha sido pre-reservado. Completa tus datos para confirmar.
@@ -400,15 +400,15 @@ export function DateTimePickerModal({
             </div>
           ) : (
             <>
-              {/* SecciÃ³n: Calendario Mensual */}
+              {/* Sección: Calendario Mensual */}
               <section className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-bold text-slate-900">1. Elige una fecha</h3>
-                    <p className="text-xs text-slate-500">Selecciona el dÃ­a de tu turno</p>
+                    <p className="text-xs text-slate-500">Selecciona el día de tu turno</p>
                   </div>
 
-                  {/* Atajos rÃ¡pidos: Hoy / MaÃ±ana */}
+                  {/* Atajos rápidos: Hoy / Mañana */}
                   <div className="flex gap-1.5">
                     <button
                       type="button"
@@ -428,14 +428,14 @@ export function DateTimePickerModal({
                       onClick={handleQuickSelectTomorrow}
                       className="text-xs px-2.5 py-1 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 font-medium transition"
                     >
-                      MaÃ±ana
+                      Mañana
                     </button>
                   </div>
                 </div>
 
                 {/* Tarjeta del Calendario */}
                 <div className="bg-slate-50/70 border border-slate-200 rounded-2xl p-3.5 shadow-xs">
-                  {/* NavegaciÃ³n del mes */}
+                  {/* Navegación del mes */}
                   <div className="flex items-center justify-between mb-3 px-1">
                     <button
                       type="button"
@@ -465,7 +465,7 @@ export function DateTimePickerModal({
                     </button>
                   </div>
 
-                  {/* Encabezado dÃ­as de la semana */}
+                  {/* Encabezado días de la semana */}
                   <div className="grid grid-cols-7 text-center gap-1 mb-1.5">
                     {WEEKDAY_NAMES.map((name, idx) => (
                       <span
@@ -479,14 +479,14 @@ export function DateTimePickerModal({
                     ))}
                   </div>
 
-                  {/* Grilla de dÃ­as */}
+                  {/* Grilla de días */}
                   <div className="grid grid-cols-7 gap-1 text-center">
-                    {/* Espacios vacÃ­os antes del dÃ­a 1 */}
+                    {/* Espacios vacíos antes del día 1 */}
                     {Array.from({ length: firstDayOfWeek }).map((_, i) => (
                       <div key={`empty-${i}`} className="h-9" />
                     ))}
 
-                    {/* DÃ­as del mes */}
+                    {/* Días del mes */}
                     {Array.from({ length: daysInMonth }).map((_, i) => {
                       const dayNumber = i + 1;
                       const isSelected = isDateSelected(dayNumber);
@@ -528,7 +528,7 @@ export function DateTimePickerModal({
                   </div>
                 </div>
 
-                {/* Leyenda rÃ¡pida */}
+                {/* Leyenda rápida */}
                 <div className="flex items-center justify-between text-[11px] text-slate-400 px-1">
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-blue-600" />
@@ -548,7 +548,7 @@ export function DateTimePickerModal({
               {/* Separador */}
               <div className="border-t border-slate-100" />
 
-              {/* SecciÃ³n: Horarios Disponibles (Chips) */}
+              {/* Sección: Horarios Disponibles (Chips) */}
               <section className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
@@ -562,12 +562,12 @@ export function DateTimePickerModal({
                           </span>
                         </>
                       ) : (
-                        "Primero selecciona un dÃ­a arriba"
+                        "Primero selecciona un día arriba"
                       )}
                     </p>
                   </div>
 
-                  {/* Filtro MaÃ±ana / Tarde / Todos */}
+                  {/* Filtro Mañana / Tarde / Todos */}
                   {selectedDate && availableSlots.length > 0 && (
                     <div className="flex bg-slate-100 p-0.5 rounded-lg text-[11px] font-semibold text-slate-600">
                       <button
@@ -590,7 +590,7 @@ export function DateTimePickerModal({
                             : "hover:text-slate-900"
                         }`}
                       >
-                        MaÃ±ana
+                        Mañana
                       </button>
                       <button
                         type="button"
@@ -617,10 +617,10 @@ export function DateTimePickerModal({
                   <div className="py-8 px-4 text-center rounded-2xl border border-dashed border-slate-200 bg-slate-50">
                     <ClockIcon className="w-7 h-7 text-slate-300 mx-auto mb-1.5" />
                     <p className="text-xs font-semibold text-slate-600">
-                      Selecciona un dÃ­a en el calendario
+                      Selecciona un día en el calendario
                     </p>
                     <p className="text-[11px] text-slate-400 mt-0.5">
-                      PodrÃ¡s ver todos los turnos disponibles para esa fecha
+                      Podrás ver todos los turnos disponibles para esa fecha
                     </p>
                   </div>
                 ) : availableSlots.length === 0 ? (
@@ -629,7 +629,7 @@ export function DateTimePickerModal({
                       El local no atiende en esta fecha
                     </p>
                     <p className="text-[11px] text-amber-700 mt-1">
-                      Los domingos el local permanece cerrado. Por favor elige otro dÃ­a.
+                      Los domingos el local permanece cerrado. Por favor elige otro día.
                     </p>
                   </div>
                 ) : (
@@ -684,10 +684,10 @@ export function DateTimePickerModal({
           )}
         </div>
 
-        {/* Modal Footer / Barra de AcciÃ³n */}
+        {/* Modal Footer / Barra de Acción */}
         {!stepConfirmed && (
           <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col gap-2.5 shrink-0">
-            {/* Resumen dinÃ¡mico de la selecciÃ³n */}
+            {/* Resumen dinámico de la selección */}
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
                 <span
@@ -696,8 +696,8 @@ export function DateTimePickerModal({
                 <span className="font-semibold text-slate-600">
                   {selectedDate && selectedSlot ? (
                     <span className="text-slate-900 font-bold">
-                      {selectedDate.getDate()} {MONTH_NAMES[selectedDate.getMonth()].slice(0, 3)}{" "}
-                      â€¢ {selectedSlot.startTime} hs
+                      {selectedDate.getDate()} {MONTH_NAMES[selectedDate.getMonth()].slice(0, 3)} •{" "}
+                      {selectedSlot.startTime} hs
                     </span>
                   ) : (
                     "Elige fecha y horario para continuar"
