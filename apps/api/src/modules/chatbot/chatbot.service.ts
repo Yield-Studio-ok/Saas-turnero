@@ -7,19 +7,20 @@ export class ChatbotService {
   private readonly logger = new Logger(ChatbotService.name);
   private genAI: GoogleGenerativeAI | null = null;
 
-  constructor(private prisma: PrismaService) {
+  constructor(private prisma: PrismaService) {}
+
+  private getGenAI(): GoogleGenerativeAI | null {
+    if (this.genAI) return this.genAI;
     const apiKey = process.env.GEMINI_API_KEY;
     if (apiKey) {
       this.genAI = new GoogleGenerativeAI(apiKey);
-    } else {
-      this.logger.warn(
-        "GEMINI_API_KEY is not defined. Chatbot will use fallback rule-based responses.",
-      );
+      return this.genAI;
     }
+    return null;
   }
 
   async ask(message: string, businessId?: string): Promise<{ reply: string }> {
-    const lowerMessage = (message || "").toLowerCase();
+    const lowerMessage = (message || "").toLowerCase().trim();
     const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
 
     // 1. Gather dynamic business context
@@ -57,12 +58,13 @@ export class ChatbotService {
     }
 
     // 2. If Gemini is available, query Gemini API
-    if (this.genAI) {
+    const ai = this.getGenAI();
+    if (ai) {
       try {
-        const model = this.genAI.getGenerativeModel({
+        const model = ai.getGenerativeModel({
           model: "gemini-1.5-flash",
           systemInstruction:
-            "Eres el asistente inteligente de Turnero para gestión de citas, servicios y negocios. Respondes de forma concisa, cordial y útil a los dueños de negocios, clientes y administradores sobre sus turnos, servicios y operaciones. Si el usuario pregunta por datos del negocio o de hoy, usa el contexto proporcionado con exactitud.",
+            "Eres el asistente inteligente de Turnero para gestión de citas, servicios y negocios. Respondes de forma concisa, cordial y útil a los dueños de negocios, clientes y administradores sobre sus turnos, servicios y operaciones. Si el usuario pregunta por datos del negocio o de hoy, usa el contexto proporcionado con exactitud. Sé proactivo y breve.",
         });
 
         const prompt = `${contextSummary ? `[Contexto actual del negocio: ${contextSummary}]\n` : ""}Pregunta del usuario: ${message}`;
@@ -224,7 +226,7 @@ export class ChatbotService {
 
     return {
       reply:
-        "Hola, soy el Asistente de IA de tu dashboard. Puedo ayudarte con métricas y consultas de tus empleados. ¿Qué necesitas saber?",
+        "Actualmente no pude procesar tu solicitud con el asistente de IA. Puedes consultar tus turnos, servicios, empleados y métricas desde el menú lateral, o preguntarme sobre los turnos de hoy.",
     };
   }
 }

@@ -178,6 +178,10 @@ describe("Appointments Cancellation (Ticket 21)", () => {
           employeeId: "emp-1",
           serviceId: "srv-1",
         },
+        include: {
+          employee: true,
+          service: true,
+        },
       });
       expect(result.id).toBe("appt-new-1");
       expect(result.status).toBe("confirmed");

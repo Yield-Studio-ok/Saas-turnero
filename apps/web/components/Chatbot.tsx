@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { MessageSquare, Bot, Sparkles, X, Send, User } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 
 interface Message {
   role: "user" | "bot";
@@ -10,6 +11,7 @@ interface Message {
 }
 
 export default function Chatbot() {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -50,7 +52,10 @@ export default function Chatbot() {
       const res = await fetch(`${apiUrl}/chatbot/ask`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage }),
+        body: JSON.stringify({
+          message: userMessage,
+          businessId: user?.tenantId,
+        }),
       });
       const data = await res.json();
       const botTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
