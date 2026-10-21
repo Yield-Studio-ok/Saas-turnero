@@ -6,7 +6,15 @@ import { apiFetch } from "@/lib/api";
 import { PaywallModal } from "@/components/paywall-modal";
 import { useRouter } from "next/navigation";
 import { hasPlanAccess } from "@/lib/plan-utils";
-import { Plus, CheckCircle2, X, MessageSquare, ShieldCheck } from "lucide-react";
+import {
+  Plus,
+  CheckCircle2,
+  X,
+  MessageSquare,
+  ShieldCheck,
+  AlertCircle,
+  Settings,
+} from "lucide-react";
 
 type Review = {
   id: string;
@@ -24,6 +32,12 @@ interface ClientReview {
   tags: string[];
   comment: string;
   date: string;
+}
+
+interface AttendedClient {
+  name: string;
+  serviceName?: string;
+  date?: string;
 }
 
 const initialMockReviews: Review[] = [
@@ -105,6 +119,29 @@ export default function ReviewsDashboard() {
     return initialClientRatings;
   });
 
+  // Loyalty Settings State (Ticket TURN-122)
+  const [loyaltySettings, setLoyaltySettings] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(`turnero_loyalty_${businessId}`);
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch {}
+      }
+    }
+    return {
+      pointsPerReview: 10,
+      isActive: true,
+      rewardThreshold: 50,
+      rewardDescription: "Corte de pelo gratis o 20% OFF",
+    };
+  });
+  const [showLoyaltyModal, setShowLoyaltyModal] = useState(false);
+  const [loyaltyFormData, setLoyaltyFormData] = useState(loyaltySettings);
+
+  // Attended Clients for Employee Mutual Review (Ticket TURN-124)
+  const [attendedClients, setAttendedClients] = useState<AttendedClient[]>([]);
+
   // Modal State
   const [showRateModal, setShowRateModal] = useState(false);
   const [clientNameToRate, setClientNameToRate] = useState("");
@@ -141,6 +178,43 @@ export default function ReviewsDashboard() {
         setLoading(false);
       });
   }, [businessId, user, isEmployee, token]);
+
+  useEffect(() => {
+    if (!businessId) return;
+    apiFetch<any[]>(`/appointments?businessId=${businessId}`, {
+      token: token || undefined,
+    })
+      .then((data) => {
+        if (Array.isArray(data)) {
+          const completed = data.filter((a) => a.status === "completed" && a.customerName);
+          const uniqueClients = new Map<string, AttendedClient>();
+          completed.forEach((a) => {
+            if (!uniqueClients.has(a.customerName)) {
+              uniqueClients.set(a.customerName, {
+                name: a.customerName,
+                serviceName: a.service?.name,
+                date: a.date,
+              });
+            }
+          });
+          setAttendedClients(Array.from(uniqueClients.values()));
+        }
+      })
+      .catch((err) => {
+        console.warn("Aviso al cargar clientes atendidos:", err);
+      });
+  }, [businessId, token]);
+
+  const handleSaveLoyaltySettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoyaltySettings(loyaltyFormData);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(`turnero_loyalty_${businessId}`, JSON.stringify(loyaltyFormData));
+    }
+    setShowLoyaltyModal(false);
+    setToastMessage("Programa de fidelidad actualizado con éxito.");
+    setTimeout(() => setToastMessage(null), 3500);
+  };
 
   const handleToggleTag = (tag: string) => {
     setSelectedTags((prev) =>
@@ -264,13 +338,40 @@ export default function ReviewsDashboard() {
                 </div>
               ) : (
                 <div>
-                  <p className="text-sm text-gray-600 mb-3">
-                    Tus clientes suman <span className="font-bold text-blue-600">10 puntos</span>{" "}
-                    por cada reseña que dejan después de su turno.
-                  </p>
-                  <div className="bg-blue-50 text-blue-800 px-3 py-1.5 rounded-lg text-xs font-semibold inline-block">
-                    Activo
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-bold text-blue-600">
+                        {loyaltySettings.pointsPerReview} pts
+                      </span>
+                      <span className="text-xs text-slate-500 font-medium">por reseña</span>
+                    </div>
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                        loyaltySettings.isActive
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          : "bg-slate-100 text-slate-600 border border-slate-200"
+                      }`}
+                    >
+                      {loyaltySettings.isActive ? "Activo" : "Pausado"}
+                    </span>
                   </div>
+                  <p className="text-xs text-slate-600 mb-3">
+                    Recompensa:{" "}
+                    <span className="font-semibold text-slate-800">
+                      {loyaltySettings.rewardDescription}
+                    </span>{" "}
+                    al alcanzar {loyaltySettings.rewardThreshold} pts.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setLoyaltyFormData(loyaltySettings);
+                      setShowLoyaltyModal(true);
+                    }}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 underline transition cursor-pointer"
+                  >
+                    <Settings className="w-3.5 h-3.5" />
+                    <span>Configurar Programa</span>
+                  </button>
                 </div>
               )}
             </div>
@@ -455,16 +556,32 @@ export default function ReviewsDashboard() {
             <form onSubmit={handleSubmitClientRating} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  Nombre del Cliente
+                  Cliente Atendido (Turno Completado) *
                 </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ej. Lucas Romero"
-                  value={clientNameToRate}
-                  onChange={(e) => setClientNameToRate(e.target.value)}
-                  className="w-full border border-gray-300 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                />
+                {attendedClients.length === 0 ? (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
+                    <span>
+                      Solo puedes calificar a clientes que hayas atendido con estado completado. Aún
+                      no registras citas completadas en tu historial.
+                    </span>
+                  </div>
+                ) : (
+                  <select
+                    required
+                    value={clientNameToRate}
+                    onChange={(e) => setClientNameToRate(e.target.value)}
+                    className="w-full border border-gray-300 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white cursor-pointer"
+                  >
+                    <option value="">Selecciona un cliente atendido...</option>
+                    {attendedClients.map((c) => (
+                      <option key={c.name} value={c.name}>
+                        {c.name} {c.serviceName ? `— ${c.serviceName}` : ""}{" "}
+                        {c.date ? `(${c.date})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               {/* Stars rating */}
@@ -544,9 +661,134 @@ export default function ReviewsDashboard() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-md cursor-pointer transition"
+                  disabled={attendedClients.length === 0 || !clientNameToRate.trim()}
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl text-xs font-semibold shadow-md cursor-pointer transition"
                 >
                   Guardar Calificación
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Configurar Programa de Fidelidad (Ticket TURN-122) */}
+      {showLoyaltyModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-slate-200 space-y-5 animate-in fade-in">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div>
+                <h3 className="text-lg font-bold text-gray-800">Programa de Fidelidad</h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Configura cómo tus clientes suman puntos y canjean recompensas.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowLoyaltyModal(false)}
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveLoyaltySettings} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Puntos acreditados por reseña
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  required
+                  value={loyaltyFormData.pointsPerReview}
+                  onChange={(e) =>
+                    setLoyaltyFormData({
+                      ...loyaltyFormData,
+                      pointsPerReview: Number(e.target.value),
+                    })
+                  }
+                  className="w-full border border-gray-300 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Puntos necesarios para canjear recompensa
+                </label>
+                <input
+                  type="number"
+                  min="5"
+                  required
+                  value={loyaltyFormData.rewardThreshold}
+                  onChange={(e) =>
+                    setLoyaltyFormData({
+                      ...loyaltyFormData,
+                      rewardThreshold: Number(e.target.value),
+                    })
+                  }
+                  className="w-full border border-gray-300 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Descripción del beneficio o recompensa
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ej. Corte de pelo gratis o 20% de descuento"
+                  value={loyaltyFormData.rewardDescription}
+                  onChange={(e) =>
+                    setLoyaltyFormData({
+                      ...loyaltyFormData,
+                      rewardDescription: e.target.value,
+                    })
+                  }
+                  className="w-full border border-gray-300 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <div>
+                  <p className="text-xs font-semibold text-slate-800">Estado del programa</p>
+                  <p className="text-[11px] text-slate-500">
+                    {loyaltyFormData.isActive
+                      ? "Los clientes suman puntos activamente"
+                      : "El programa se encuentra temporalmente pausado"}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setLoyaltyFormData({
+                      ...loyaltyFormData,
+                      isActive: !loyaltyFormData.isActive,
+                    })
+                  }
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                    loyaltyFormData.isActive
+                      ? "bg-emerald-600 text-white"
+                      : "bg-slate-300 text-slate-700"
+                  }`}
+                >
+                  {loyaltyFormData.isActive ? "Activo" : "Pausado"}
+                </button>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-3 border-t">
+                <button
+                  type="button"
+                  onClick={() => setShowLoyaltyModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-md cursor-pointer transition"
+                >
+                  Guardar Cambios
                 </button>
               </div>
             </form>
