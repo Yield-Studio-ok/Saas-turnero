@@ -226,14 +226,15 @@ export default function DashboardPage() {
       ]
     : [];
 
+  const displayName =
+    user?.name || user?.businessName || (user?.email ? user.email.split("@")[0] : "Usuario");
+
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">
-            ¡Hola, {user?.email || "Usuario"}! 👋
-          </h1>
+          <h1 className="text-2xl font-bold text-slate-800">¡Hola, {displayName}! 👋</h1>
           <p className="text-slate-500 mt-1">Este es el resumen de tu local al día de hoy.</p>
         </div>
         <Link
@@ -310,12 +311,13 @@ export default function DashboardPage() {
           </div>
           <div className="flex-1 min-h-0">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={chartData} margin={{ top: 10, right: 20, left: -10, bottom: 25 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
                 <XAxis
                   dataKey="name"
                   axisLine={false}
                   tickLine={false}
+                  interval={0}
                   tick={{ fill: "#64748B", fontSize: 12 }}
                   dy={10}
                 />
