@@ -57,16 +57,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           plan: parsed.plan,
         });
 
-        // Validar token contra /me de manera no bloqueante
-        apiFetch("/me", { token: savedToken }).catch((err: any) => {
-          if (err?.status === 401) {
-            setToken(null);
-            setUser(null);
-            resetUser();
-            localStorage.removeItem("auth_token");
-            localStorage.removeItem("auth_user");
-          }
-        });
+        // Validar token contra /me de manera no bloqueante y refrescar datos
+        apiFetch<ExtendedUser>("/me", { token: savedToken })
+          .then((refreshedUser) => {
+            if (refreshedUser && refreshedUser.uid) {
+              setUser((prev) => ({ ...prev, ...refreshedUser }));
+              localStorage.setItem("auth_user", JSON.stringify({ ...parsed, ...refreshedUser }));
+            }
+          })
+          .catch((err: any) => {
+            if (err?.status === 401) {
+              setToken(null);
+              setUser(null);
+              resetUser();
+              localStorage.removeItem("auth_token");
+              localStorage.removeItem("auth_user");
+            }
+          });
       } catch {
         setUser(null);
         setToken(null);

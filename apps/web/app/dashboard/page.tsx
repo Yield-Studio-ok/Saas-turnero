@@ -36,10 +36,12 @@ function EmployeeDashboardHome({ user }: { user: any }) {
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-300">
       {/* Header */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-slate-800">¡Hola, {employeeName}! 👋</h1>
+      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-800 break-words">
+              ¡Hola, {employeeName}! 👋
+            </h1>
             <span className="px-2.5 py-0.5 text-xs font-semibold bg-blue-100 text-blue-700 rounded-full border border-blue-200">
               Portal Empleado
             </span>
@@ -48,17 +50,17 @@ function EmployeeDashboardHome({ user }: { user: any }) {
             Este es el resumen de tus citas programadas para el día de hoy.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
           <Link
             href="/dashboard/turnos"
-            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition shadow-sm flex items-center gap-2 text-sm cursor-pointer"
+            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition shadow-sm flex items-center justify-center gap-2 text-sm cursor-pointer"
           >
             <CalendarCheck className="w-4 h-4" />
             <span>Ver Mi Agenda</span>
           </Link>
           <Link
             href="/dashboard/ventas"
-            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition flex items-center gap-2 text-sm cursor-pointer"
+            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition flex items-center justify-center gap-2 text-sm cursor-pointer"
           >
             <ShoppingBag className="w-4 h-4" />
             <span>Venta Mostrador</span>
@@ -232,14 +234,18 @@ export default function DashboardPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
       {/* Header Section */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">¡Hola, {displayName}! 👋</h1>
-          <p className="text-slate-500 mt-1">Este es el resumen de tu local al día de hoy.</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 break-words">
+            ¡Hola, {displayName}! 👋
+          </h1>
+          <p className="text-slate-500 mt-1 text-sm sm:text-base">
+            Este es el resumen de tu local al día de hoy.
+          </p>
         </div>
         <Link
           href="/dashboard/turnos"
-          className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors shadow-sm shadow-blue-600/20 flex items-center gap-2"
+          className="w-full sm:w-auto px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors shadow-sm shadow-blue-600/20 flex items-center justify-center gap-2 text-sm font-semibold"
         >
           <CalendarCheck className="w-4 h-4" />
           <span>Nuevo Turno</span>

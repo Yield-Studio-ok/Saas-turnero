@@ -46,23 +46,47 @@ export class AuthService implements OnModuleInit {
       throw new UnauthorizedException("Invalid credentials");
     }
 
+    let tenantId = user.businesses?.[0]?.id;
+    let businessName = user.businesses?.[0]?.name;
+    let employeeId: string | undefined = undefined;
+
+    if (user.role === "employee" || !tenantId) {
+      const employee = await this.prisma.employee.findFirst({
+        where: { email: user.email },
+        include: { business: true },
+      });
+      if (employee) {
+        employeeId = employee.id;
+        if (!tenantId) {
+          tenantId = employee.businessId;
+          businessName = employee.business?.name;
+        }
+      }
+    }
+
     const userPlan = user.businesses?.[0]?.plan || undefined;
 
     const authUser: AuthUser = {
       uid: user.id,
       email: user.email,
+      name: user.name || undefined,
+      businessName: businessName || undefined,
       role: user.role,
-      tenantId: user.businesses?.[0]?.id,
+      tenantId: tenantId,
       plan: userPlan,
+      employeeId: employeeId,
     };
 
     return {
       accessToken: this.jwt.sign({
         sub: authUser.uid,
         email: authUser.email,
+        name: authUser.name,
+        businessName: authUser.businessName,
         role: authUser.role,
         tenantId: authUser.tenantId,
         plan: authUser.plan,
+        employeeId: authUser.employeeId,
       }),
       user: authUser,
     };
@@ -76,17 +100,23 @@ export class AuthService implements OnModuleInit {
     const payload = this.jwt.verify<{
       sub: string;
       email: string;
+      name?: string;
+      businessName?: string;
       role: string;
       tenantId?: string;
       plan?: string;
+      employeeId?: string;
     }>(token);
 
     return {
       uid: payload.sub,
       email: payload.email,
+      name: payload.name,
+      businessName: payload.businessName,
       role: payload.role,
       tenantId: payload.tenantId,
       plan: payload.plan,
+      employeeId: payload.employeeId,
     };
   }
 }

@@ -4,4 +4,7 @@ export type AuthUser = {
   role: string;
   tenantId?: string;
   plan?: string;
+  name?: string;
+  businessName?: string;
+  employeeId?: string;
 };

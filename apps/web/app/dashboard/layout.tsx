@@ -52,6 +52,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -120,14 +121,46 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <ProtectedRoute>
       <div className="min-h-screen flex bg-slate-50 print:bg-white print:block">
-        <div className="print:hidden">
+        {/* Desktop Sidebar (visible on md+, hidden on mobile) */}
+        <div className="hidden md:flex print:hidden">
           <DashboardSidebar />
         </div>
 
+        {/* Mobile Slide-over Drawer */}
+        {isMobileMenuOpen && (
+          <div className="fixed inset-0 z-50 md:hidden print:hidden flex">
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
+              onClick={() => setIsMobileMenuOpen(false)}
+              aria-hidden="true"
+            />
+            {/* Sliding Panel */}
+            <div className="relative flex-1 flex flex-col max-w-xs w-full bg-[#0F172A] z-10 shadow-2xl h-full animate-in slide-in-from-left duration-200">
+              <DashboardSidebar onClose={() => setIsMobileMenuOpen(false)} />
+            </div>
+          </div>
+        )}
+
         {/* Main content */}
         <main className="flex-1 flex flex-col relative min-w-0 print:block print:w-full">
-          <header className="bg-white border-b border-slate-200 h-16 flex items-center px-8 justify-between flex-shrink-0 z-10 print:hidden">
-            <div className="flex items-center gap-2">
+          <header className="bg-white border-b border-slate-200 h-16 flex items-center px-4 sm:px-8 justify-between flex-shrink-0 z-10 print:hidden">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="md:hidden p-2 -ml-2 text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition focus:outline-none focus:ring-2 focus:ring-blue-500"
+                aria-label="Abrir menú de navegación"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
+              </button>
               <h1 className="text-xl font-bold text-slate-800 tracking-tight">Dashboard</h1>
             </div>
 
@@ -258,7 +291,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </header>
 
-          <div className="p-8 flex-1 overflow-auto text-slate-900 bg-slate-50/50 print:p-0 print:m-0 print:bg-white print:overflow-visible">
+          <div className="p-4 sm:p-8 flex-1 overflow-auto text-slate-900 bg-slate-50/50 print:p-0 print:m-0 print:bg-white print:overflow-visible">
             {children}
           </div>
 
